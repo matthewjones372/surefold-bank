@@ -55,9 +55,12 @@ class DailyLimitSpec {
 
     @Test
     fun `the limit an account opens with is written in its Opened, the default included`() {
-        val opened = Account.Unopened.decide(id, AccountCommand.Open("ada", gbp(1), "open"), noon)
-            .shouldBeRight().single()
-        (opened as AccountEvent.Opened).dailyLimit shouldBe gbp(1_000_000)
+        val open = AccountCommand.Open("ada", gbp(1), "open")
+        val opened = Account.Unopened.decide(id, open, noon).shouldBeRight().single() as AccountEvent.Opened
+        opened.dailyLimit shouldBe gbp(1_000_000)
+        opened.reference shouldBe open.reference
+        open.reference shouldBe "open"
+        opened.atMillis shouldBe noon
     }
 
     @Test
@@ -102,7 +105,9 @@ class DailyLimitSpec {
     fun `the refusal says the limit and what is left today`() {
         val paid = rich.after(AccountCommand.Withdraw(gbp(975_000), "w-1"))
 
-        paid.decide(id, AccountCommand.Withdraw(gbp(30_000), "w-2"), noon).shouldBeLeft().message shouldBe
+        val refused = paid.decide(id, AccountCommand.Withdraw(gbp(30_000), "w-2"), noon).shouldBeLeft()
+        refused.shouldBeInstanceOf<AccountError.DailyLimitExceeded>().id shouldBe "acc-1"
+        refused.message shouldBe
             "Account acc-1 may pay out 10000.00 GBP a day and has 250.00 GBP of that left today, not 300.00 GBP"
     }
 
