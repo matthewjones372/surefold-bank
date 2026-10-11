@@ -19,15 +19,18 @@ subprojects {
         ignoreFailures.set(true)
     }
 
-    apply(plugin = "info.solidsoft.pitest")
-
-    // Mutation testing for the money zone; run on demand (`pitest`), not part of `build`.
-    extensions.configure<info.solidsoft.gradle.pitest.PitestPluginExtension> {
-        pitestVersion.set("1.30.0")
-        junit5PluginVersion.set("1.2.3")
-        targetClasses.set(setOf("bank.*"))
-        outputFormats.set(setOf("XML", "HTML"))
-        timestampedReports.set(false)
+    // Mutation testing for the money rules, in domain only: app's money code is tested through clusters of nodes
+    // on Postgres, and Pitest reruns a module's whole suite before it mutates anything, so mutating app cost minutes
+    // a check. Run on demand (`pitest`), not part of `build`.
+    if (name == "domain") {
+        apply(plugin = "info.solidsoft.pitest")
+        extensions.configure<info.solidsoft.gradle.pitest.PitestPluginExtension> {
+            pitestVersion.set("1.30.0")
+            junit5PluginVersion.set("1.2.3")
+            targetClasses.set(setOf("bank.*"))
+            outputFormats.set(setOf("XML", "HTML"))
+            timestampedReports.set(false)
+        }
     }
 
     repositories {
