@@ -12,7 +12,9 @@ import io.github.matthewjones372.lark.cluster.Cluster
 import io.github.matthewjones372.pelican.pekko.PelicanServer
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
+import java.io.IOException
 import java.net.ServerSocket
+import kotlin.random.Random
 import java.sql.DriverManager
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
@@ -76,17 +78,29 @@ class TestNode(
 )
 
 /**
- * [count] ports, each different: every socket held open until all are chosen. Chosen one after another, the kernel can hand the
- * same port back once its socket closes, and a node whose web port was another's cluster port could not bind it.
+ * [count] different ports a node can bind, chosen below the ephemeral range. A port from `ServerSocket(0)` is
+ * ephemeral: between being chosen and a node binding it, the kernel can give it to any outgoing connection (JDBC,
+ * the issuer, Testcontainers), and the node fails with "Address already in use". Linux's ephemeral ports start at
+ * 32768 and macOS's at 49152.
  */
 private fun freePorts(count: Int): List<Int> {
-    val held = List(count) { ServerSocket(0) }
-    return try {
-        held.map { it.localPort }
-    } finally {
-        held.forEach { it.close() }
+    val chosen = LinkedHashSet<Int>()
+    while (chosen.size < count) {
+        val port = Random.nextInt(FIRST_PORT, LAST_PORT)
+        if (port !in chosen && bindable(port)) chosen += port
     }
+    return chosen.toList()
 }
+
+private fun bindable(port: Int): Boolean = try {
+    ServerSocket(port).close()
+    true
+} catch (_: IOException) {
+    false
+}
+
+private const val FIRST_PORT = 20_000
+private const val LAST_PORT = 32_000
 
 /**
  * Nodes of one cluster, all on [database], each on its own ports. With [journals] above 1, the journal is split across
