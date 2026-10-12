@@ -5,12 +5,22 @@
       "properties": {
         "gauntlet": {
           "baseline": {
-            "commit": "33df360ea5a454e8ec56bb45a6143930f083cd51",
+            "commit": "eb40b62c1143f031549b661325e94babbaab5943",
             "gauntletVersion": "0.1.0-rc.22",
-            "irHash": "20342ed9db6b03fa526590bbaac6d3835e82792f4f95961f3ad0fcd446d66c82"
+            "irHash": "d073d8b26eb329ba79a41ffb3bc87e9b22398ad9dd852be8361f066b8af85a93"
           },
           "legacy": [],
           "metrics": {
+            "budget/screening/p50": {
+              "higherIsBetter": false,
+              "unit": "ms",
+              "value": 0.686
+            },
+            "budget/screening/p99": {
+              "higherIsBetter": false,
+              "unit": "ms",
+              "value": 5.331
+            },
             "coverage": {
               "higherIsBetter": true,
               "perFile": {
@@ -48,10 +58,11 @@
                 "bank-approvals/protocol/src/main/kotlin/bank/approvals/protocol/Messages.kt": 0,
                 "bank-approvals/protocol/src/main/kotlin/bank/approvals/protocol/wire/Wire.kt": 80,
                 "lark-bank/api/src/main/kotlin/bank/api/Audit.kt": 0,
-                "lark-bank/api/src/main/kotlin/bank/api/Caller.kt": 0,
-                "lark-bank/api/src/main/kotlin/bank/api/Endpoints.kt": 0,
-                "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt": 0,
+                "lark-bank/api/src/main/kotlin/bank/api/Caller.kt": 13.89,
+                "lark-bank/api/src/main/kotlin/bank/api/Endpoints.kt": 63.2,
+                "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt": 3.3,
                 "lark-bank/api/src/main/kotlin/bank/api/Looks.kt": 0,
+                "lark-bank/api/src/main/kotlin/bank/api/Opening.kt": 100,
                 "lark-bank/api/src/main/kotlin/bank/api/Screening.kt": 53.33,
                 "lark-bank/api/src/main/kotlin/bank/api/TraceCompletion.kt": 0,
                 "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt": 0,
@@ -67,7 +78,7 @@
                 "lark-bank/app/src/main/kotlin/bank/app/Ops.kt": 99.12,
                 "lark-bank/app/src/main/kotlin/bank/app/Projections.kt": 91.78,
                 "lark-bank/app/src/main/kotlin/bank/app/Publishing.kt": 100,
-                "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt": 98.15,
+                "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt": 98.52,
                 "lark-bank/app/src/main/kotlin/bank/app/Screening.kt": 92.59,
                 "lark-bank/app/src/main/kotlin/bank/app/Settings.kt": 94.9,
                 "lark-bank/app/src/main/kotlin/bank/app/Shadowing.kt": 85.71,
@@ -76,19 +87,20 @@
                 "lark-bank/app/src/main/kotlin/bank/app/TracedBank.kt": 100,
                 "lark-bank/app/src/main/kotlin/bank/app/Transfers.kt": 88.46,
                 "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt": 96.69,
-                "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt": 87.8,
-                "lark-bank/domain/src/main/kotlin/bank/domain/Bank.kt": 0,
+                "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt": 98.02,
+                "lark-bank/domain/src/main/kotlin/bank/domain/Bank.kt": 88.89,
+                "lark-bank/domain/src/main/kotlin/bank/domain/DailyLimit.kt": 100,
                 "lark-bank/domain/src/main/kotlin/bank/domain/Money.kt": 94.12,
                 "lark-bank/domain/src/main/kotlin/bank/domain/Transfer.kt": 82.05,
                 "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt": 0,
                 "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt": 0,
                 "lark-bank/loadtest/src/main/kotlin/bank/load/StandInCheck.kt": 0,
-                "lark-bank/protocol/src/main/kotlin/bank/protocol/Codecs.kt": 93.81,
+                "lark-bank/protocol/src/main/kotlin/bank/protocol/Codecs.kt": 93.86,
                 "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt": 94.2,
                 "lark-bank/protocol/src/main/kotlin/bank/protocol/Mapping.kt": 100,
                 "lark-bank/protocol/src/main/kotlin/bank/protocol/Messages.kt": 63.64,
                 "lark-bank/protocol/src/main/kotlin/bank/protocol/wire/Ops.kt": 11.11,
-                "lark-bank/protocol/src/main/kotlin/bank/protocol/wire/Wire.kt": 94.06
+                "lark-bank/protocol/src/main/kotlin/bank/protocol/wire/Wire.kt": 94.74
               },
               "unit": "%",
               "value": 58.45
@@ -96,12 +108,12 @@
             "integrity/assertions-per-test": {
               "higherIsBetter": true,
               "unit": "count",
-              "value": 63
+              "value": 62
             },
             "integrity/executed-tests": {
               "higherIsBetter": true,
               "unit": "count",
-              "value": 242
+              "value": 275
             },
             "integrity/property-tests": {
               "higherIsBetter": true,
@@ -254,7 +266,6 @@
             "bank-checks:checks.screening.adapters.ScreeningHttpSpec.POST /screen - a second request for a transfer answers the first decision, though the rules have changed",
             "bank-checks:checks.screening.adapters.ScreeningHttpSpec.POST /screen - a transfer over the bound is declined by the rule, in the bank's words",
             "bank-checks:checks.screening.adapters.ScreeningHttpSpec.POST /screen - an amount that is not a number is refused",
-            "bank-checks:checks.screening.adapters.ScreeningHttpSpec.POST /screen - p99 over 10,000 requests is under 20 ms",
             "bank-checks:checks.screening.adapters.TracedSpec.Traced - a request in a trace is answered in a server span whose parent is the caller's",
             "bank-checks:checks.screening.adapters.TracedSpec.Traced - a request with no trace starts one of its own",
             "bank-checks:checks.screening.domain.ScreenSpec.Screen - a decline names the rule and version, with verdict's evidence",
@@ -263,6 +274,12 @@
             "bank-checks:checks.screening.domain.ScreenSpec.Screen - a rule reads the hour the transfer was requested, in UTC",
             "bank-checks:checks.screening.domain.ScreenSpec.Screen - the first rule in the admin's order that holds declines",
             "bank-checks:checks.screening.domain.ScreenSpec.Screen - with no rule live, every transfer is approved",
+            "lark-bank:bank.api.OpeningSpec.a daily limit that is not an amount of the account's currency is refused()",
+            "lark-bank:bank.api.OpeningSpec.a refusal for the daily limit names the limit, what is left today and what was asked()",
+            "lark-bank:bank.api.OpeningSpec.a refusal no opening can give is a bug, not an answer()",
+            "lark-bank:bank.api.OpeningSpec.an opening is refused as already open, as an invalid amount, or as unavailable()",
+            "lark-bank:bank.api.OpeningSpec.an opening reads its initial amount and its daily limit in the account's currency()",
+            "lark-bank:bank.api.OpeningSpec.an opening without a daily limit leaves it to the account's default()",
             "lark-bank:bank.api.ScreeningClientSpec.the committed client is the one the description generates()",
             "lark-bank:bank.api.ScreeningContractSpec.a check that stopped sending the evidence would break the bank()",
             "lark-bank:bank.api.ScreeningContractSpec.the check serves everything the bank's client sends and reads()",
@@ -281,6 +298,8 @@
             "lark-bank:bank.app.CallerTableSpec.and the table covers every endpoint the document describes()",
             "lark-bank:bank.app.CallerTableSpec.every endpoint answers every kind of caller as the table says()",
             "lark-bank:bank.app.ConservationSpec.thousands of transfers across three nodes and two journal databases leave every penny where the ledger says()",
+            "lark-bank:bank.app.DailyLimitApiSpec.a daily limit that is not an amount of the account's currency is refused at opening()",
+            "lark-bank:bank.app.DailyLimitApiSpec.withdrawals and transfers past an account's daily limit are refused, saying the limit and what is left()",
             "lark-bank:bank.app.DbRolesSpec.as bank_reader with bank caller set to Ada, select star from statement_line returns only her rows()",
             "lark-bank:bank.app.DbRolesSpec.the bank reads a statement through the same fence, so a read the rules let slip returns nothing()",
             "lark-bank:bank.app.ExemplarsSpec.a request in a sampled trace leaves its trace id on the latency histogram, and one in an unsampled trace does not()",
@@ -318,6 +337,12 @@
             "lark-bank:bank.app.TransferPageSpec.a payroll pasted as lines credits every account on it()",
             "lark-bank:bank.app.TransferPageSpec.a transfer still pending when the page is answered is followed until it completes()",
             "lark-bank:bank.app.TransferPageSpec.a transfer to an account that does not exist is refunded, and says why()",
+            "lark-bank:bank.domain.AccountDetailsSpec.a balance names its account and owner()",
+            "lark-bank:bank.domain.AccountDetailsSpec.a deposit and a withdrawal carry their reference and when they happened()",
+            "lark-bank:bank.domain.AccountDetailsSpec.a transfer's legs carry the transfer, a reference made from it, and when they happened()",
+            "lark-bank:bank.domain.AccountDetailsSpec.a transfer's view names it, both accounts and why it stopped()",
+            "lark-bank:bank.domain.AccountDetailsSpec.an account pays out its whole balance, and not a penny more()",
+            "lark-bank:bank.domain.AccountDetailsSpec.each refusal names the account and says why in words()",
             "lark-bank:bank.domain.AccountSpec.a settled transfer's legs are closed once, and an account with none writes nothing()",
             "lark-bank:bank.domain.AccountSpec.a transfer's leg retried after hundreds of other commands is still applied once()",
             "lark-bank:bank.domain.AccountSpec.a transfer's legs are idempotent by transfer id()",
@@ -331,6 +356,21 @@
             "lark-bank:bank.domain.AccountSpec.only the most recent references are remembered()",
             "lark-bank:bank.domain.AccountSpec.opening again for the same owner is a retry and writes nothing()",
             "lark-bank:bank.domain.AccountSpec.the same reference twice moves the money once()",
+            "lark-bank:bank.domain.DailyLimitSpec.a debit refused for the limit rejects its transfer with the refusal as the reason()",
+            "lark-bank:bank.domain.DailyLimitSpec.a limit in another currency, or below zero, is refused at opening()",
+            "lark-bank:bank.domain.DailyLimitSpec.a limit of zero pays nothing out, and still takes money in()",
+            "lark-bank:bank.domain.DailyLimitSpec.a new UTC day starts again from nothing, and the last millisecond of the old one does not()",
+            "lark-bank:bank.domain.DailyLimitSpec.a refund never counts as a payout, and is never refused for the limit()",
+            "lark-bank:bank.domain.DailyLimitSpec.a refund on a later day gives nothing back to that day()",
+            "lark-bank:bank.domain.DailyLimitSpec.a refunded debit no longer counts against today's limit()",
+            "lark-bank:bank.domain.DailyLimitSpec.an Opened written before limits reads as the default()",
+            "lark-bank:bank.domain.DailyLimitSpec.an account opened with a limit keeps that one()",
+            "lark-bank:bank.domain.DailyLimitSpec.an account opened without a limit may pay out 10,000 in its currency a day()",
+            "lark-bank:bank.domain.DailyLimitSpec.an account that cannot cover the amount says so before the limit()",
+            "lark-bank:bank.domain.DailyLimitSpec.the default is 10,000 at the currency's own places()",
+            "lark-bank:bank.domain.DailyLimitSpec.the limit an account opens with is written in its Opened, the default included()",
+            "lark-bank:bank.domain.DailyLimitSpec.the refusal says the limit and what is left today()",
+            "lark-bank:bank.domain.DailyLimitSpec.withdrawals and debits count together against the one limit()",
             "lark-bank:bank.domain.MoneySpec.a currency is only what the registry lists()",
             "lark-bank:bank.domain.MoneySpec.a decimal string parses to its exact amount, padded to its currency's places()",
             "lark-bank:bank.domain.MoneySpec.a rate's result is rounded once, as the caller says()",
@@ -354,6 +394,11 @@
             "lark-bank:bank.protocol.ContractSpec.every transfer event survives the wire as itself, with both its accounts on it()",
             "lark-bank:bank.protocol.ContractSpec.money is a plain decimal at its currency's scale, which a consumer reads exactly()",
             "lark-bank:bank.protocol.ContractSpec.no domain event goes unpublished, since every kind of event is in the round trips above()",
+            "lark-bank:bank.protocol.DailyLimitWireSpec.a snapshot taken before limits reads as an account that has paid nothing out()",
+            "lark-bank:bank.protocol.DailyLimitWireSpec.an Opened carries the limit the account opened with()",
+            "lark-bank:bank.protocol.DailyLimitWireSpec.an Opened written before limits reads with none, which the account takes as the default()",
+            "lark-bank:bank.protocol.DailyLimitWireSpec.an account's snapshot keeps its limit and what it has paid out today()",
+            "lark-bank:bank.protocol.DailyLimitWireSpec.opening with a limit, and the refusal for passing it, cross between nodes as themselves()",
             "lark-bank:bank.protocol.RoundTripSpec.a bulk credit and a transfer's requests cross between nodes as themselves()",
             "lark-bank:bank.protocol.RoundTripSpec.an account's snapshot is the account()",
             "lark-bank:bank.protocol.RoundTripSpec.every account event survives the journal()",
@@ -8320,9 +8365,9 @@
                 },
                 "region": {
                   "endColumn": 147,
-                  "endLine": 103,
+                  "endLine": 106,
                   "startColumn": 1,
-                  "startLine": 103
+                  "startLine": 106
                 }
               }
             }
@@ -8347,9 +8392,9 @@
                 },
                 "region": {
                   "endColumn": 136,
-                  "endLine": 169,
+                  "endLine": 185,
                   "startColumn": 1,
-                  "startLine": 169
+                  "startLine": 185
                 }
               }
             }
@@ -8358,7 +8403,7 @@
             "text": "Line detected, which is longer than the defined maximum line length in the code style."
           },
           "partialFingerprints": {
-            "gauntlet/ctx/v1/nosym": "41c25263fb40639314a78a9ee536ae9f0d5f4cb8e8962db505deb7c6daf35712",
+            "gauntlet/ctx/v1/nosym": "696917d1891771ca600af455c530307b34ac35662f0cc544fdf0208e1eb2f9cd",
             "gauntlet/line/v1": "8220a4c644b1cf8825a5c460f910521b795f7b7bbf765aa45636a00a3c2eb086",
             "signature/v1": "808371d445f79618a1362c5b0a768ffa1b157deb"
           },
@@ -8373,9 +8418,9 @@
                 },
                 "region": {
                   "endColumn": 122,
-                  "endLine": 173,
+                  "endLine": 189,
                   "startColumn": 1,
-                  "startLine": 173
+                  "startLine": 189
                 }
               }
             }
@@ -8407,7 +8452,7 @@
             }
           ],
           "message": {
-            "text": "The function bankApi appears to be too complex based on Cyclomatic Complexity (complexity: 55). The maximum allowed complexity for methods is set to '14'"
+            "text": "The function bankApi appears to be too complex based on Cyclomatic Complexity (complexity: 52). The maximum allowed complexity for methods is set to '14'"
           },
           "partialFingerprints": {
             "gauntlet/ctx/v1": "a651b5a1e9e57d0b30b3314b85ffa06460c42cf0d2ced435f734a0978bdb8b0d",
@@ -8434,7 +8479,7 @@
             }
           ],
           "message": {
-            "text": "The function bankApi is too long (186). The maximum length is 60."
+            "text": "The function bankApi is too long (182). The maximum length is 60."
           },
           "partialFingerprints": {
             "gauntlet/ctx/v1": "d84fda5cc7bbd28c29976b24a64f5aadd418c6b1d5e6e275a8d72c34a2635cfa",
@@ -8453,9 +8498,9 @@
                 },
                 "region": {
                   "endColumn": 83,
-                  "endLine": 219,
+                  "endLine": 215,
                   "startColumn": 80,
-                  "startLine": 219
+                  "startLine": 215
                 }
               }
             }
@@ -8480,9 +8525,9 @@
                 },
                 "region": {
                   "endColumn": 88,
-                  "endLine": 219,
+                  "endLine": 215,
                   "startColumn": 85,
-                  "startLine": 219
+                  "startLine": 215
                 }
               }
             }
@@ -8507,9 +8552,9 @@
                 },
                 "region": {
                   "endColumn": 71,
-                  "endLine": 266,
+                  "endLine": 262,
                   "startColumn": 68,
-                  "startLine": 266
+                  "startLine": 262
                 }
               }
             }
@@ -8545,7 +8590,7 @@
             "text": "Line detected, which is longer than the defined maximum line length in the code style."
           },
           "partialFingerprints": {
-            "gauntlet/ctx/v1": "7cba23c486d93ad2f64f83c6f3c4f36f0b07e7338f6611e42651755f9c595f89",
+            "gauntlet/ctx/v1": "c393eb4aab666e8f266b1c7b20f215ad321a93d54501172f689ea37203ef4b0e",
             "gauntlet/line/v1": "df160a3d6c7f6bbd2305d0387ca7bc672430335aff3b332bdd24409412223304",
             "gauntlet/symbol/v1": "39c54a4770172de890fdf527f8fb3a48d44121697365bcb9608240bdd8d31584",
             "signature/v1": "34bcba9e480f2d69c8b9f65462afffe5ad666610"
@@ -8560,37 +8605,10 @@
                   "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
-                  "endColumn": 126,
-                  "endLine": 108,
-                  "startColumn": 1,
-                  "startLine": 108
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "Line detected, which is longer than the defined maximum line length in the code style."
-          },
-          "partialFingerprints": {
-            "gauntlet/ctx/v1": "e78dc7e74670e197faac7d3c56d219afbe89139f77958c0530e1875c0a476446",
-            "gauntlet/line/v1": "c7358df08c98cbac916de797ff46943f551584d31ac9331355a827cdb7e1c4bb",
-            "gauntlet/symbol/v1": "39c54a4770172de890fdf527f8fb3a48d44121697365bcb9608240bdd8d31584",
-            "signature/v1": "814d6b5a3801fe277c9a24d342a261ea5e745b57"
-          },
-          "ruleId": "detekt.style.MaxLineLength"
-        },
-        {
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
-                },
-                "region": {
                   "endColumn": 130,
-                  "endLine": 129,
+                  "endLine": 122,
                   "startColumn": 1,
-                  "startLine": 129
+                  "startLine": 122
                 }
               }
             }
@@ -8615,9 +8633,9 @@
                 },
                 "region": {
                   "endColumn": 127,
-                  "endLine": 134,
+                  "endLine": 127,
                   "startColumn": 1,
-                  "startLine": 134
+                  "startLine": 127
                 }
               }
             }
@@ -8626,7 +8644,7 @@
             "text": "Line detected, which is longer than the defined maximum line length in the code style."
           },
           "partialFingerprints": {
-            "gauntlet/ctx/v1": "ce2c1158508cb5b9a97a639fe7c9c7eb396ecdaed115195cd3bae1e4a56ed141",
+            "gauntlet/ctx/v1": "ed8cd51b0c0eeec74e7888447fdcf93d70b08bf6ff1789bc28af027dc81e73ec",
             "gauntlet/line/v1": "93acc0d406b5a748441c40430ea2981c1fb5de2743b66e7a1c2d16254a8e2943",
             "gauntlet/symbol/v1": "39c54a4770172de890fdf527f8fb3a48d44121697365bcb9608240bdd8d31584",
             "signature/v1": "d82723ac312ac8d6f13957d922f928c86532b556"
@@ -8641,37 +8659,10 @@
                   "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
-                  "endColumn": 133,
-                  "endLine": 136,
-                  "startColumn": 1,
-                  "startLine": 136
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "Line detected, which is longer than the defined maximum line length in the code style."
-          },
-          "partialFingerprints": {
-            "gauntlet/ctx/v1": "98ee1d6fdcb16ce22a2761d26ee4883497232f5a0c50c9c75d7373968432b542",
-            "gauntlet/line/v1": "00c1af45d8a6a228887174fb040667d76ba84c82dfea0f842d8c43b868cb250a",
-            "gauntlet/symbol/v1": "39c54a4770172de890fdf527f8fb3a48d44121697365bcb9608240bdd8d31584",
-            "signature/v1": "c8ae88251b4627711a5d2faf3bc7aa9af0838d33"
-          },
-          "ruleId": "detekt.style.MaxLineLength"
-        },
-        {
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
-                },
-                "region": {
                   "endColumn": 131,
-                  "endLine": 145,
+                  "endLine": 140,
                   "startColumn": 1,
-                  "startLine": 145
+                  "startLine": 140
                 }
               }
             }
@@ -8696,9 +8687,9 @@
                 },
                 "region": {
                   "endColumn": 127,
-                  "endLine": 151,
+                  "endLine": 147,
                   "startColumn": 1,
-                  "startLine": 151
+                  "startLine": 147
                 }
               }
             }
@@ -8707,7 +8698,7 @@
             "text": "Line detected, which is longer than the defined maximum line length in the code style."
           },
           "partialFingerprints": {
-            "gauntlet/ctx/v1": "eae7d58beb762963028afeeac99a77cc7114fe1de2bc57d357444989d8c32448",
+            "gauntlet/ctx/v1": "a623f0acdf8d7b3dd908a8eebf43faa741174b386c27db3b6005e197140bebf7",
             "gauntlet/line/v1": "93acc0d406b5a748441c40430ea2981c1fb5de2743b66e7a1c2d16254a8e2943",
             "gauntlet/symbol/v1": "39c54a4770172de890fdf527f8fb3a48d44121697365bcb9608240bdd8d31584",
             "signature/v1": "d82723ac312ac8d6f13957d922f928c86532b556"
@@ -8723,9 +8714,9 @@
                 },
                 "region": {
                   "endColumn": 139,
-                  "endLine": 168,
+                  "endLine": 164,
                   "startColumn": 1,
-                  "startLine": 168
+                  "startLine": 164
                 }
               }
             }
@@ -8750,9 +8741,9 @@
                 },
                 "region": {
                   "endColumn": 124,
-                  "endLine": 172,
+                  "endLine": 168,
                   "startColumn": 1,
-                  "startLine": 172
+                  "startLine": 168
                 }
               }
             }
@@ -8777,9 +8768,9 @@
                 },
                 "region": {
                   "endColumn": 134,
-                  "endLine": 186,
+                  "endLine": 182,
                   "startColumn": 1,
-                  "startLine": 186
+                  "startLine": 182
                 }
               }
             }
@@ -8804,9 +8795,9 @@
                 },
                 "region": {
                   "endColumn": 122,
-                  "endLine": 200,
+                  "endLine": 196,
                   "startColumn": 1,
-                  "startLine": 200
+                  "startLine": 196
                 }
               }
             }
@@ -8831,9 +8822,9 @@
                 },
                 "region": {
                   "endColumn": 130,
-                  "endLine": 201,
+                  "endLine": 197,
                   "startColumn": 1,
-                  "startLine": 201
+                  "startLine": 197
                 }
               }
             }
@@ -8858,9 +8849,9 @@
                 },
                 "region": {
                   "endColumn": 140,
-                  "endLine": 203,
+                  "endLine": 199,
                   "startColumn": 1,
-                  "startLine": 203
+                  "startLine": 199
                 }
               }
             }
@@ -8885,9 +8876,9 @@
                 },
                 "region": {
                   "endColumn": 133,
-                  "endLine": 207,
+                  "endLine": 203,
                   "startColumn": 1,
-                  "startLine": 207
+                  "startLine": 203
                 }
               }
             }
@@ -8912,9 +8903,9 @@
                 },
                 "region": {
                   "endColumn": 133,
-                  "endLine": 214,
+                  "endLine": 210,
                   "startColumn": 1,
-                  "startLine": 214
+                  "startLine": 210
                 }
               }
             }
@@ -8939,9 +8930,9 @@
                 },
                 "region": {
                   "endColumn": 157,
-                  "endLine": 219,
+                  "endLine": 215,
                   "startColumn": 1,
-                  "startLine": 219
+                  "startLine": 215
                 }
               }
             }
@@ -8966,9 +8957,9 @@
                 },
                 "region": {
                   "endColumn": 127,
-                  "endLine": 234,
+                  "endLine": 230,
                   "startColumn": 1,
-                  "startLine": 234
+                  "startLine": 230
                 }
               }
             }
@@ -8993,9 +8984,9 @@
                 },
                 "region": {
                   "endColumn": 127,
-                  "endLine": 236,
+                  "endLine": 232,
                   "startColumn": 1,
-                  "startLine": 236
+                  "startLine": 232
                 }
               }
             }
@@ -9020,9 +9011,9 @@
                 },
                 "region": {
                   "endColumn": 122,
-                  "endLine": 242,
+                  "endLine": 238,
                   "startColumn": 1,
-                  "startLine": 242
+                  "startLine": 238
                 }
               }
             }
@@ -9047,9 +9038,9 @@
                 },
                 "region": {
                   "endColumn": 122,
-                  "endLine": 249,
+                  "endLine": 245,
                   "startColumn": 1,
-                  "startLine": 249
+                  "startLine": 245
                 }
               }
             }
@@ -9074,9 +9065,9 @@
                 },
                 "region": {
                   "endColumn": 125,
-                  "endLine": 256,
+                  "endLine": 252,
                   "startColumn": 1,
-                  "startLine": 256
+                  "startLine": 252
                 }
               }
             }
@@ -9101,9 +9092,9 @@
                 },
                 "region": {
                   "endColumn": 130,
-                  "endLine": 291,
+                  "endLine": 287,
                   "startColumn": 1,
-                  "startLine": 291
+                  "startLine": 287
                 }
               }
             }
@@ -9128,9 +9119,9 @@
                 },
                 "region": {
                   "endColumn": 125,
-                  "endLine": 296,
+                  "endLine": 292,
                   "startColumn": 1,
-                  "startLine": 296
+                  "startLine": 292
                 }
               }
             }
@@ -9154,9 +9145,9 @@
                 },
                 "region": {
                   "endColumn": 134,
-                  "endLine": 306,
+                  "endLine": 302,
                   "startColumn": 1,
-                  "startLine": 306
+                  "startLine": 302
                 }
               }
             }
@@ -9181,9 +9172,9 @@
                 },
                 "region": {
                   "endColumn": 130,
-                  "endLine": 331,
+                  "endLine": 327,
                   "startColumn": 1,
-                  "startLine": 331
+                  "startLine": 327
                 }
               }
             }
@@ -9208,9 +9199,9 @@
                 },
                 "region": {
                   "endColumn": 125,
-                  "endLine": 345,
+                  "endLine": 341,
                   "startColumn": 1,
-                  "startLine": 345
+                  "startLine": 341
                 }
               }
             }
@@ -15580,9 +15571,9 @@
                 },
                 "region": {
                   "endColumn": 124,
-                  "endLine": 66,
+                  "endLine": 68,
                   "startColumn": 1,
-                  "startLine": 66
+                  "startLine": 68
                 }
               }
             }
@@ -15606,36 +15597,10 @@
                   "uri": "lark-bank/app/src/test/kotlin/bank/app/Nodes.kt"
                 },
                 "region": {
-                  "endColumn": 129,
-                  "endLine": 79,
-                  "startColumn": 1,
-                  "startLine": 79
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "Line detected, which is longer than the defined maximum line length in the code style."
-          },
-          "partialFingerprints": {
-            "gauntlet/ctx/v1/nosym": "63ef723f07fe7258b92fb94440de7c3f330ce6653aea6c317b9662b97478d8f2",
-            "gauntlet/line/v1": "cf94d35a6cdccd9e00ef1c435e6311ee752411bfa10c3ab85ff1b16da2a9ebd5",
-            "signature/v1": "df58248c414f342c81e056b40bee12d17a08bf61"
-          },
-          "ruleId": "detekt.style.MaxLineLength"
-        },
-        {
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/Nodes.kt"
-                },
-                "region": {
                   "endColumn": 133,
-                  "endLine": 111,
+                  "endLine": 125,
                   "startColumn": 1,
-                  "startLine": 111
+                  "startLine": 125
                 }
               }
             }
@@ -16601,91 +16566,10 @@
                   "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
                 },
                 "region": {
-                  "endColumn": 19,
-                  "endLine": 117,
-                  "startColumn": 13,
-                  "startLine": 117
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "The function decide appears to be too complex based on Cyclomatic Complexity (complexity: 15). The maximum allowed complexity for methods is set to '14'"
-          },
-          "partialFingerprints": {
-            "gauntlet/ctx/v1": "38e0a43c2f3e4b7bc2ef1402328894e6045d2188ba4007ce4d89e0d464e06c33",
-            "gauntlet/line/v1": "3be6ac51376a1b8ecbb0d8f4199ff99ebd66f34fe3243f96071fbc1f6abd8b28",
-            "gauntlet/symbol/v1": "bf150e7e1031c0faa5e301bf4c54369aa2e060ceb1b1a928c4cf874a622156ac",
-            "signature/v1": "2b22bd08ceb65fd1bb2b5c23a901ac3c6fb2c896"
-          },
-          "ruleId": "detekt.complexity.CyclomaticComplexMethod"
-        },
-        {
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
-                },
-                "region": {
-                  "endColumn": 124,
-                  "endLine": 41,
-                  "startColumn": 1,
-                  "startLine": 41
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "Line detected, which is longer than the defined maximum line length in the code style."
-          },
-          "partialFingerprints": {
-            "gauntlet/ctx/v1": "a1824c54e79f79ae180a5e64be7536aa0c16a2f0f224c7e764bbb5b8ab5bc3d2",
-            "gauntlet/line/v1": "2e8759f31a77867b9179f5298841bd0060d68a3d8b5ee0456bf8839e8c0cd3a1",
-            "gauntlet/symbol/v1": "1c11db74acaecf05709c119fc95e0c9bb53f44c14f4fa19e5971938937f98396",
-            "signature/v1": "d1101179d522c2d3155bf30ad3c2b1b6fd45690a"
-          },
-          "ruleId": "detekt.style.MaxLineLength"
-        },
-        {
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
-                },
-                "region": {
-                  "endColumn": 123,
-                  "endLine": 102,
-                  "startColumn": 1,
-                  "startLine": 102
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "Line detected, which is longer than the defined maximum line length in the code style."
-          },
-          "partialFingerprints": {
-            "gauntlet/ctx/v1": "5c8db20cc7b0e147e4166f036342451ab6a272fb8d7fa591c67ac289de61b0e6",
-            "gauntlet/line/v1": "3583cd312ca6d27eca5a9c678b1853ca8201d08a2ca13ef64bbb5a38630aab08",
-            "gauntlet/symbol/v1": "d28c75e60917f4fc59a59543fa1f5ebb55517122da2857a1943530a006fa0290",
-            "signature/v1": "1aeae5876a96b04c8d258b39fbcd2c611db80403"
-          },
-          "ruleId": "detekt.style.MaxLineLength"
-        },
-        {
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
-                },
-                "region": {
                   "endColumn": 125,
-                  "endLine": 130,
+                  "endLine": 160,
                   "startColumn": 1,
-                  "startLine": 130
+                  "startLine": 160
                 }
               }
             }
@@ -16710,9 +16594,9 @@
                 },
                 "region": {
                   "endColumn": 141,
-                  "endLine": 131,
+                  "endLine": 161,
                   "startColumn": 1,
-                  "startLine": 131
+                  "startLine": 161
                 }
               }
             }
@@ -16737,9 +16621,9 @@
                 },
                 "region": {
                   "endColumn": 138,
-                  "endLine": 132,
+                  "endLine": 162,
                   "startColumn": 1,
-                  "startLine": 132
+                  "startLine": 162
                 }
               }
             }
@@ -16764,9 +16648,9 @@
                 },
                 "region": {
                   "endColumn": 138,
-                  "endLine": 133,
+                  "endLine": 163,
                   "startColumn": 1,
-                  "startLine": 133
+                  "startLine": 163
                 }
               }
             }
@@ -16775,7 +16659,7 @@
             "text": "Line detected, which is longer than the defined maximum line length in the code style."
           },
           "partialFingerprints": {
-            "gauntlet/ctx/v1": "6a6cb72a11123d0471cf472ab9b14f6bf4287e96155c206d9018063005c8f18a",
+            "gauntlet/ctx/v1": "fd01488b5f617a81d905c9e814d0fbabe495aa937ebaa175941d712e88fb93c0",
             "gauntlet/line/v1": "5bb7b5dea4a09d14e32ccb36a3d1fca70978f85fe56f630402ba42e8a6f0ca6b",
             "gauntlet/symbol/v1": "4150e6d3f908affa3e32bac51710e96586bf9408c6e42f698f5a968e9528d594",
             "signature/v1": "a5e5ebec8b167d30373314f4756de351d347b06c"
@@ -16790,37 +16674,10 @@
                   "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
                 },
                 "region": {
-                  "endColumn": 136,
-                  "endLine": 136,
-                  "startColumn": 1,
-                  "startLine": 136
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "Line detected, which is longer than the defined maximum line length in the code style."
-          },
-          "partialFingerprints": {
-            "gauntlet/ctx/v1": "5e7c651e1fa59782660d0321723a4cb489cc165d9fc5f5b60347da78caac64c3",
-            "gauntlet/line/v1": "110c217488fa36726dccd6352d7d275f408057e445078191fe5fcb04c4b93b54",
-            "gauntlet/symbol/v1": "4150e6d3f908affa3e32bac51710e96586bf9408c6e42f698f5a968e9528d594",
-            "signature/v1": "73b94a2f942acf68b59f1c5237d4e5cce5a829d0"
-          },
-          "ruleId": "detekt.style.MaxLineLength"
-        },
-        {
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
-                },
-                "region": {
                   "endColumn": 135,
-                  "endLine": 155,
+                  "endLine": 186,
                   "startColumn": 1,
-                  "startLine": 155
+                  "startLine": 186
                 }
               }
             }
@@ -16845,9 +16702,9 @@
                 },
                 "region": {
                   "endColumn": 135,
-                  "endLine": 165,
+                  "endLine": 197,
                   "startColumn": 1,
-                  "startLine": 165
+                  "startLine": 197
                 }
               }
             }
@@ -16872,9 +16729,9 @@
                 },
                 "region": {
                   "endColumn": 137,
-                  "endLine": 179,
+                  "endLine": 215,
                   "startColumn": 1,
-                  "startLine": 179
+                  "startLine": 215
                 }
               }
             }
@@ -16883,7 +16740,7 @@
             "text": "Line detected, which is longer than the defined maximum line length in the code style."
           },
           "partialFingerprints": {
-            "gauntlet/ctx/v1/nosym": "99dd3b122bff8c4098d6f8096ff2c5b18d96c68d3b6f848810e11b8106dd1b85",
+            "gauntlet/ctx/v1/nosym": "0e7b145818536532a5b85572f99a078d92b316c853021655a566560a19b81491",
             "gauntlet/line/v1": "be6871520d37a79e49bf98b52babd68ac145d41f09df42a66ed7ab450d4785b5",
             "signature/v1": "49b922312f48ddc0b96ac61e2724aab7cb3f855a"
           },
@@ -18084,9 +17941,9 @@
                 },
                 "region": {
                   "endColumn": 160,
-                  "endLine": 213,
+                  "endLine": 214,
                   "startColumn": 1,
-                  "startLine": 213
+                  "startLine": 214
                 }
               }
             }
@@ -18750,6 +18607,22 @@
       "tool": {
         "driver": {
           "name": "scala-arch"
+        }
+      }
+    },
+    {
+      "results": [],
+      "tool": {
+        "driver": {
+          "name": "scala-rules"
+        }
+      }
+    },
+    {
+      "results": [],
+      "tool": {
+        "driver": {
+          "name": "scalafix"
         }
       }
     }
