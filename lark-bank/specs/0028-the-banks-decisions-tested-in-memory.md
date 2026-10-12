@@ -28,7 +28,7 @@ screening, which asks on a virtual thread, is a port a test answers synchronousl
 
 ```kotlin
 // app/src/test: no cluster, no Postgres, no threads
-val sim = testActors(order = Ordering.seeded(42), faults = Faults(drop = 0.1, duplicate = 0.1))  // Lark spec 0127
+val sim = testActors(order = Ordering.seeded(42), faults = Faults(drop = 0.1, duplicate = 0.1))  // Lark spec 0128
 val bank = InMemoryBank(sim)          // the Bank port over account and transfer test actors
 bank.open(a, "ada", gbp(100)); bank.open(b, "bob", gbp(0))
 repeat(50) { bank.transfer(TransferId("t-$it"), a, b, gbp(1)) }
@@ -57,7 +57,7 @@ should own.
 
 ## Depends on
 
-**Lark spec 0127, a test runtime that can be unkind** (drafted in Lark): `testActors` gains a seeded delivery order,
+**Lark spec 0128, a test runtime that can be unkind** (committed in Lark): `testActors` gains a seeded delivery order,
 message drop/duplicate/delay, and crashing an actor so it recovers from its journal. Until it lands, the in-memory
 specs run Lark's first-in-first-out order with a bank-side `AccountsById` wrapper that drops and repeats messages,
 and crash-recovery is left to the cluster specs.
@@ -66,7 +66,7 @@ and crash-recovery is left to the cluster specs.
 
 - [ ] **`in-memory-bank`** — `InMemoryBank` over `testActors` in `app`'s tests, and example specs moved from cluster
       specs for the saga's decisions. Done when: the saga's behaviour specs run without a cluster, in under 5 seconds.
-- [ ] **`bank-properties`** (after Lark 0127) — seeded property specs with faults and crashes. Done when: 1,000 seeds
+- [ ] **`bank-properties`** (after Lark 0128) — seeded property specs with faults and crashes. Done when: 1,000 seeds
       run in under 10 seconds, conserving money with each leg applied once.
 - [ ] **`mutate-app-fast`** — Pitest in `app` with target tests limited to the in-memory specs. Done when: a check
       touching `Transfers.kt` mutates it in under a minute and kills at least 80% of its mutants.
