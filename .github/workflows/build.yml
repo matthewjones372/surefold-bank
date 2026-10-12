@@ -71,7 +71,7 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/gauntlet-reports"
-          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/target/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
+          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
       - name: Upload the reports for Gauntlet
         if: always()
         uses: actions/upload-artifact@v4
@@ -120,7 +120,7 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/gauntlet-reports"
-          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/target/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
+          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
       - name: Upload the reports for Gauntlet
         if: always()
         uses: actions/upload-artifact@v4
@@ -158,7 +158,7 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/gauntlet-reports"
-          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/target/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
+          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
       - name: Upload the reports for Gauntlet
         if: always()
         uses: actions/upload-artifact@v4
@@ -206,7 +206,7 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/gauntlet-reports"
-          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/target/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
+          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
       - name: Upload the reports for Gauntlet
         if: always()
         uses: actions/upload-artifact@v4
