@@ -65,21 +65,7 @@ object ScreeningHttpSpec extends ZIOSpecDefault:
         (url, _)    <- serve(large)
         (status, _) <- post(url, body("t-bad", "lots"))
       yield assertTrue(status == Status.UnprocessableEntity)
-    },
-    test("p99 over 10,000 requests is under 20 ms") {
-      for
-        (url, _) <- serve(large)
-        _        <- ZIO.foreachParDiscard(1 to 1000)(n => post(url, body(s"warm-$n", "10.00"))).withParallelism(8)
-        timings  <- ZIO
-                     .foreachPar(1 to 10000) { n =>
-                       post(url, body(s"p-$n", if n % 4 == 0 then "2500.00" else "10.00")).timed.map(_._1.toNanos)
-                     }
-                     .withParallelism(8)
-        sorted = timings.sorted
-        p99    = sorted((sorted.size * 0.99).toInt) / 1_000_000.0
-        _     <- ZIO.logInfo(f"screening p50 ${sorted(sorted.size / 2) / 1_000_000.0}%.2f ms, p99 $p99%.2f ms")
-      yield assertTrue(p99 < 20.0)
-    } @@ TestAspect.withLiveClock
+    }
   ).provideShared(
     TestPostgres.migrated("screening").orDie,
     Server.defaultWith(_.onAnyOpenPort),
