@@ -95,4 +95,5 @@ review {
   review when protected changed
   review when dependency added
   auto   when small and all gates pass
+  auto   when only tests changed and no zone touched and all gates pass
 }
