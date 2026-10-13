@@ -59,7 +59,7 @@ fun account(
                             state.decide(id, command, now()).fold(
                                 { refusal ->
                                     counted("refused")
-                                    // A leg's first refusal is written, so its copies are refused alike (spec 0029).
+                                    // A leg's first refusal is written, so its copies are refused alike (spec 0030).
                                     persist(*state.refusing(command, refusal, now()).toTypedArray())
                                         .then { message.reply(Either.Left(refusal)) }
                                 },

@@ -6,7 +6,7 @@ import bank.domain.TransferId
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
-/** Bank spec 0029: a refused leg moves no money, so the read models list it and count nothing for it. */
+/** Bank spec 0030: a refused leg moves no money, so the read models list it and count nothing for it. */
 class LegRefusedReadSpec {
     @Test
     fun `a refused leg is listed as refused, with no amount`() {

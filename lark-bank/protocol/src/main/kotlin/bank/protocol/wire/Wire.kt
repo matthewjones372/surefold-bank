@@ -107,6 +107,10 @@ sealed interface Account {
         val debitedOn: Set<String> = emptySet(),
         val refused: Map<String, String> = emptyMap(),
     ) : Account
+
+    @Serializable
+    @SerialName("RefusingAccount")
+    data class Refusing(val refused: Map<String, String>) : Account
 }
 
 @Serializable

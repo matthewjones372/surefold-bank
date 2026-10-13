@@ -67,7 +67,7 @@ message LegsClosed {
   string transfer_id = 1;
 }
 
-// A transfer's leg the account refused, so it refuses every copy alike (bank spec 0029). Moves no money.
+// A transfer's leg the account refused, so it refuses every copy alike (bank spec 0030). Moves no money.
 message LegRefused {
   string transfer_id = 1;
   // "debit" or "credit".

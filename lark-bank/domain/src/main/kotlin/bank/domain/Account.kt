@@ -69,7 +69,7 @@ sealed interface AccountEvent {
         override val reference: String get() = "refund:$transfer"
     }
 
-    /** A debit or credit refused for [reason]: every copy of it is refused again, until it is closed (spec 0029). */
+    /** A debit or credit refused for [reason]: every copy of it is refused again, until it is closed (spec 0030). */
     data class LegRefused(val transfer: TransferId, val leg: Leg, val reason: String, override val atMillis: Long) :
         AccountEvent {
         override val reference: String get() = "${leg.prefix}:$transfer"
@@ -81,7 +81,7 @@ sealed interface AccountEvent {
     }
 }
 
-/** A transfer's leg a saga sends again until it is answered, and which an account decides once (specs 0013, 0029). */
+/** A transfer's leg a saga sends again until it is answered, and which an account decides once (specs 0013, 0030). */
 enum class Leg(val prefix: String) { Debit("debit"), Credit("credit") }
 
 /** The ways an account says no. Only a transfer leg's first refusal is written, as [AccountEvent.LegRefused]. */
@@ -135,6 +135,9 @@ data class Unavailable(override val message: String) : AccountError, TransferErr
 sealed interface Account {
     data object Unopened : Account
 
+    /** Never opened, but holding the transfer legs it refused for that until they close (spec 0030). */
+    data class Refusing(val refused: Map<String, String>) : Account
+
     data class Open(
         val owner: String,
         val balance: Money,
@@ -144,7 +147,7 @@ sealed interface Account {
         val paidOutOn: Long = 0,
         val paidOut: Money? = null,
         val debitedOn: Set<String> = emptySet(),
-        /** The message of each leg refused whose transfer has not yet settled, by reference (spec 0029). */
+        /** The message of each leg refused whose transfer has not yet settled, by reference (spec 0030). */
         val refused: Map<String, String> = emptyMap(),
     ) : Account
 
@@ -161,7 +164,7 @@ data class Balance(val id: String, val owner: String, val balance: Money)
  * rule about money is tested without an actor, a journal or a clock.
  */
 fun Account.decide(id: AccountId, command: AccountCommand, now: Long): Either<AccountError, List<AccountEvent>> =
-    refusedBefore(id, command) ?: deciding(id, command, now)
+    refusedBefore(id, command) ?: closingRefusals(command, now) ?: deciding(id, command, now)
 
 private fun Account.deciding(
     id: AccountId,
@@ -169,7 +172,7 @@ private fun Account.deciding(
     now: Long,
 ): Either<AccountError, List<AccountEvent>> =
     when (this) {
-        Account.Unopened -> when (command) {
+        Account.Unopened, is Account.Refusing -> when (command) {
             is AccountCommand.Open -> opening(id, command, now)
             is AccountCommand.Deposit, is AccountCommand.Withdraw, is AccountCommand.Debit, is AccountCommand.Credit,
             is AccountCommand.Refund, is AccountCommand.Close,
@@ -225,7 +228,13 @@ private fun Account.Open.taking(
 /** The state after an event. Recovery is this, folded over the journal from the newest snapshot. */
 fun Account.evolve(event: AccountEvent): Account = when (event) {
     is AccountEvent.Opened ->
-        Account.Open(event.owner, event.initial, listOf(event.reference), dailyLimit = event.dailyLimit)
+        Account.Open(
+            event.owner,
+            event.initial,
+            listOf(event.reference),
+            dailyLimit = event.dailyLimit,
+            refused = refusals,
+        )
     is AccountEvent.Deposited -> open().moved(event.amount, event.reference)
     is AccountEvent.Credited -> open().moved(event.amount, event.reference).leg(event.reference)
     is AccountEvent.Refunded -> open().moved(event.amount, event.reference).leg(event.reference)
@@ -233,11 +242,8 @@ fun Account.evolve(event: AccountEvent): Account = when (event) {
     is AccountEvent.Withdrawn -> open().moved(-event.amount, event.reference).paid(event.amount, event.atMillis)
     is AccountEvent.Debited -> open().moved(-event.amount, event.reference).leg(event.reference)
         .paid(event.amount, event.atMillis, event.transfer)
-    is AccountEvent.LegRefused -> open().let { it.copy(refused = it.refused + (event.reference to event.reason)) }
-    is AccountEvent.LegsClosed -> open().let { open ->
-        val of = { reference: String -> reference.endsWith(":${event.transfer}") }
-        open.copy(legs = open.legs.filterNot(of).toSet(), refused = open.refused.filterKeys { !of(it) })
-    }
+    is AccountEvent.LegRefused -> refused(event.reference, event.reason)
+    is AccountEvent.LegsClosed -> closed(event.transfer)
 }
 
 private fun Account.Open.leg(reference: String): Account.Open = copy(legs = legs + reference)
@@ -245,13 +251,13 @@ private fun Account.Open.leg(reference: String): Account.Open = copy(legs = legs
 private fun Account.open(): Account.Open = when (this) {
     is Account.Open -> this
     // A journal whose first event is not Opened is a corrupt journal, not a case to handle.
-    Account.Unopened -> error("an event for an account that was never opened")
+    Account.Unopened, is Account.Refusing -> error("an event for an account that was never opened")
 }
 
 private fun Account.Open.moved(by: Money, reference: String): Account.Open =
     copy(balance = balance + by, recent = (recent + reference).takeLast(Account.RECENT))
 
 fun Account.balanceOf(id: AccountId): Either<AccountError, Balance> = when (this) {
-    Account.Unopened -> AccountError.NoSuchAccount(id.value).left()
+    Account.Unopened, is Account.Refusing -> AccountError.NoSuchAccount(id.value).left()
     is Account.Open -> Balance(id.value, owner, balance).right()
 }
