@@ -66,7 +66,7 @@ and crash-recovery is left to the cluster specs.
 
 - [ ] **`in-memory-bank`** — `InMemoryBank` over `testActors` in `app`'s tests, and example specs moved from cluster
       specs for the saga's decisions. Done when: the saga's behaviour specs run without a cluster, in under 5 seconds.
-- [ ] **`bank-properties`** (after Lark 0128) — seeded property specs with faults and crashes. Done when: 1,000 seeds
+- [x] **`bank-properties`** (after Lark 0128) — seeded property specs with faults and crashes. Done when: 1,000 seeds
       run in under 10 seconds, conserving money with each leg applied once.
 - [ ] **`mutate-app-fast`** — Pitest in `app` with target tests limited to the in-memory specs. Done when: a check
       touching `Transfers.kt` mutates it in under a minute and kills at least 80% of its mutants.
@@ -80,9 +80,18 @@ and crash-recovery is left to the cluster specs.
 ./gradlew build                                              # everything, cluster specs included
 ```
 
+## Settled while building
+
+- **Seeds per check: 200.** `BankPropertiesSpec` runs seeds 1 to 200, about 3 seconds; `SEEDS=10000` runs a longer
+  sweep (21 seconds), and a failure names its seed, which `SEED=<n>` replays alone. A nightly run on `main` is not
+  set up.
+- **The daily limit's properties are in the first property spec,** with conservation, settling, each leg once, and a
+  refund only after a refused credit.
+- **The first properties found a real bug:** a refused leg, retried, could be applied once money arrived, so a
+  rejected transfer still took the money (seed 22). Spec 0030 fixes it in the account; the saga is unchanged.
+
 ## Open questions
 
-- Seeds per check? Recommended: 200 on every check, 10,000 nightly on `main`, failures printing their seed.
 - Tag the cluster specs (JUnit `@Tag("cluster")`) so Pitest and Gauntlet's test selection (Gauntlet spec 0013) can
   leave them out? Recommended: yes, in `in-memory-bank`.
 - The daily limit's properties in the first property PR? Recommended: yes, it's the first rule that depends on retries.
