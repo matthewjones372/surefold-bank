@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import java.io.IOException
 import java.net.URI
+import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.Instant
 
@@ -38,9 +40,14 @@ class Fga(
 ) {
     private val http = HttpClient.newBuilder().connectTimeout(timeout).build()
 
-    /** Found once, by name: the store the access-model Job makes. */
+    /**
+     * Found once, by name: the store the access-model Job makes. Finding it is setup, not a decision, so it is given
+     * [LOOKUP] rather than a check's budget: a lookup that times out is made again by the next call, under the same
+     * budget, and a slow server would leave every check unanswered.
+     */
     val storeId: String by lazy {
-        stores(url, token, http, timeout, carried())[store] ?: throw FgaUnavailable("OpenFGA has no store named $store")
+        storeNamed(url, token, http, maxOf(timeout, LOOKUP), store, carried())
+            ?: throw FgaUnavailable("OpenFGA has no store named $store")
     }
 
     /** Whether [user] has [relation] to [obj] at [now], which is what a grant's expiry is weighed against. */
@@ -115,31 +122,36 @@ class Fga(
     companion object {
         private val json = ObjectMapper()
         private const val MOST_PER_WRITE = 100
+        private val LOOKUP: Duration = Duration.ofSeconds(5)
 
         /** Makes the store [store] if there is none, and writes [modelJson] as its newest model, as the Job does. */
         fun create(url: String, token: String, store: String, modelJson: String) {
             val http = HttpClient.newHttpClient()
             val timeout = Duration.ofSeconds(10)
-            val id = stores(url, token, http, timeout)[store]
+            val id = storeNamed(url, token, http, timeout, store)
                 ?: send(http, url, token, timeout, "POST", "/stores", json.createObjectNode().put("name", store)).path("id").asText()
             send(http, url, token, timeout, "POST", "/stores/$id/authorization-models", json.readTree(modelJson))
         }
 
-        private fun stores(
+        /** The id of the store named [store], asked for by name: one request, however many stores there are. */
+        private fun storeNamed(
             url: String,
             token: String,
             http: HttpClient,
             timeout: Duration,
+            store: String,
             headers: Map<String, String> = emptyMap(),
-        ): Map<String, String> {
-            val found = mutableMapOf<String, String>()
+        ): String? {
+            val name = URLEncoder.encode(store, StandardCharsets.UTF_8)
             var continuation = ""
             do {
-                val page = send(http, url, token, timeout, "GET", "/stores?page_size=100&continuation_token=$continuation", null, headers)
-                page.path("stores").forEach { found.putIfAbsent(it.path("name").asText(), it.path("id").asText()) }
+                val path = "/stores?name=$name&page_size=100&continuation_token=$continuation"
+                val page = send(http, url, token, timeout, "GET", path, null, headers)
+                val found = page.path("stores").firstOrNull { it.path("name").asText() == store }
+                if (found != null) return found.path("id").asText()
                 continuation = page.path("continuation_token").asText("")
             } while (continuation.isNotEmpty())
-            return found
+            return null
         }
 
         private fun send(
