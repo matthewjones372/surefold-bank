@@ -11,6 +11,7 @@ import bank.domain.Money
 import bank.domain.Transfer
 import bank.domain.TransferEvent
 import bank.domain.TransferId
+import bank.domain.evolve
 import bank.protocol.AccountEvents
 import bank.protocol.AccountMessage
 import bank.protocol.Kinds
@@ -21,12 +22,15 @@ import bank.protocol.TransferMessage
 import bank.protocol.TransferRequest
 import io.github.matthewjones372.lark.actor.ActorRef
 import io.github.matthewjones372.lark.actor.Address
+import io.github.matthewjones372.lark.actor.Faults
 import io.github.matthewjones372.lark.actor.JournalConflict
+import io.github.matthewjones372.lark.actor.Ordering
 import io.github.matthewjones372.lark.actor.PersistenceId
 import io.github.matthewjones372.lark.actor.Remembered
 import io.github.matthewjones372.lark.actor.Reply
 import io.github.matthewjones372.lark.actor.TestActor
 import io.github.matthewjones372.lark.actor.TestActors
+import io.github.matthewjones372.lark.actor.TraceEntry
 import io.github.matthewjones372.lark.actor.events
 import io.github.matthewjones372.lark.actor.testActors
 import io.github.matthewjones372.lark.clock
@@ -42,11 +46,19 @@ private val NOON: Instant = Instant.parse("2026-10-10T12:00:00Z")
 
 /**
  * The bank's shipped `account(...)` and `transfer(...)` behaviours as Lark test actors, stepped on the test's thread
- * with an in-memory journal: no cluster, no Postgres, no threads (bank spec 0028).
+ * with an in-memory journal: no cluster, no Postgres, no threads (bank spec 0028). [order] and [faults] are Lark's
+ * (Lark spec 0128): a seeded order, and messages between actors lost, doubled, delayed or crashing their receiver.
  */
-fun inMemory(legTimeout: Duration = 1.seconds, block: InMemoryBank.() -> Unit) =
+fun <A> inMemory(
+    legTimeout: Duration = 1.seconds,
+    order: Ordering = Ordering.Told,
+    faults: Faults = Faults(),
+    block: InMemoryBank.() -> A,
+): A =
     // Events are stamped from lark's clock, bound here for the test's thread.
-    clock.locally(fixedClock(NOON)) { testActors(clock = fixedClock(NOON)) { InMemoryBank(this, legTimeout).block() } }
+    clock.locally(fixedClock(NOON)) {
+        testActors(clock = fixedClock(NOON), order = order, faults = faults) { InMemoryBank(this, legTimeout).block() }
+    }
 
 /** The [Bank] port as it ships, [ShardedBank], over account and transfer test actors instead of sharded entities. */
 class InMemoryBank internal constructor(
@@ -68,8 +80,29 @@ class InMemoryBank internal constructor(
     fun start(id: TransferId, from: AccountId, to: AccountId, amount: Money): Answers =
         Answers(id).also { actors.sagaOf(id.value).tell(TransferAsk(TransferRequest.Start(from, to, amount), it)) }
 
+    /** Every delivery, loss, duplicate, delay and crash so far, to read when a seed fails. */
+    val trace: List<TraceEntry> get() = sim.trace
+
     /** Moves the test's time on, firing each saga's leg timer that falls due on the way. */
     fun advance(by: Duration = legTimeout) = sim.advance(by)
+
+    /**
+     * Runs messages and timers to idle, then asks each saga still moving how far it has got, as a caller polling
+     * would, until none is: a crashed saga's timers went with it, so only a message starts it again.
+     */
+    fun settleAll(rounds: Int = 50) {
+        repeat(rounds) {
+            sim.settle()
+            val moving = actors.sagaIds.map(::TransferId).filterNot(::settled)
+            if (moving.isEmpty()) return
+            moving.forEach { actors.sagaOf(it.value).tell(TransferAsk(TransferRequest.Status, Unheard)) }
+        }
+        sim.settle()
+    }
+
+    private fun settled(id: TransferId): Boolean =
+        (transferEvents(id).fold<TransferEvent, Transfer>(Transfer.Unrequested, Transfer::evolve) as? Transfer.Moving)
+            ?.settled == true
 
     fun transferEvents(id: TransferId): List<TransferEvent> =
         sim.journal.events(PersistenceId(Kinds.TRANSFER, id.value), TransferEvents)
@@ -105,6 +138,8 @@ internal class Actors(private val sim: TestActors, private val legTimeout: Durat
 
     val network = Network { id -> accountOf(id) }
 
+    val sagaIds: Set<String> get() = sagas.keys.toSet()
+
     fun accountOf(id: String) =
         accounts.getOrPut(id) { sim.spawn("account-$id", account(AccountId(id), snapshots = null)) }
 
@@ -120,6 +155,13 @@ private class Plain<M : Any>(private val actor: ActorRef<M>) : ActorRef<M> {
     override val address: Address get() = actor.address
 
     override fun tell(message: M) = actor.tell(message)
+}
+
+/** Where a poke's answer goes: the poke only wakes the saga. */
+private object Unheard : Reply<TransferAnswer> {
+    override val address = Address("test", "/temp/unheard", 1)
+
+    override fun invoke(answer: TransferAnswer) = Unit
 }
 
 /** An account or a settled saga has answered before the tell returns; only a saga still moving waits this out. */

@@ -64,9 +64,9 @@ and crash-recovery is left to the cluster specs.
 
 ## Stack
 
-- [ ] **`in-memory-bank`** — `InMemoryBank` over `testActors` in `app`'s tests, and example specs moved from cluster
+- [x] **`in-memory-bank`** (#32) — `InMemoryBank` over `testActors` in `app`'s tests, and example specs moved from cluster
       specs for the saga's decisions. Done when: the saga's behaviour specs run without a cluster, in under 5 seconds.
-- [ ] **`bank-properties`** (after Lark 0128) — seeded property specs with faults and crashes. Done when: 1,000 seeds
+- [x] **`bank-properties`** (after Lark 0128) — seeded property specs with faults and crashes. Done when: 1,000 seeds
       run in under 10 seconds, conserving money with each leg applied once.
 - [ ] **`mutate-app-fast`** — Pitest in `app` with target tests limited to the in-memory specs. Done when: a check
       touching `Transfers.kt` mutates it in under a minute and kills at least 80% of its mutants.
