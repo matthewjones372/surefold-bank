@@ -66,6 +66,12 @@ suites {
 }
 
 // Ratchets keep each file from getting worse; the floors apply to new and changed lines only, so old code doesn't block a change.
+budget screening {
+  command "cd bank-checks && sbt -batch 'screening/Test/runMain checks.screening.adapters.ScreeningLatency {json}'"
+  when "bank-checks/screening/**" touched
+  p99 < 20ms
+}
+
 gates {
   fast   { build, lint ratchet, arch }
   verify {
@@ -76,6 +82,7 @@ gates {
     coverage >= 90% on changed in zone money
     mutation ratchet >= 80% on changed in zone money
   }
+  perf   { budget screening }
 }
 
 on fail coverage { fix "Add tests for the uncovered changed lines listed in the report." }
@@ -88,4 +95,5 @@ review {
   review when protected changed
   review when dependency added
   auto   when small and all gates pass
+  auto   when only tests changed and no zone touched and all gates pass
 }

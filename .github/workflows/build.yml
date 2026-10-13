@@ -16,11 +16,46 @@ permissions:
   contents: read
 
 jobs:
+  # Which services a pull request needs built: the ones it changes, and the ones that build from what it changes
+  # (lark-bank's events, issuer and pins; bank-access's client). A push to main builds them all.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      lark-bank: ${{ steps.which.outputs.lark-bank }}
+      bank-checks: ${{ steps.which.outputs.bank-checks }}
+      bank-approvals: ${{ steps.which.outputs.bank-approvals }}
+      bank-access: ${{ steps.which.outputs.bank-access }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0 }
+      - id: which
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          all() { for s in lark-bank bank-checks bank-approvals bank-access; do echo "$s=true" >> "$GITHUB_OUTPUT"; done; }
+          if [ "${{ github.event_name }}" != "pull_request" ]; then all; exit 0; fi
+          # Markdown (specs, docs, READMEs) builds nothing.
+          changed=$(git diff --name-only "$BASE...$HEAD" | grep -vE '\.md$' || true)
+          echo "$changed"
+          touches() { echo "$changed" | grep -qE "$1" && echo true || echo false; }
+          shared='^(\.github/workflows/build\.yml|lark-bank/(events/|issuer/|flake\.lock))'
+          echo "lark-bank=$(touches '^(lark-bank/|bank-access/|\.github/workflows/build\.yml)')" >> "$GITHUB_OUTPUT"
+          echo "bank-checks=$(touches "^bank-checks/|$shared")" >> "$GITHUB_OUTPUT"
+          echo "bank-approvals=$(touches "^bank-approvals/|$shared")" >> "$GITHUB_OUTPUT"
+          echo "bank-access=$(touches "^bank-access/|$shared")" >> "$GITHUB_OUTPUT"
+
   lark-bank:
+    needs: changes
+    if: needs.changes.outputs.lark-bank == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
+      # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
+      # doesn't fail the job and a warm job skips the downloads.
+      - uses: gradle/actions/setup-gradle@v4
+        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
@@ -40,7 +75,7 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/gauntlet-reports"
-          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/target/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
+          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
       - name: Upload the reports for Gauntlet
         if: always()
         uses: actions/upload-artifact@v4
@@ -60,10 +95,25 @@ jobs:
           retention-days: 7
 
   bank-checks:
+    needs: changes
+    if: needs.changes.outputs.bank-checks == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
+      # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
+      # doesn't fail the job and a warm job skips the downloads.
+      - uses: gradle/actions/setup-gradle@v4
+        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
+      # sbt's and Coursier's downloads kept between runs, for the same reasons.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.ivy2/cache
+            ~/.sbt
+          key: sbt-${{ runner.os }}-${{ hashFiles('bank-checks/**/*.sbt', 'bank-checks/project/build.properties') }}
+          restore-keys: sbt-${{ runner.os }}-
       - uses: actions/checkout@v5
         with: { repository: matthewjones372/verdict, path: deps/verdict }
       - id: pins
@@ -87,7 +137,7 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/gauntlet-reports"
-          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/target/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
+          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
       - name: Upload the reports for Gauntlet
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,10 +148,16 @@ jobs:
           retention-days: 7
 
   bank-approvals:
+    needs: changes
+    if: needs.changes.outputs.bank-approvals == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
+      # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
+      # doesn't fail the job and a warm job skips the downloads.
+      - uses: gradle/actions/setup-gradle@v4
+        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
@@ -123,7 +179,7 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/gauntlet-reports"
-          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/target/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
+          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
       - name: Upload the reports for Gauntlet
         if: always()
         uses: actions/upload-artifact@v4
@@ -143,10 +199,16 @@ jobs:
           retention-days: 7
 
   bank-access:
+    needs: changes
+    if: needs.changes.outputs.bank-access == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
+      # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
+      # doesn't fail the job and a warm job skips the downloads.
+      - uses: gradle/actions/setup-gradle@v4
+        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
       - name: The model's tests
         working-directory: bank-access
         run: nix flake check --print-build-logs
@@ -169,7 +231,7 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/gauntlet-reports"
-          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/target/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
+          find . \( -path '*/build/test-results/*.xml' -o -path '*/build/reports/kover/*.xml' -o -path '*/build/reports/jacoco/*.xml' -o -path '*/test-reports/*.xml' -o -path '*/coverage-report/cobertura.xml' \) -not -path './.git/*' | while read -r f; do mkdir -p "$RUNNER_TEMP/gauntlet-reports/$(dirname "$f")"; cp "$f" "$RUNNER_TEMP/gauntlet-reports/$f"; done
       - name: Upload the reports for Gauntlet
         if: always()
         uses: actions/upload-artifact@v4
