@@ -49,13 +49,20 @@ jobs:
     needs: changes
     if: needs.changes.outputs.lark-bank == 'true'
     runs-on: ubuntu-latest
+    # Write, so a push to main can submit the dependency graph. A pull request from a fork gets a read-only token
+    # whatever this says.
+    permissions: { contents: write }
     steps:
       - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
       # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
       # doesn't fail the job and a warm job skips the downloads.
+      # On main, what this build resolved is submitted to GitHub's dependency graph, which cannot read
+      # build.gradle.kts itself, so Dependabot alerts cover it.
       - uses: gradle/actions/setup-gradle@v4
-        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
+        with:
+          cache-read-only: "${{ github.ref != 'refs/heads/main' }}"
+          dependency-graph: "${{ github.event_name == 'push' && 'generate-and-submit' || 'disabled' }}"
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
@@ -151,13 +158,20 @@ jobs:
     needs: changes
     if: needs.changes.outputs.bank-approvals == 'true'
     runs-on: ubuntu-latest
+    # Write, so a push to main can submit the dependency graph. A pull request from a fork gets a read-only token
+    # whatever this says.
+    permissions: { contents: write }
     steps:
       - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
       # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
       # doesn't fail the job and a warm job skips the downloads.
+      # On main, what this build resolved is submitted to GitHub's dependency graph, which cannot read
+      # build.gradle.kts itself, so Dependabot alerts cover it.
       - uses: gradle/actions/setup-gradle@v4
-        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
+        with:
+          cache-read-only: "${{ github.ref != 'refs/heads/main' }}"
+          dependency-graph: "${{ github.event_name == 'push' && 'generate-and-submit' || 'disabled' }}"
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
@@ -202,13 +216,20 @@ jobs:
     needs: changes
     if: needs.changes.outputs.bank-access == 'true'
     runs-on: ubuntu-latest
+    # Write, so a push to main can submit the dependency graph. A pull request from a fork gets a read-only token
+    # whatever this says.
+    permissions: { contents: write }
     steps:
       - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
       # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
       # doesn't fail the job and a warm job skips the downloads.
+      # On main, what this build resolved is submitted to GitHub's dependency graph, which cannot read
+      # build.gradle.kts itself, so Dependabot alerts cover it.
       - uses: gradle/actions/setup-gradle@v4
-        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
+        with:
+          cache-read-only: "${{ github.ref != 'refs/heads/main' }}"
+          dependency-graph: "${{ github.event_name == 'push' && 'generate-and-submit' || 'disabled' }}"
       - name: The model's tests
         working-directory: bank-access
         run: nix flake check --print-build-logs
