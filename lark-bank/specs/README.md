@@ -44,3 +44,4 @@ home overlay, by name.
 | [0027](0027-a-daily-withdrawal-limit.md) | a daily limit on what an account pays out, withdrawals and debits together, per UTC day; built |
 | [0028](0028-the-banks-decisions-tested-in-memory.md) | the account and transfer behaviours run in memory under Lark's test runtime, with seeded faults, so the saga is tested and mutation-tested without a cluster; draft |
 | [0029](0029-a-cluster-that-grows-with-its-load.md) | the bank sized by a HorizontalPodAutoscaler on CPU, three to six nodes, with metrics-server on kind and a load that ramps; draft |
+| [0030](0030-a-leg-refused-stays-refused.md) | a debit or credit an account refused is kept until its transfer closes, so a retry is refused alike and no late retry moves money; built to `leg-refused` |

@@ -1,4 +1,4 @@
-# 0029 — A leg refused stays refused
+# 0030 — A leg refused stays refused
 
 ## Problem
 
@@ -38,6 +38,9 @@ data class LegRefused(val transfer: TransferId, val leg: Leg, val reason: String
 - A retry is answered `AccountError.LegRefused`, whose message is the first refusal's, so the saga writes the same
   `Rejected` or `CreditRefused` reason whichever copy it hears. The wire carries an error only as a message of its
   own, never inside an event or a snapshot, so the event keeps the message rather than the typed error.
+- An account nobody has opened refuses a credit as `NoSuchAccount`, and keeps that too: `Account.Refusing` holds its
+  refusals, so a credit retried after the account opens is still refused, and the saga's refund is the only payout.
+  Opening it carries the refusals over; `Close` drops them as for an open account.
 - `LegRefused` goes through the journal codec, the wire contract and the events topic's `account.proto` as the other
   leg events do. The read models ignore it: it moves no money.
 
@@ -54,9 +57,12 @@ Nothing. Lark spec 0128 (merged) is what found it.
 
 ## Stack
 
-- [ ] **`leg-refused`** — `LegRefused`, `refused` on the account, `decide` and the account actor, the codecs and
+- [x] **`leg-refused`** (#36) — `LegRefused`, `refused` on the account, `decide` and the account actor, the codecs and
       schemas. Done when: a domain spec shows a refused debit and a refused credit answer the same refusal to a
       retry after the account's balance has changed, and write once.
+- [ ] **`leg-refused-unopened`** — `Account.Refusing`, and `RefusedLegSpec` reproducing the debit case through the
+      shipped behaviours with a fixed sequence. Done when: a credit refused to an unopened account is refused again
+      after it opens, and `RefusedLegSpec` fails on the code before `leg-refused`.
 - [ ] **`bank-properties`** (spec 0028) — the seeded property specs, stacked on this. Done when: 1,000 seeds with
       drops, duplicates, delays and crashes keep every property.
 

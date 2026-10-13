@@ -81,6 +81,10 @@ message OpenAccount {
   map<string, string> refused = 9;
 }
 
+message RefusingAccount {
+  map<string, string> refused = 1;
+}
+
 // serial name 'bank.protocol.wire.AccountCommand.Open'
 message Open {
   required string owner = 1;
@@ -340,6 +344,7 @@ message AccountSnapshot {
   oneof value {
     UnopenedAccount unopened_account = 1;
     OpenAccount open_account = 2;
+    RefusingAccount refusing_account = 3;
   }
 }
 

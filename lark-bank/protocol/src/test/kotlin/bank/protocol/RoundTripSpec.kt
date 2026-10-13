@@ -63,6 +63,8 @@ class RoundTripSpec {
             Account.Open("ada", gbp(42), listOf("a", "b"), setOf("debit:t-1"), refused = mapOf("credit:t-2" to "no"))
         AccountStates.decode(AccountStates.encode(open)) shouldBe open
         AccountStates.decode(AccountStates.encode(Account.Unopened)) shouldBe Account.Unopened
+        val refusing = Account.Refusing(mapOf("credit:t-3" to "No account a"))
+        AccountStates.decode(AccountStates.encode(refusing)) shouldBe refusing
     }
 
     @Test

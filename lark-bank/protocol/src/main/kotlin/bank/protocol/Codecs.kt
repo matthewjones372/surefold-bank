@@ -46,6 +46,7 @@ private val accountStates = Kotlinx.oneOf<WireAccount> {
     name = "AccountSnapshot"
     message<WireAccount.Unopened>(1)
     message<WireAccount.Open>(2)
+    message<WireAccount.Refusing>(3)
 }
 
 private val accountRequests = Kotlinx.oneOf<Any> {

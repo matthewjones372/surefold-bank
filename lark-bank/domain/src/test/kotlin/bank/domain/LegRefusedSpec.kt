@@ -7,7 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 
-/** Bank spec 0029: a leg an account refused is refused again, whatever has changed since, and written once. */
+/** Bank spec 0030: a leg an account refused is refused again, whatever has changed since, and written once. */
 class LegRefusedSpec {
     private val cy = AccountId("cy")
     private val t4 = TransferId("t-4")
@@ -85,8 +85,36 @@ class LegRefusedSpec {
             AccountCommand.Refund(t4, gbp(0)),
             AccountCommand.Close(t4),
         ).map { empty.refusing(it, refusal, now) } shouldBe List(4) { emptyList() }
-        Account.Unopened.refusing(AccountCommand.Debit(t4, gbp(1)), AccountError.NoSuchAccount("cy"), now) shouldBe
-            emptyList()
+    }
+
+    @Test
+    fun `a credit refused because nobody had opened the account is refused again once it is opened`() {
+        val credit = AccountCommand.Credit(t4, gbp(5_00))
+        val refusal = Account.Unopened.decide(cy, credit, now).shouldBeLeft()
+        val noted = Account.Unopened.refusing(credit, refusal, now)
+        noted shouldBe listOf(AccountEvent.LegRefused(t4, Leg.Credit, refusal.message, now))
+
+        val refusing = Account.Unopened.after(noted).shouldBeInstanceOf<Account.Refusing>()
+        val opened = refusing.after(listOf(AccountEvent.Opened("cy", gbp(0), "open:cy", now)))
+        opened.decide(cy, credit, now).shouldBeLeft() shouldBe
+            AccountError.LegRefused("cy", "credit:t-4", refusal.message)
+        opened.decide(cy, AccountCommand.Close(t4), now).shouldBeRight() shouldBe
+            listOf(AccountEvent.LegsClosed(t4, now))
+    }
+
+    @Test
+    fun `an account holding refusals but never opened is still not open`() {
+        val credit = AccountCommand.Credit(t4, gbp(5_00))
+        val refusing = Account.Unopened.after(Account.Unopened.refusing(credit, AccountError.NoSuchAccount("cy"), now))
+        refusing.balanceOf(cy).shouldBeLeft() shouldBe AccountError.NoSuchAccount("cy")
+        refusing.decide(cy, AccountCommand.Deposit(gbp(1), "d-1"), now).shouldBeLeft() shouldBe
+            AccountError.NoSuchAccount("cy")
+        refusing.decide(cy, AccountCommand.Close(TransferId("t-5")), now).shouldBeLeft() shouldBe
+            AccountError.NoSuchAccount("cy")
+        val closed = refusing.decide(cy, AccountCommand.Close(t4), now).shouldBeRight()
+        refusing.after(closed) shouldBe Account.Unopened
+        val two = refusing.after(listOf(AccountEvent.LegRefused(TransferId("t-5"), Leg.Debit, "no", now)))
+        two.after(closed) shouldBe Account.Refusing(mapOf("debit:t-5" to "no"))
     }
 
     @Test
