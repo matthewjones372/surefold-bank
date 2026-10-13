@@ -74,12 +74,19 @@ sealed interface AccountEvent {
 
     @Serializable
     data class LegsClosed(val transfer: String, val atMillis: Long) : AccountEvent
+
+    @Serializable
+    data class LegRefused(val transfer: String, val leg: String, val reason: String, val atMillis: Long) : AccountEvent
 }
 
 sealed interface Account {
     @Serializable
     @SerialName("UnopenedAccount")
     data object Unopened : Account
+
+    @Serializable
+    @SerialName("RefusingAccount")
+    data class Refusing(val refused: Map<String, String>) : Account
 
     @Serializable
     @SerialName("OpenAccount")
@@ -92,6 +99,7 @@ sealed interface Account {
         val paidOutOn: Long = 0,
         val paidOut: Money? = null,
         val debitedOn: Set<String> = emptySet(),
+        val refused: Map<String, String> = emptyMap(),
     ) : Account
 }
 
@@ -121,6 +129,9 @@ sealed interface AccountError {
     @Serializable
     @SerialName("AccountUnavailable")
     data class Unavailable(val message: String) : AccountError
+
+    @Serializable
+    data class AlreadyRefused(val id: String, val reason: String) : AccountError
 }
 
 @Serializable

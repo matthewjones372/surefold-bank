@@ -32,6 +32,7 @@ class ContractSpec {
         AccountEvent.Credited(transfer, gbp(500), 1_004),
         AccountEvent.Refunded(transfer, gbp(500), 1_005),
         AccountEvent.LegsClosed(transfer, 1_006),
+        AccountEvent.LegRefused(transfer, "debit", "Account acc-1 has 5.00 GBP, not 9.00 GBP", 1_007),
     )
 
     private val transferEvents = listOf(

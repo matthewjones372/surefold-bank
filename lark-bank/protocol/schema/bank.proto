@@ -53,6 +53,14 @@ message LegsClosed {
   required int64 atMillis = 2;
 }
 
+// serial name 'bank.protocol.wire.AccountEvent.LegRefused'
+message LegRefused {
+  required string transfer = 1;
+  required string leg = 2;
+  required string reason = 3;
+  required int64 atMillis = 4;
+}
+
 message UnopenedAccount {
 }
 
@@ -69,6 +77,12 @@ message OpenAccount {
   optional Money paidOut = 7;
   // WARNING: a default value decoded when value is missing
   repeated string debitedOn = 8;
+  // WARNING: a default value decoded when value is missing
+  map<string, string> refused = 9;
+}
+
+message RefusingAccount {
+  map<string, string> refused = 1;
 }
 
 // serial name 'bank.protocol.wire.AccountCommand.Open'
@@ -164,6 +178,12 @@ message DailyLimitExceeded {
   required Money limit = 2;
   required Money remaining = 3;
   required Money requested = 4;
+}
+
+// serial name 'bank.protocol.wire.AccountError.AlreadyRefused'
+message AlreadyRefused {
+  required string id = 1;
+  required string reason = 2;
 }
 
 // serial name 'bank.protocol.wire.BulkCredit'
@@ -309,6 +329,7 @@ message AccountEvent {
     Credited credited = 5;
     Refunded refunded = 6;
     LegsClosed legs_closed = 7;
+    LegRefused leg_refused = 8;
   }
 }
 
@@ -317,6 +338,7 @@ message AccountSnapshot {
   oneof value {
     UnopenedAccount unopened_account = 1;
     OpenAccount open_account = 2;
+    RefusingAccount refusing_account = 3;
   }
 }
 
@@ -345,6 +367,7 @@ message AccountReply {
     AccountUnavailable account_unavailable = 6;
     CurrencyMismatch currency_mismatch = 7;
     DailyLimitExceeded daily_limit_exceeded = 8;
+    AlreadyRefused already_refused = 9;
   }
 }
 

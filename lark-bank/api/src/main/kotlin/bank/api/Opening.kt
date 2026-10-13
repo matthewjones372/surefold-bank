@@ -24,6 +24,6 @@ internal fun openRefused(refusal: AccountError) = when (refusal) {
     is AccountError.InvalidAmount -> invalidAmount(InvalidAmount(refusal.message))
     is Unavailable -> unavailable(refusal)
     is AccountError.NoSuchAccount, is AccountError.InsufficientFunds, is AccountError.CurrencyMismatch,
-    is AccountError.DailyLimitExceeded,
+    is AccountError.DailyLimitExceeded, is AccountError.AlreadyRefused,
     -> error("opening refused as $refusal")
 }

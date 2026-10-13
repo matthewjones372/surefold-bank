@@ -22,7 +22,7 @@ object Movements:
       case EventCase.DEBITED =>
         val debited = event.getDebited
         Some(movement(event, "debit", debited.getAmount, debited.getTransferId))
-      case EventCase.OPENED | EventCase.CREDITED | EventCase.REFUNDED | EventCase.LEGS_CLOSED |
+      case EventCase.OPENED | EventCase.CREDITED | EventCase.REFUNDED | EventCase.LEGS_CLOSED | EventCase.LEG_REFUSED |
           EventCase.EVENT_NOT_SET =>
         None
 

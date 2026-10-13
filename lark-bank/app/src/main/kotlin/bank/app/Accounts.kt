@@ -8,6 +8,7 @@ import bank.domain.AccountId
 import bank.domain.balanceOf
 import bank.domain.decide
 import bank.domain.evolve
+import bank.domain.refusalToKeep
 import bank.protocol.AccountAsk
 import bank.protocol.AccountEvents
 import bank.protocol.AccountMessage
@@ -58,7 +59,12 @@ fun account(
                             state.decide(id, command, now()).fold(
                                 { refusal ->
                                     counted("refused")
-                                    none().then { message.reply(Either.Left(refusal)) }
+                                    // A transfer's leg refused is written before it is answered, so the same leg sent
+                                    // again is refused again whatever has changed since (bank spec 0030).
+                                    when (val kept = state.refusalToKeep(command, refusal, now())) {
+                                        null -> none().then { message.reply(Either.Left(refusal)) }
+                                        else -> persist(kept).then { message.reply(Either.Left(refusal)) }
+                                    }
                                 },
                                 { events ->
                                     counted(if (events.isEmpty()) "repeated" else "applied")

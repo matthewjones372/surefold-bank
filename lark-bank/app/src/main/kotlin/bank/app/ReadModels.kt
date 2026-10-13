@@ -398,7 +398,7 @@ private fun AccountEvent.totals(): Totals = when (this) {
     is AccountEvent.Debited -> Totals(inFlight = amount.amount, events = 1)
     is AccountEvent.Credited -> Totals(inFlight = amount.amount.negate(), events = 1)
     is AccountEvent.Refunded -> Totals(inFlight = amount.amount.negate(), events = 1)
-    is AccountEvent.LegsClosed -> Totals()
+    is AccountEvent.LegsClosed, is AccountEvent.LegRefused -> Totals()
 }
 
 private fun AccountEvent.delta(): Money = when (this) {
@@ -408,7 +408,7 @@ private fun AccountEvent.delta(): Money = when (this) {
     is AccountEvent.Refunded -> amount
     is AccountEvent.Withdrawn -> -amount
     is AccountEvent.Debited -> -amount
-    is AccountEvent.LegsClosed -> error("a transfer's legs closing moves no money")
+    is AccountEvent.LegsClosed, is AccountEvent.LegRefused -> error("a transfer's leg closing or refused moves no money")
 }
 
 /** What the event moved, or null for one that moves no money. */
@@ -419,7 +419,7 @@ fun AccountEvent.amount(): Money? = when (this) {
     is AccountEvent.Refunded -> amount
     is AccountEvent.Withdrawn -> amount
     is AccountEvent.Debited -> amount
-    is AccountEvent.LegsClosed -> null
+    is AccountEvent.LegsClosed, is AccountEvent.LegRefused -> null
 }
 
 fun AccountEvent.kind(): String = when (this) {
@@ -430,4 +430,5 @@ fun AccountEvent.kind(): String = when (this) {
     is AccountEvent.Withdrawn -> "withdrawn"
     is AccountEvent.Debited -> "debited"
     is AccountEvent.LegsClosed -> "closed"
+    is AccountEvent.LegRefused -> "refused"
 }

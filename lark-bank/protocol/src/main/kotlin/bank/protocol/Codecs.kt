@@ -39,12 +39,14 @@ private val accountEvents = Kotlinx.oneOf<WireAccountEvent> {
     message<WireAccountEvent.Credited>(5)
     message<WireAccountEvent.Refunded>(6)
     message<WireAccountEvent.LegsClosed>(7)
+    message<WireAccountEvent.LegRefused>(8)
 }
 
 private val accountStates = Kotlinx.oneOf<WireAccount> {
     name = "AccountSnapshot"
     message<WireAccount.Unopened>(1)
     message<WireAccount.Open>(2)
+    message<WireAccount.Refusing>(3)
 }
 
 private val accountRequests = Kotlinx.oneOf<Any> {
@@ -69,6 +71,7 @@ private val accountReplies = Kotlinx.oneOf<Any> {
     message<WireAccountError.Unavailable>(6)
     message<WireAccountError.CurrencyMismatch>(7)
     message<WireAccountError.DailyLimitExceeded>(8)
+    message<WireAccountError.AlreadyRefused>(9)
 }
 
 private val bulkCredits = Kotlinx.oneOf<WireBulkCredit> {

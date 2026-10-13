@@ -38,6 +38,7 @@ class RoundTripSpec {
             AccountEvent.Credited(t, gbp(7), 5),
             AccountEvent.Refunded(t, gbp(7), 6),
             AccountEvent.LegsClosed(t, 7),
+            AccountEvent.LegRefused(t, "credit", "No account b", 8),
         )
         events.map { AccountEvents.decode(AccountEvents.encode(it)) } shouldBe events
     }
@@ -60,6 +61,11 @@ class RoundTripSpec {
         val open = Account.Open("ada", gbp(42), listOf("a", "b"), setOf("debit:t-1"))
         AccountStates.decode(AccountStates.encode(open)) shouldBe open
         AccountStates.decode(AccountStates.encode(Account.Unopened)) shouldBe Account.Unopened
+        // Bank spec 0030: the refusals an account keeps, open or not yet opened.
+        val refusing = Account.Refusing(mapOf("credit:t-1" to "No account a"))
+        AccountStates.decode(AccountStates.encode(refusing)) shouldBe refusing
+        val keeping = open.copy(refused = mapOf("debit:t-2" to "Account a has 1.00 GBP, not 2.00 GBP"))
+        AccountStates.decode(AccountStates.encode(keeping)) shouldBe keeping
     }
 
     @Test
@@ -98,6 +104,7 @@ class RoundTripSpec {
             Either.Left(AccountError.InvalidAmount(gbp(-1))),
             Either.Left(AccountError.CurrencyMismatch("a", "GBP", "BTC")),
             Either.Left(Unavailable("slow")),
+            Either.Left(AccountError.AlreadyRefused("a", "No account a")),
         )
         accountAnswers.map { AccountAnswers.roundTrip(it) } shouldBe accountAnswers
 
