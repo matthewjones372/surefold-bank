@@ -7,17 +7,15 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
-import java.time.Duration
 import java.util.concurrent.ConcurrentLinkedQueue
 
-/** A fake OpenFGA whose store lookup takes [lookupTakes], answering each page of `GET /stores` from [pages]. */
-private class FakeStores(private val pages: Map<String, String>, private val lookupTakes: Duration = Duration.ZERO) {
+/** A fake OpenFGA answering each page of `GET /stores` from [pages], and every check as allowed. */
+private class FakeStores(private val pages: Map<String, String>) {
     val asked = ConcurrentLinkedQueue<String>()
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
         createContext("/") { exchange ->
             asked += "${exchange.requestMethod} ${exchange.requestURI}"
             val body = if (exchange.requestURI.path == "/stores") {
-                Thread.sleep(lookupTakes.toMillis())
                 val continuation = exchange.requestURI.query.substringAfter("continuation_token=", "")
                 pages.getValue(continuation)
             } else {
@@ -33,19 +31,18 @@ private class FakeStores(private val pages: Map<String, String>, private val loo
     fun stop() = server.stop(0)
 }
 
-/** The store is found once by its name, and finding it is not held to a check's budget. */
+/** The store is found by its name, not by listing every store. */
 class StoreLookupTest {
     @Test
-    fun `the store is asked for by name, across pages, and a check slower to find it than its budget still answers`() {
+    fun `the store is asked for by name, across the pages OpenFGA answers in`() {
         val fake = FakeStores(
             mapOf(
                 "" to """{"stores":[{"name":"bank-old","id":"s0"}],"continuation_token":"next"}""",
                 "next" to """{"stores":[{"name":"bank","id":"s1"}],"continuation_token":""}""",
             ),
-            lookupTakes = Duration.ofMillis(200),
         )
         try {
-            val fga = Fga(fake.url, "key", "bank", timeout = Duration.ofMillis(50))
+            val fga = Fga(fake.url, "key", "bank")
 
             fga.check("person:ada", "owner", "account:a1") shouldBe true
 

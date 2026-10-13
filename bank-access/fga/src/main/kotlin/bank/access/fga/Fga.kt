@@ -40,13 +40,9 @@ class Fga(
 ) {
     private val http = HttpClient.newBuilder().connectTimeout(timeout).build()
 
-    /**
-     * Found once, by name: the store the access-model Job makes. Finding it is setup, not a decision, so it is given
-     * [LOOKUP] rather than a check's budget: a lookup that times out is made again by the next call, under the same
-     * budget, and a slow server would leave every check unanswered.
-     */
+    /** Found once, by name: the store the access-model Job makes. */
     val storeId: String by lazy {
-        storeNamed(url, token, http, maxOf(timeout, LOOKUP), store, carried())
+        storeNamed(url, token, http, timeout, store, carried())
             ?: throw FgaUnavailable("OpenFGA has no store named $store")
     }
 
@@ -122,7 +118,6 @@ class Fga(
     companion object {
         private val json = ObjectMapper()
         private const val MOST_PER_WRITE = 100
-        private val LOOKUP: Duration = Duration.ofSeconds(5)
 
         /** Makes the store [store] if there is none, and writes [modelJson] as its newest model, as the Job does. */
         fun create(url: String, token: String, store: String, modelJson: String) {
@@ -133,7 +128,10 @@ class Fga(
             send(http, url, token, timeout, "POST", "/stores/$id/authorization-models", json.readTree(modelJson))
         }
 
-        /** The id of the store named [store], asked for by name: one request, however many stores there are. */
+        /**
+         * The id of the store named [store], asked for by name: one request however many stores the server holds, since
+         * the first check makes it within its own budget.
+         */
         private fun storeNamed(
             url: String,
             token: String,
