@@ -7,6 +7,7 @@ import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.balanceOf
 import bank.domain.decide
+import bank.domain.refusing
 import bank.domain.evolve
 import bank.protocol.AccountAsk
 import bank.protocol.AccountEvents
@@ -58,7 +59,9 @@ fun account(
                             state.decide(id, command, now()).fold(
                                 { refusal ->
                                     counted("refused")
-                                    none().then { message.reply(Either.Left(refusal)) }
+                                    // A leg's first refusal is written, so its copies are refused alike (spec 0029).
+                                    persist(*state.refusing(command, refusal, now()).toTypedArray())
+                                        .then { message.reply(Either.Left(refusal)) }
                                 },
                                 { events ->
                                     counted(if (events.isEmpty()) "repeated" else "applied")

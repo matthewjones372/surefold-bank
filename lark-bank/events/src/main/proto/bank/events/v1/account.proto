@@ -24,6 +24,7 @@ message AccountEvent {
     Credited credited = 14;
     Refunded refunded = 15;
     LegsClosed legs_closed = 16;
+    LegRefused leg_refused = 17;
   }
 }
 
@@ -64,4 +65,12 @@ message Refunded {
 // A settled transfer's legs, forgotten by the account. Moves no money.
 message LegsClosed {
   string transfer_id = 1;
+}
+
+// A transfer's leg the account refused, so it refuses every copy alike (bank spec 0029). Moves no money.
+message LegRefused {
+  string transfer_id = 1;
+  // "debit" or "credit".
+  string leg = 2;
+  string reason = 3;
 }

@@ -34,7 +34,8 @@ object MovementsSpec extends ZIOSpecDefault:
         kind(base.clone.setOpened(Opened.newBuilder.setOwner("ada").setInitial(money)).build).isEmpty,
         kind(base.clone.setCredited(Credited.newBuilder.setAmount(money).setTransferId("t")).build).isEmpty,
         kind(base.clone.setRefunded(Refunded.newBuilder.setAmount(money).setTransferId("t")).build).isEmpty,
-        kind(base.clone.setLegsClosed(LegsClosed.newBuilder.setTransferId("t")).build).isEmpty
+        kind(base.clone.setLegsClosed(LegsClosed.newBuilder.setTransferId("t")).build).isEmpty,
+        kind(base.clone.setLegRefused(LegRefused.newBuilder.setTransferId("t").setLeg("debit")).build).isEmpty
       )
     },
     test("a debit's reference is its transfer") {

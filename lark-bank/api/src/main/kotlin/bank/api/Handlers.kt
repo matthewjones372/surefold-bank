@@ -9,6 +9,7 @@ import org.apache.pekko.util.ByteString
 import arrow.core.Either
 import arrow.core.flatMap
 import bank.domain.AccountError
+import bank.domain.AccountError.LegRefused
 import bank.domain.AccountId
 import bank.domain.Balance
 import bank.domain.Bank
@@ -110,7 +111,7 @@ fun bankApi(
                     is AccountError.NoSuchAccount -> accountMissing(refusal)
                     is Unavailable -> unavailable(refusal)
                     is AccountError.AlreadyOpen, is AccountError.InsufficientFunds, is AccountError.InvalidAmount,
-                    is AccountError.CurrencyMismatch, is AccountError.DailyLimitExceeded,
+                    is AccountError.CurrencyMismatch, is AccountError.DailyLimitExceeded, is AccountError.LegRefused,
                     -> error("a balance refused as $refusal")
                 }
             }
@@ -127,7 +128,7 @@ fun bankApi(
                             is AccountError.CurrencyMismatch -> invalidAmount(InvalidAmount(refusal.message, refusal.account))
                             is Unavailable -> unavailable(refusal)
                             is AccountError.AlreadyOpen, is AccountError.InsufficientFunds,
-                            is AccountError.DailyLimitExceeded,
+                            is AccountError.DailyLimitExceeded, is AccountError.LegRefused,
                             -> error("a deposit refused as $refusal")
                         }
                     }
@@ -146,7 +147,7 @@ fun bankApi(
                             is AccountError.InvalidAmount -> invalidAmount(InvalidAmount(refusal.message))
                             is AccountError.CurrencyMismatch -> invalidAmount(InvalidAmount(refusal.message, refusal.account))
                             is Unavailable -> unavailable(refusal)
-                            is AccountError.AlreadyOpen -> error("a withdrawal refused as $refusal")
+                            is AccountError.AlreadyOpen, is LegRefused -> error("a withdrawal refused as $refusal")
                         }
                     }
             }
