@@ -109,7 +109,7 @@ sealed interface AccountError {
         override val message: String get() = "Account $id is in $account, not $given"
     }
 
-    /** A transfer's leg this account refused before, for [reason]: it is refused again, the same way (bank spec 0030). */
+    /** A transfer's leg this account refused before, for [reason]: refused again, the same way (bank spec 0030). */
     data class AlreadyRefused(val id: String, val reason: String) : AccountError {
         override val message: String get() = reason
     }
@@ -173,33 +173,49 @@ fun Account.decide(id: AccountId, command: AccountCommand, now: Long): Either<Ac
             is AccountCommand.Refund, is AccountCommand.Close,
             -> AccountError.NoSuchAccount(id.value).left()
         }
-        is Account.Refusing -> when (command) {
-            is AccountCommand.Open -> opening(id, command, now)
-            is AccountCommand.Close ->
-                if (refused.keys.none { it.endsWith(":${command.transfer}") }) AccountError.NoSuchAccount(id.value).left()
-                else listOf(AccountEvent.LegsClosed(command.transfer, now)).right()
-            is AccountCommand.Debit, is AccountCommand.Credit, is AccountCommand.Refund ->
-                refused[command.reference]?.let { AccountError.AlreadyRefused(id.value, it).left() }
-                    ?: AccountError.NoSuchAccount(id.value).left()
-            is AccountCommand.Deposit, is AccountCommand.Withdraw -> AccountError.NoSuchAccount(id.value).left()
+        is Account.Refusing -> refusing(id, command, now)
+        is Account.Open -> open(id, command, now)
+    }
+
+/** An account not yet opened that keeps refusals (spec 0030): it answers its refused legs, and nothing else. */
+private fun Account.Refusing.refusing(
+    id: AccountId,
+    command: AccountCommand,
+    now: Long,
+): Either<AccountError, List<AccountEvent>> = when (command) {
+    is AccountCommand.Open -> opening(id, command, now)
+    is AccountCommand.Close ->
+        if (refused.keys.none { it.endsWith(":${command.transfer}") }) AccountError.NoSuchAccount(id.value).left()
+        else listOf(AccountEvent.LegsClosed(command.transfer, now)).right()
+    is AccountCommand.Debit, is AccountCommand.Credit, is AccountCommand.Refund ->
+        refused[command.reference]?.let { AccountError.AlreadyRefused(id.value, it).left() }
+            ?: AccountError.NoSuchAccount(id.value).left()
+    is AccountCommand.Deposit, is AccountCommand.Withdraw -> AccountError.NoSuchAccount(id.value).left()
+}
+
+private fun Account.Open.open(
+    id: AccountId,
+    command: AccountCommand,
+    now: Long,
+): Either<AccountError, List<AccountEvent>> =
+    when (command) {
+        // Opening an open account again for the same owner is a retry; for anyone else it is a clash.
+        is AccountCommand.Open ->
+            if (command.owner == owner) emptyList<AccountEvent>().right() else AccountError.AlreadyOpen(id.value).left()
+        is AccountCommand.Deposit ->
+            once(command) { moving(id, command.amount) { AccountEvent.Deposited(it, command.reference, now) } }
+        is AccountCommand.Credit ->
+            decidedOnce(id, command) { moving(id, command.amount) { AccountEvent.Credited(command.transfer, it, now) } }
+        is AccountCommand.Refund ->
+            decidedOnce(id, command) { moving(id, command.amount) { AccountEvent.Refunded(command.transfer, it, now) } }
+        is AccountCommand.Withdraw ->
+            once(command) { taking(id, command.amount, now) { AccountEvent.Withdrawn(it, command.reference, now) } }
+        is AccountCommand.Debit -> decidedOnce(id, command) {
+            taking(id, command.amount, now) { AccountEvent.Debited(command.transfer, it, now) }
         }
-        is Account.Open -> when (command) {
-            // Opening an open account again for the same owner is a retry; for anyone else it is a clash.
-            is AccountCommand.Open ->
-                if (command.owner == owner) emptyList<AccountEvent>().right() else AccountError.AlreadyOpen(id.value).left()
-            is AccountCommand.Deposit -> once(command) { moving(id, command.amount) { AccountEvent.Deposited(it, command.reference, now) } }
-            is AccountCommand.Credit ->
-                decidedOnce(id, command) { moving(id, command.amount) { AccountEvent.Credited(command.transfer, it, now) } }
-            is AccountCommand.Refund ->
-                decidedOnce(id, command) { moving(id, command.amount) { AccountEvent.Refunded(command.transfer, it, now) } }
-            is AccountCommand.Withdraw ->
-                once(command) { taking(id, command.amount, now) { AccountEvent.Withdrawn(it, command.reference, now) } }
-            is AccountCommand.Debit ->
-                decidedOnce(id, command) { taking(id, command.amount, now) { AccountEvent.Debited(command.transfer, it, now) } }
-            is AccountCommand.Close ->
-                if ((legs + refused.keys).none { it.endsWith(":${command.transfer}") }) emptyList<AccountEvent>().right()
-                else listOf(AccountEvent.LegsClosed(command.transfer, now)).right()
-        }
+        is AccountCommand.Close ->
+            if ((legs + refused.keys).none { it.endsWith(":${command.transfer}") }) emptyList<AccountEvent>().right()
+            else listOf(AccountEvent.LegsClosed(command.transfer, now)).right()
     }
 
 /**
@@ -272,21 +288,27 @@ fun Account.evolve(event: AccountEvent): Account = when (event) {
     is AccountEvent.Withdrawn -> open().moved(-event.amount, event.reference).paid(event.amount, event.atMillis)
     is AccountEvent.Debited -> open().moved(-event.amount, event.reference).leg(event.reference)
         .paid(event.amount, event.atMillis, event.transfer)
-    is AccountEvent.LegsClosed -> when (this) {
-        is Account.Refusing -> refused.filterKeys { !it.endsWith(":${event.transfer}") }
-            .let { left -> if (left.isEmpty()) Account.Unopened else Account.Refusing(left) }
+    is AccountEvent.LegsClosed -> closed(event.transfer)
+    is AccountEvent.LegRefused -> refused(event)
+}
+
+/** A settled transfer's legs and refusals forgotten; a refusing account with none left is unopened again. */
+private fun Account.closed(transfer: TransferId): Account {
+    val other = { reference: String -> !reference.endsWith(":$transfer") }
+    return when (this) {
+        is Account.Refusing ->
+            refused.filterKeys(other).let { left -> if (left.isEmpty()) Account.Unopened else Account.Refusing(left) }
         else -> open().let { open ->
-            open.copy(
-                legs = open.legs.filterNot { it.endsWith(":${event.transfer}") }.toSet(),
-                refused = open.refused.filterKeys { !it.endsWith(":${event.transfer}") },
-            )
+            open.copy(legs = open.legs.filter(other).toSet(), refused = open.refused.filterKeys(other))
         }
     }
-    is AccountEvent.LegRefused -> when (this) {
-        Account.Unopened -> Account.Refusing(mapOf(event.reference to event.reason))
-        is Account.Refusing -> copy(refused = refused + (event.reference to event.reason))
-        is Account.Open -> copy(refused = refused + (event.reference to event.reason))
-    }
+}
+
+/** A refused leg kept, by an account open or not (spec 0030). */
+private fun Account.refused(event: AccountEvent.LegRefused): Account = when (this) {
+    Account.Unopened -> Account.Refusing(mapOf(event.reference to event.reason))
+    is Account.Refusing -> copy(refused = refused + (event.reference to event.reason))
+    is Account.Open -> copy(refused = refused + (event.reference to event.reason))
 }
 
 private fun Account.Open.leg(reference: String): Account.Open = copy(legs = legs + reference)

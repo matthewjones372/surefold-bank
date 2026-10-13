@@ -110,7 +110,8 @@ fun bankApi(
                     is AccountError.NoSuchAccount -> accountMissing(refusal)
                     is Unavailable -> unavailable(refusal)
                     is AccountError.AlreadyOpen, is AccountError.InsufficientFunds, is AccountError.InvalidAmount,
-                    is AccountError.CurrencyMismatch, is AccountError.DailyLimitExceeded, is AccountError.AlreadyRefused,
+                    is AccountError.CurrencyMismatch, is AccountError.DailyLimitExceeded,
+                    is AccountError.AlreadyRefused,
                     -> error("a balance refused as $refusal")
                 }
             }
@@ -146,7 +147,8 @@ fun bankApi(
                             is AccountError.InvalidAmount -> invalidAmount(InvalidAmount(refusal.message))
                             is AccountError.CurrencyMismatch -> invalidAmount(InvalidAmount(refusal.message, refusal.account))
                             is Unavailable -> unavailable(refusal)
-                            is AccountError.AlreadyOpen, is AccountError.AlreadyRefused -> error("a withdrawal refused as $refusal")
+                            is AccountError.AlreadyOpen, is AccountError.AlreadyRefused ->
+                                error("a withdrawal refused as $refusal")
                         }
                     }
             }

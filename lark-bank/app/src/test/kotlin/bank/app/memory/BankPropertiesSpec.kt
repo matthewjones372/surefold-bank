@@ -37,14 +37,21 @@ class BankPropertiesSpec {
     fun `money is conserved, every transfer settles, and each leg is applied once, whatever the schedule`() {
         val only = System.getenv("SEED")?.toLong()
         val seeds = only?.let { listOf(it) } ?: (1L..(System.getenv("SEEDS")?.toLong() ?: SEEDS))
-        seeds.forEach { seed -> withClue("seed $seed (SEED=$seed replays it)") { scenario(seed) } }
+        val opened = ACCOUNTS.values.fold(gbp(0)) { sum, opening -> sum + opening.initial }
+        seeds.forEach { seed ->
+            // Money is conserved: what the accounts hold once it has all settled is what they opened with.
+            withClue("seed $seed (SEED=$seed replays it)") { scenario(seed) shouldBe opened }
+        }
     }
 
-    /** One seeded run: accounts, transfers among them chosen from the seed, the faults, then every property. */
-    private fun scenario(seed: Long) {
+    /**
+     * One seeded run: accounts, transfers among them chosen from the seed, and the faults; every other property is
+     * checked here, and what the accounts hold at the end is returned.
+     */
+    private fun scenario(seed: Long): Money {
         val pick = Random(seed)
         val unkind = Faults(drop = 0.1, duplicate = 0.1, delay = 0.1, maxDelay = 3.seconds, crash = 0.05)
-        clock.locally(fixedClock(NOON)) {
+        return clock.locally(fixedClock(NOON)) {
             testActors(clock = fixedClock(NOON), order = Ordering.seeded(seed), faults = unkind) {
                 val bank = InMemoryBank(this, LEG)
                 ACCOUNTS.forEach { (id, opening) -> bank.opened(id, opening.initial, opening.limit) }
@@ -55,17 +62,20 @@ class BankPropertiesSpec {
                     val to = if (pick.nextInt(8) == 0) NOWHERE else (ACCOUNTS.keys - from).random(pick)
                     Asked(TransferId("t-$n"), from, to, gbp(pick.nextLong(1_00, 40_00)))
                 }
-                asked.forEach { (id, from, to, amount) ->
-                    bank.start(id, from, to, amount)
+                asked.forEach { transfer ->
+                    bank.start(transfer)
                     // Now and then started again, as a client that heard nothing would: still one transfer.
-                    if (pick.nextInt(5) == 0) bank.start(id, from, to, amount)
+                    if (pick.nextInt(5) == 0) bank.start(transfer)
                 }
                 settled(bank, asked)
 
                 bank.properties(asked)
+                ACCOUNTS.keys.fold(gbp(0)) { sum, id -> sum + bank.balanceOf(id) }
             }
         }
     }
+
+    private fun InMemoryBank.start(transfer: Asked) = start(transfer.id, transfer.from, transfer.to, transfer.amount)
 
     /**
      * Runs the schedule to idle, then starts each transfer still moving again, as its client or the sweeper would on a
@@ -74,9 +84,9 @@ class BankPropertiesSpec {
     private fun io.github.matthewjones372.lark.actor.TestActors.settled(bank: InMemoryBank, asked: List<Asked>) {
         repeat(SWEEPS) {
             settle()
-            val moving = asked.filter { bank.statusOf(it.id) !in SETTLED }
+            val moving = asked.filter { transfer -> bank.statusOf(transfer.id) !in SETTLED }
             if (moving.isEmpty()) return
-            moving.forEach { bank.start(it.id, it.from, it.to, it.amount) }
+            moving.forEach { transfer -> bank.start(transfer) }
         }
         settle()
     }
@@ -84,49 +94,58 @@ class BankPropertiesSpec {
     private fun InMemoryBank.properties(asked: List<Asked>) {
         // Every transfer settles: completed, rejected, or refunded.
         asked.forEach { withClue(it.id.value) { statusOf(it.id) shouldBeIn SETTLED } }
-
-        // Money is conserved: what the accounts hold is what they opened with.
-        ACCOUNTS.keys.fold(gbp(0)) { sum, id -> sum + balanceOf(id) } shouldBe
-            ACCOUNTS.values.fold(gbp(0)) { sum, opening -> sum + opening.initial }
-
         ACCOUNTS.keys.forEach { id ->
-            val events = accountEvents(id)
-            asked.forEach { (transfer) ->
-                withClue("${transfer.value} on ${id.value}") {
-                    // Each leg is applied once (spec 0013), however often it arrived.
-                    events.count { it is AccountEvent.Debited && it.transfer == transfer } shouldBeLessThanOrEqual 1
-                    events.count { it is AccountEvent.Credited && it.transfer == transfer } shouldBeLessThanOrEqual 1
-                    events.count { it is AccountEvent.Refunded && it.transfer == transfer } shouldBeLessThanOrEqual 1
-                }
-            }
-            // The daily limit holds (spec 0027): paid out today, less what was refunded, is within it.
-            ACCOUNTS.getValue(id).limit?.let { limit ->
-                val debited = events.filterIsInstance<AccountEvent.Debited>().fold(gbp(0)) { sum, it -> sum + it.amount }
-                val refunded = events.filterIsInstance<AccountEvent.Refunded>().fold(gbp(0)) { sum, it -> sum + it.amount }
-                withClue("${id.value}'s daily limit") { (debited - refunded <= limit) shouldBe true }
+            legsOnce(id, asked)
+            ACCOUNTS.getValue(id).limit?.let { limit -> withinLimit(id, limit) }
+        }
+        asked.forEach { transfer ->
+            withClue(transfer.id.value) {
+                refundedOnlyAfterRefusal(transfer.id)
+                agreesWithAccounts(transfer)
             }
         }
+    }
 
-        asked.forEach { (id, from, to) ->
-            val kinds = transferEvents(id).map { it::class }
-            withClue(id.value) {
-                // A refund only ever follows a refused credit, and a refused credit is always refunded.
-                (TransferEvent.SourceRefunded::class in kinds) shouldBe (TransferEvent.CreditRefused::class in kinds)
-                if (TransferEvent.SourceRefunded::class in kinds) {
-                    kinds.indexOf(TransferEvent.CreditRefused::class) shouldBeLessThanOrEqual
-                        kinds.indexOf(TransferEvent.SourceRefunded::class)
-                }
-                // What the accounts did agrees with how the saga says it ended.
-                val debited = accountEvents(from).any { it is AccountEvent.Debited && it.transfer == id }
-                val credited = to != NOWHERE &&
-                    accountEvents(to).any { it is AccountEvent.Credited && it.transfer == id }
-                val refunded = accountEvents(from).any { it is AccountEvent.Refunded && it.transfer == id }
-                when (statusOf(id)) {
-                    TransferStatus.Completed -> listOf(debited, credited, refunded) shouldBe listOf(true, true, false)
-                    TransferStatus.Refunded -> listOf(debited, credited, refunded) shouldBe listOf(true, false, true)
-                    else -> listOf(debited, credited, refunded) shouldBe listOf(false, false, false)
-                }
+    /** Each leg is applied once (spec 0013), however often it arrived. */
+    private fun InMemoryBank.legsOnce(id: AccountId, asked: List<Asked>) {
+        val events = accountEvents(id)
+        asked.forEach { transfer ->
+            withClue("${transfer.id.value} on ${id.value}") {
+                events.count { it is AccountEvent.Debited && it.transfer == transfer.id } shouldBeLessThanOrEqual 1
+                events.count { it is AccountEvent.Credited && it.transfer == transfer.id } shouldBeLessThanOrEqual 1
+                events.count { it is AccountEvent.Refunded && it.transfer == transfer.id } shouldBeLessThanOrEqual 1
             }
+        }
+    }
+
+    /** The daily limit holds (spec 0027): paid out today, less what was refunded, is within it. */
+    private fun InMemoryBank.withinLimit(id: AccountId, limit: Money) {
+        val events = accountEvents(id)
+        val debited = events.filterIsInstance<AccountEvent.Debited>().fold(gbp(0)) { sum, debit -> sum + debit.amount }
+        val refunded = events.filterIsInstance<AccountEvent.Refunded>().fold(gbp(0)) { sum, back -> sum + back.amount }
+        withClue("${id.value}'s daily limit") { (debited - refunded <= limit) shouldBe true }
+    }
+
+    /** A refund only ever follows a refused credit, and a refused credit is always refunded. */
+    private fun InMemoryBank.refundedOnlyAfterRefusal(id: TransferId) {
+        val kinds = transferEvents(id).map { it::class }
+        val refused = kinds.indexOf(TransferEvent.CreditRefused::class)
+        val refunded = kinds.indexOf(TransferEvent.SourceRefunded::class)
+        (refunded >= 0) shouldBe (refused >= 0)
+        refused shouldBeLessThanOrEqual refunded
+    }
+
+    /** What the accounts did agrees with how the saga says it ended. */
+    private fun InMemoryBank.agreesWithAccounts(transfer: Asked) {
+        val id = transfer.id
+        val debited = accountEvents(transfer.from).any { it is AccountEvent.Debited && it.transfer == id }
+        val credited = transfer.to != NOWHERE &&
+            accountEvents(transfer.to).any { it is AccountEvent.Credited && it.transfer == id }
+        val refunded = accountEvents(transfer.from).any { it is AccountEvent.Refunded && it.transfer == id }
+        listOf(debited, credited, refunded) shouldBe when (statusOf(id)) {
+            TransferStatus.Completed -> listOf(true, true, false)
+            TransferStatus.Refunded -> listOf(true, false, true)
+            else -> listOf(false, false, false)
         }
     }
 

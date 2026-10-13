@@ -408,7 +408,8 @@ private fun AccountEvent.delta(): Money = when (this) {
     is AccountEvent.Refunded -> amount
     is AccountEvent.Withdrawn -> -amount
     is AccountEvent.Debited -> -amount
-    is AccountEvent.LegsClosed, is AccountEvent.LegRefused -> error("a transfer's leg closing or refused moves no money")
+    is AccountEvent.LegsClosed, is AccountEvent.LegRefused ->
+        error("a transfer's leg closing or refused moves no money")
 }
 
 /** What the event moved, or null for one that moves no money. */

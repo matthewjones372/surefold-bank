@@ -62,8 +62,8 @@ class LegRefusedSpec {
 
     @Test
     fun `only a transfer's legs are remembered, and nothing the account could not decide`() {
-        opened.refusalToKeep(AccountCommand.Withdraw(gbp(5_000), "w-1"), AccountError.InsufficientFunds("cy", gbp(2_000), gbp(5_000)), 0)
-            .shouldBeNull()
-        opened.refusalToKeep(AccountCommand.Debit(t3, gbp(1)), Unavailable("slow"), 0).shouldBeNull()
+        val short = AccountError.InsufficientFunds("cy", gbp(2_000), gbp(5_000))
+        opened.refusalToKeep(AccountCommand.Withdraw(gbp(5_000), "w-1"), short, 0) shouldBe null
+        opened.refusalToKeep(AccountCommand.Debit(t3, gbp(1)), Unavailable("slow"), 0) shouldBe null
     }
 }

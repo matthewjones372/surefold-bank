@@ -32,7 +32,7 @@ class RefusedLegSpec {
             val status = transferStatus(t3).shouldBeRight().status
             val moved = gbp(70_00) - balanceOf(cy)
             // Either it moved and completed, or it was rejected and moved nothing.
-            (status to moved) shouldBe if (status == TransferStatus.Completed) status to gbp(38_63) else status to gbp(0)
+            moved shouldBe if (status == TransferStatus.Completed) gbp(38_63) else gbp(0)
             balanceOf(cy) + balanceOf(bob) shouldBe gbp(70_00)
         }
 }
