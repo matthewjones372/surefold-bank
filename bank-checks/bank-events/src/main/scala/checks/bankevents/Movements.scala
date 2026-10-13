@@ -23,7 +23,7 @@ object Movements:
         val debited = event.getDebited
         Some(movement(event, "debit", debited.getAmount, debited.getTransferId))
       case EventCase.OPENED | EventCase.CREDITED | EventCase.REFUNDED | EventCase.LEGS_CLOSED |
-          EventCase.EVENT_NOT_SET =>
+          EventCase.LEG_REFUSED | EventCase.EVENT_NOT_SET =>
         None
 
   private def movement(event: AccountEvent, kind: String, amount: bank.events.v1.Money, reference: String) =
