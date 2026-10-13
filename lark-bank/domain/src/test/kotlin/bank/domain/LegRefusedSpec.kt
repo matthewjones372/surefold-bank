@@ -2,6 +2,7 @@ package bank.domain
 
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -85,6 +86,18 @@ class LegRefusedSpec {
             AccountCommand.Refund(t4, gbp(0)),
             AccountCommand.Close(t4),
         ).map { empty.refusing(it, refusal, now) } shouldBe List(4) { emptyList() }
+        val withdraw = AccountCommand.Withdraw(gbp(1), "w-1")
+        Account.Unopened.refusing(withdraw, AccountError.NoSuchAccount("cy"), now) shouldBe emptyList()
+    }
+
+    @Test
+    fun `an event other than its opening, for an account never opened, is a corrupt journal`() {
+        val refusing = Account.Refusing(mapOf("credit:t-4" to "No account cy"))
+        val deposited = AccountEvent.Deposited(gbp(1), "d-1", now)
+        listOf(Account.Unopened, refusing).forEach { never ->
+            val corrupt = shouldThrow<IllegalStateException> { never.evolve(deposited) }
+            corrupt.message shouldBe "an event for an account that was never opened"
+        }
     }
 
     @Test
