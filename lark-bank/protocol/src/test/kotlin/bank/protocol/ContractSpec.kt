@@ -4,6 +4,7 @@ import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.Currencies
 import bank.domain.Currency
+import bank.domain.Leg
 import bank.domain.Listed
 import bank.domain.Money
 import bank.domain.ScreeningOutcome
@@ -32,6 +33,7 @@ class ContractSpec {
         AccountEvent.Credited(transfer, gbp(500), 1_004),
         AccountEvent.Refunded(transfer, gbp(500), 1_005),
         AccountEvent.LegsClosed(transfer, 1_006),
+        AccountEvent.LegRefused(transfer, Leg.Credit, "No account a-2", 1_007),
     )
 
     private val transferEvents = listOf(

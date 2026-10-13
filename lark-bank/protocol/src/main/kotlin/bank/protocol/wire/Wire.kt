@@ -74,6 +74,19 @@ sealed interface AccountEvent {
 
     @Serializable
     data class LegsClosed(val transfer: String, val atMillis: Long) : AccountEvent
+
+    @Serializable
+    data class LegRefused(val transfer: String, val leg: Leg, val reason: String, val atMillis: Long) : AccountEvent
+}
+
+/** Renamed in bank.proto, where an enum's values share the package with the Debit and Credit commands. */
+@Serializable
+enum class Leg {
+    @SerialName("DebitLeg")
+    Debit,
+
+    @SerialName("CreditLeg")
+    Credit,
 }
 
 sealed interface Account {
@@ -92,6 +105,7 @@ sealed interface Account {
         val paidOutOn: Long = 0,
         val paidOut: Money? = null,
         val debitedOn: Set<String> = emptySet(),
+        val refused: Map<String, String> = emptyMap(),
     ) : Account
 }
 
@@ -121,6 +135,10 @@ sealed interface AccountError {
     @Serializable
     @SerialName("AccountUnavailable")
     data class Unavailable(val message: String) : AccountError
+
+    @Serializable
+    @SerialName("LegRefusedAgain")
+    data class LegRefused(val id: String, val reference: String, val message: String) : AccountError
 }
 
 @Serializable

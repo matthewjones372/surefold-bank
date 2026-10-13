@@ -26,18 +26,18 @@ schedules with late messages; on a node it needs only an answer slower than the 
 A refused debit or credit writes an event, and the account answers every copy of that leg with the same refusal.
 
 ```kotlin
-data class LegRefused(val transfer: TransferId, val leg: Leg, val error: AccountError, override val atMillis: Long) :
+data class LegRefused(val transfer: TransferId, val leg: Leg, val reason: String, override val atMillis: Long) :
     AccountEvent { override val reference get() = "${leg.prefix}:$transfer" }   // "debit:t-4", as Debited's
 
-// Account.decide: a leg refused before answers with what it said then, writing nothing
-account.decide(id, Debit(t4, gbp(22_56)), now)   // Left(InsufficientFunds(...)), and LegRefused written
-account.decide(id, Debit(t4, gbp(22_56)), now)   // Left(InsufficientFunds(...)) again, nothing written
+// first:  Left(InsufficientFunds(...)), and LegRefused written with its message
+// retry:  Left(AccountError.LegRefused("cy", "debit:t-4", <the same message>)), nothing written
 ```
 
-- `Account.Open.refused: Map<String, AccountError>` holds refusals by leg reference until `LegsClosed` drops them,
-  as `legs` holds applied ones. A refused reference counts as open, so the saga's `Close` writes `LegsClosed`.
-- The account actor persists `LegRefused` and then answers `Left` with its error, so the first answer and every
-  repeat are the same.
+- `Account.Open.refused: Map<String, String>` holds each refusal's message by leg reference until `LegsClosed` drops
+  them, as `legs` holds applied ones. A refused reference counts as open, so the saga's `Close` writes `LegsClosed`.
+- A retry is answered `AccountError.LegRefused`, whose message is the first refusal's, so the saga writes the same
+  `Rejected` or `CreditRefused` reason whichever copy it hears. The wire carries an error only as a message of its
+  own, never inside an event or a snapshot, so the event keeps the message rather than the typed error.
 - `LegRefused` goes through the journal codec, the wire contract and the events topic's `account.proto` as the other
   leg events do. The read models ignore it: it moves no money.
 
@@ -69,8 +69,6 @@ Nothing. Lark spec 0128 (merged) is what found it.
 
 ## Open questions
 
-- Keep the refusal's full `AccountError` in the event, or only its message? Recommended: the error, so a repeat's
-  answer is typed exactly like the first; it needs the error in the codec, which `Wire.kt` already has.
 - Should a refused `Refund` be kept too? Recommended: no, a refund to the source cannot be refused for funds or the
   daily limit; it can only fail on currency or amount, which no retry changes.
 - Does the events topic need `LegRefused` at all? Recommended: yes, with consumers free to skip it, so the topic stays

@@ -7,9 +7,10 @@ import bank.domain.AccountError
 import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.Balance
+import bank.domain.Leg
 import bank.domain.Money
-import bank.domain.TransferEvent
 import bank.domain.TransferError
+import bank.domain.TransferEvent
 import bank.domain.TransferId
 import bank.domain.TransferStatus
 import bank.domain.TransferView
@@ -38,6 +39,7 @@ class RoundTripSpec {
             AccountEvent.Credited(t, gbp(7), 5),
             AccountEvent.Refunded(t, gbp(7), 6),
             AccountEvent.LegsClosed(t, 7),
+            AccountEvent.LegRefused(t, Leg.Debit, "Account a has 0.00 GBP, not 7.00 GBP", 8),
         )
         events.map { AccountEvents.decode(AccountEvents.encode(it)) } shouldBe events
     }
@@ -57,7 +59,8 @@ class RoundTripSpec {
 
     @Test
     fun `an account's snapshot is the account`() {
-        val open = Account.Open("ada", gbp(42), listOf("a", "b"), setOf("debit:t-1"))
+        val open =
+            Account.Open("ada", gbp(42), listOf("a", "b"), setOf("debit:t-1"), refused = mapOf("credit:t-2" to "no"))
         AccountStates.decode(AccountStates.encode(open)) shouldBe open
         AccountStates.decode(AccountStates.encode(Account.Unopened)) shouldBe Account.Unopened
     }
@@ -98,6 +101,7 @@ class RoundTripSpec {
             Either.Left(AccountError.InvalidAmount(gbp(-1))),
             Either.Left(AccountError.CurrencyMismatch("a", "GBP", "BTC")),
             Either.Left(Unavailable("slow")),
+            Either.Left(AccountError.LegRefused("a", "debit:t-1", "Account a has 1.00 GBP, not 2.00 GBP")),
         )
         accountAnswers.map { AccountAnswers.roundTrip(it) } shouldBe accountAnswers
 

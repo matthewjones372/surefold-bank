@@ -6,6 +6,7 @@ import arrow.core.raise.ensureNotNull
 import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.Currencies
+import bank.domain.Leg
 import bank.domain.Money
 import bank.domain.ScreeningOutcome
 import bank.domain.TransferEvent
@@ -17,6 +18,7 @@ import bank.events.v1.CreditRefused
 import bank.events.v1.Debited
 import bank.events.v1.Deposited
 import bank.events.v1.DestinationCredited
+import bank.events.v1.LegRefused
 import bank.events.v1.LegsClosed
 import bank.events.v1.Money as MoneyRecord
 import bank.events.v1.Opened
@@ -48,6 +50,9 @@ fun AccountEvent.toContract(account: AccountId, sequence: Long): AccountRecord {
         is AccountEvent.Credited -> record.setCredited(Credited.newBuilder().setTransferId(transfer.value).setAmount(amount.toContract()))
         is AccountEvent.Refunded -> record.setRefunded(Refunded.newBuilder().setTransferId(transfer.value).setAmount(amount.toContract()))
         is AccountEvent.LegsClosed -> record.setLegsClosed(LegsClosed.newBuilder().setTransferId(transfer.value))
+        is AccountEvent.LegRefused -> record.setLegRefused(
+            LegRefused.newBuilder().setTransferId(transfer.value).setLeg(leg.name.lowercase()).setReason(reason),
+        )
     }
     return record.build()
 }
@@ -110,6 +115,8 @@ fun AccountRecord.fromContract(currencies: Currencies): Either<ContractError, Fr
         AccountCase.CREDITED -> AccountEvent.Credited(TransferId(credited.transferId), money(credited.amount, currencies), atMillis)
         AccountCase.REFUNDED -> AccountEvent.Refunded(TransferId(refunded.transferId), money(refunded.amount, currencies), atMillis)
         AccountCase.LEGS_CLOSED -> AccountEvent.LegsClosed(TransferId(legsClosed.transferId), atMillis)
+        AccountCase.LEG_REFUSED -> Leg.entries.firstOrNull { it.prefix == legRefused.leg }
+            ?.let { AccountEvent.LegRefused(TransferId(legRefused.transferId), it, legRefused.reason, atMillis) }
         AccountCase.EVENT_NOT_SET, null -> null
     }
     FromContract(accountId, sequence, ensureNotNull(event) { ContractError.Unknown(accountId, sequence) })
