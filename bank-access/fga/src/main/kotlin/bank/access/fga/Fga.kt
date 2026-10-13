@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import java.io.IOException
 import java.net.URI
+import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.Instant
 
@@ -40,7 +42,8 @@ class Fga(
 
     /** Found once, by name: the store the access-model Job makes. */
     val storeId: String by lazy {
-        stores(url, token, http, timeout, carried())[store] ?: throw FgaUnavailable("OpenFGA has no store named $store")
+        storeNamed(url, token, http, timeout, store, carried())
+            ?: throw FgaUnavailable("OpenFGA has no store named $store")
     }
 
     /** Whether [user] has [relation] to [obj] at [now], which is what a grant's expiry is weighed against. */
@@ -120,26 +123,33 @@ class Fga(
         fun create(url: String, token: String, store: String, modelJson: String) {
             val http = HttpClient.newHttpClient()
             val timeout = Duration.ofSeconds(10)
-            val id = stores(url, token, http, timeout)[store]
+            val id = storeNamed(url, token, http, timeout, store)
                 ?: send(http, url, token, timeout, "POST", "/stores", json.createObjectNode().put("name", store)).path("id").asText()
             send(http, url, token, timeout, "POST", "/stores/$id/authorization-models", json.readTree(modelJson))
         }
 
-        private fun stores(
+        /**
+         * The id of the store named [store], asked for by name: one request however many stores the server holds, since
+         * the first check makes it within its own budget.
+         */
+        private fun storeNamed(
             url: String,
             token: String,
             http: HttpClient,
             timeout: Duration,
+            store: String,
             headers: Map<String, String> = emptyMap(),
-        ): Map<String, String> {
-            val found = mutableMapOf<String, String>()
+        ): String? {
+            val name = URLEncoder.encode(store, StandardCharsets.UTF_8)
             var continuation = ""
             do {
-                val page = send(http, url, token, timeout, "GET", "/stores?page_size=100&continuation_token=$continuation", null, headers)
-                page.path("stores").forEach { found.putIfAbsent(it.path("name").asText(), it.path("id").asText()) }
+                val path = "/stores?name=$name&page_size=100&continuation_token=$continuation"
+                val page = send(http, url, token, timeout, "GET", path, null, headers)
+                val found = page.path("stores").firstOrNull { it.path("name").asText() == store }
+                if (found != null) return found.path("id").asText()
                 continuation = page.path("continuation_token").asText("")
             } while (continuation.isNotEmpty())
-            return found
+            return null
         }
 
         private fun send(
