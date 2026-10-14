@@ -70,6 +70,10 @@ and crash-recovery is left to the cluster specs.
       run in under 10 seconds, conserving money with each leg applied once.
 - [ ] **`mutate-app-fast`** — Pitest in `app` with target tests limited to the in-memory specs. Done when: a check
       touching `Transfers.kt` mutates it in under a minute and kills at least 80% of its mutants.
+      The specs are in: screening, the account actor, its bulk credits and the saga's counters, in memory. Pitest
+      with them targets `TransfersKt` and `AccountsKt`: 39 seconds, 81% killed (72 of 89). The change to
+      `build.gradle.kts` that turns it on is the owner's, being build configuration; the entry is ticked once it is
+      in. What survives returns null from a lambda whose value is unused, or needs a full mailbox.
 - [ ] **`trim-cluster-specs`** — cluster specs keep only what needs a cluster. Done when: lark-bank's unit run is at
       most half today's five minutes, and no behaviour lost its last test.
 
@@ -79,6 +83,15 @@ and crash-recovery is left to the cluster specs.
 ./gradlew :app:test --tests 'bank.app.memory.*' :app:pitest   # in memory, mutation-tested
 ./gradlew build                                              # everything, cluster specs included
 ```
+
+## Settled while building
+
+- **Nine in-memory specs had stopped running.** `inMemory` became generic with `bank-properties`, so a spec written
+  `= inMemory { ... }` returned its last value, and JUnit skips a `@Test` that returns one, saying only a warning.
+  `inMemory` returns `Unit` again, `inMemoryOf` returns a value, and `app`'s `junit-platform.properties` makes such a
+  warning fail the run.
+- **The property spec is left out of mutation.** It runs in the build; under Pitest it would run again for every
+  mutant, and the example specs kill the same mutants without it.
 
 ## Open questions
 
