@@ -1,11 +1,14 @@
 package bank.app
 
 import bank.domain.AccountId
+import bank.domain.ScreeningDecision
+import bank.domain.ScreeningOutcome
 import bank.domain.Step
 import bank.domain.TransferId
 import bank.domain.TransferStatus
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.sun.net.httpserver.HttpServer
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
@@ -18,6 +21,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -120,6 +124,38 @@ class ScreeningSpec {
             }
             val answers = calls.map { it.get(30, TimeUnit.SECONDS) }
             answers.filter { it.isLeft() } shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `the check's approval and its decline are read with the rule, version and evidence it gave`() {
+        StubCheck(declineFrom = BigDecimal("500.00")).use { check ->
+            val screener = PelicanScreener(check.url, 5.seconds)
+            fun screened(amount: Long) = screener.screen(
+                TransferId("scr-read-$run-$amount"),
+                Step.Screen(from, to, gbp(amount), requestedAt = 1),
+            )
+
+            screened(10_000).shouldBeRight() shouldBe
+                ScreeningDecision(ScreeningOutcome.Approved, null, null, "no rule held")
+            screened(60_000).shouldBeRight() shouldBe
+                ScreeningDecision(ScreeningOutcome.Declined, "large-transfer", 3, "amount >= 500.00")
+        }
+    }
+
+    @Test
+    fun `a check that is down, or slower than the timeout, gives no decision, for the bank's policy to decide`() {
+        val down = StubCheck(declineFrom = BigDecimal.ZERO).apply { close() }
+        PelicanScreener(down.url, 1.seconds)
+            .screen(TransferId("scr-down-$run"), Step.Screen(from, to, gbp(1_000), requestedAt = 1))
+            .shouldBeLeft().why.isNotBlank() shouldBe true
+
+        val never = CountDownLatch(1)
+        StubCheck(declineFrom = BigDecimal("500.00"), hold = never).use { check ->
+            PelicanScreener(check.url, 300.milliseconds)
+                .screen(TransferId("scr-slow-$run"), Step.Screen(from, to, gbp(1_000), requestedAt = 1))
+                .shouldBeLeft().why.isNotBlank() shouldBe true
+            never.countDown()
         }
     }
 
