@@ -49,7 +49,19 @@ private val NOON: Instant = Instant.parse("2026-10-10T12:00:00Z")
  * with an in-memory journal: no cluster, no Postgres, no threads (bank spec 0028). [order] and [faults] are Lark's
  * (Lark spec 0128): a seeded order, and messages between actors lost, doubled, delayed or crashing their receiver.
  */
-fun <A> inMemory(
+fun inMemory(
+    legTimeout: Duration = 1.seconds,
+    order: Ordering = Ordering.Told,
+    faults: Faults = Faults(),
+    block: InMemoryBank.() -> Unit,
+) {
+    // Unit, so a spec written `= inMemory { ... }` is a void @Test, which JUnit runs: one returning its last value
+    // is skipped. A spec that wants a value back asks [inMemoryOf].
+    inMemoryOf(legTimeout, order, faults, block)
+}
+
+/** As [inMemory], answering what [block] does: for a spec that runs many and looks at each. */
+fun <A> inMemoryOf(
     legTimeout: Duration = 1.seconds,
     order: Ordering = Ordering.Told,
     faults: Faults = Faults(),

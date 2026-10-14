@@ -42,13 +42,13 @@ private fun List<Money>.total(): Money = fold(gbp(0)) { sum, amount -> sum + amo
 
 /**
  * Bank spec 0028's properties, each over many seeded schedules of the shipped account and transfer behaviours. A
- * failure names its seeds, and `inMemory(order = Ordering.seeded(seed), faults = UNKIND)` replays one exactly.
+ * failure names its seeds, and `inMemoryOf(order = Ordering.seeded(seed), faults = UNKIND)` replays one exactly.
  */
 class BankPropertiesSpec {
     @Test
     fun `across 1,000 unkind schedules money is conserved, every transfer settles and each leg applies once`() {
         val broken = (1L..1_000L)
-            .associateWith { seed -> inMemory(order = Ordering.seeded(seed), faults = UNKIND) { brokenUnder(seed) } }
+            .associateWith { seed -> inMemoryOf(order = Ordering.seeded(seed), faults = UNKIND) { brokenUnder(seed) } }
             .filterValues { it.isNotEmpty() }
         broken shouldBe emptyMap()
     }
