@@ -89,29 +89,6 @@ class ScreeningSpec {
         eventually { bank.transferStatus(transfer).getOrNull()?.status in setOf(TransferStatus.Completed, TransferStatus.Rejected) }
 
     @Test
-    fun `an approved transfer moves, and a declined one is rejected with the rule as its reason and moves nothing`() {
-        StubCheck(declineFrom = BigDecimal("500.00")).use { check ->
-            TestCluster(1, extra = check.config()).running { (node) ->
-                node.opened()
-                val small = TransferId("scr-small-$run")
-                val large = TransferId("scr-large-$run")
-                node.bank.transfer(small, from, to, gbp(10_000))
-                node.bank.transfer(large, from, to, gbp(60_000))
-                node.settled(small) shouldBe true
-                node.settled(large) shouldBe true
-
-                node.bank.transferStatus(small).getOrNull()?.status shouldBe TransferStatus.Completed
-                val declined = node.bank.transferStatus(large).shouldBeRight()
-                declined.status shouldBe TransferStatus.Rejected
-                declined.reason shouldBe "Declined by large-transfer, version 3"
-                node.bank.balance(from).shouldBeRight().balance shouldBe gbp(90_000)
-                node.bank.balance(to).shouldBeRight().balance shouldBe gbp(10_000)
-                check.asked.keys shouldBe setOf(small.value, large.value)
-            }
-        }
-    }
-
-    @Test
     fun `two hundred transfers screened at once each get the check's answer, not the policy's`() {
         StubCheck(declineFrom = BigDecimal("500.00"), delayMillis = 50).use { check ->
             val screener = PelicanScreener(check.url, 5.seconds)
@@ -156,36 +133,6 @@ class ScreeningSpec {
                 .screen(TransferId("scr-slow-$run"), Step.Screen(from, to, gbp(1_000), requestedAt = 1))
                 .shouldBeLeft().why.isNotBlank() shouldBe true
             never.countDown()
-        }
-    }
-
-    @Test
-    fun `a check that does not answer in time leaves it to the bank's policy`() {
-        val never = CountDownLatch(1)
-        StubCheck(declineFrom = BigDecimal("500.00"), hold = never).use { check ->
-            TestCluster(1, extra = check.config(whenUnanswered = "decline")).running { (node) ->
-                node.opened()
-                val transfer = TransferId("scr-slow-$run")
-                node.bank.transfer(transfer, from, to, gbp(1_000))
-                node.settled(transfer) shouldBe true
-                val view = node.bank.transferStatus(transfer).shouldBeRight()
-                view.status shouldBe TransferStatus.Rejected
-                view.reason shouldBe "Declined: the check did not answer in time"
-                node.bank.balance(from).shouldBeRight().balance shouldBe gbp(100_000)
-            }
-            never.countDown()
-        }
-    }
-
-    @Test
-    fun `approving when unanswered, a transfer moves though the check is down`() {
-        val down = StubCheck(declineFrom = BigDecimal.ZERO).apply { close() }
-        TestCluster(1, extra = down.config(whenUnanswered = "approve")).running { (node) ->
-            node.opened()
-            val transfer = TransferId("scr-down-$run")
-            node.bank.transfer(transfer, from, to, gbp(1_000))
-            node.settled(transfer) shouldBe true
-            node.bank.transferStatus(transfer).shouldBeRight().status shouldBe TransferStatus.Completed
         }
     }
 

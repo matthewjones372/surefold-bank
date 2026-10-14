@@ -76,6 +76,10 @@ and crash-recovery is left to the cluster specs.
       in. What survives returns null from a lambda whose value is unused, or needs a full mailbox.
 - [ ] **`trim-cluster-specs`** — cluster specs keep only what needs a cluster. Done when: lark-bank's unit run is at
       most half today's five minutes, and no behaviour lost its last test.
+      Every cluster case is sorted below. Three screening cases are gone, about 4 of `app`'s 274 seconds on CI; no
+      other case is a saga decision alone. What is left of the five minutes is starting nodes, containers and
+      Chromium for what only they show, one class after another: halving it means running the classes in parallel
+      or starting nodes faster, which is build configuration and test setup, the owner's.
 
 ## Acceptance
 
@@ -92,6 +96,40 @@ and crash-recovery is left to the cluster specs.
   warning fail the run.
 - **The property spec is left out of mutation.** It runs in the build; under Pitest it would run again for every
   mutant, and the example specs kill the same mutants without it.
+
+## The cluster specs, case by case
+
+`app`'s specs outside `memory`, on CI's run of `main` before the trim: 55 cases in 28 classes, 274 seconds, nearly
+all of it in the classes that start nodes. Each case is kept for what only a cluster shows, or is gone with the
+specs that now hold its behaviour.
+
+**Gone, held in memory** (each removal's commit names the same):
+
+| Cluster case (`bank.app.ScreeningSpec`) | Now held by |
+|---|---|
+| an approved transfer moves, and a declined one is rejected with the rule as its reason and moves nothing | `memory.ScreeningSpec`: an approved transfer is screened once, then debited and credited; a declined transfer is rejected with the rule that declined it, and nothing moves. `ScreeningSpec`: the check's approval and its decline are read with the rule, version and evidence it gave |
+| a check that does not answer in time leaves it to the bank's policy | `memory.ScreeningSpec`: a check slower than the timeout is decided by the policy, and its late answer changes nothing. `ScreeningSpec`: a check that is down, or slower than the timeout, gives no decision |
+| approving when unanswered, a transfer moves though the check is down | `memory.ScreeningSpec`: a check with no decision is decided at once by the bank's policy. `ScreeningSpec`: a check that is down, or slower than the timeout, gives no decision |
+
+The two `ScreeningSpec` cases named call `PelicanScreener` against the stub check with no node; screening's
+settings reach a node through the cases kept, which run with it on.
+
+**Kept, needing a cluster:**
+
+- Sharding, journals and nodes: `ConservationSpec` (three nodes, two journal databases; the money properties also
+  hold in `BankPropertiesSpec`, without sharding), `LeavingSpec` (a node leaves mid-run), `SweeperSpec` (a saga only
+  the journal knows of, found through the read models), `ScreeningSpec`'s saga stopped mid-screening and screening
+  again on a new node, `ReadModelsSpec` (the read models' SQL on Postgres), `DbRolesSpec` (row-level security).
+- HTTP and pages: `ApiSpec` (its retries, id reuse and cross-currency refund are `SecondStartSpec`'s and
+  `SettlingSpec`'s decisions, kept for the contract's errors, currencies and metrics), `DailyLimitApiSpec` (its
+  transfer half is `TransferDailyLimitSpec`'s, kept for `DailyLimitExceeded` and the opening limit over HTTP),
+  `CallerTableSpec`, `PagesSpec`, `AccountPageSpec`, `TransferPageSpec`.
+- Who may see what: `AccessAuditSpec`, `AccessLogSpec`, `ActAsSpec`, `GrantsSpec`, `ShadowSpec`.
+- Publishing, ops, logs and traces: `PublishingSpec`, `OpsSpec`, `LogJsonSpec`, `ExemplarsSpec`, `TraceActorsSpec`,
+  `TraceEventsSpec`, `TraceExportSpec`, `ScreeningSpec`'s trace to the check.
+
+**Kept, starting no cluster** (under a second each): `ShardedBankSpec`, `LegRefusedReadSpec`, `LevelFileSpec`,
+`TraceCallsSpec`, `OpsSpec`'s p99, and `ScreeningSpec`'s three cases on `PelicanScreener` alone.
 
 ## Open questions
 
