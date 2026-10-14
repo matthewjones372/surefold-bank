@@ -54,8 +54,13 @@ jobs:
       - uses: cachix/install-nix-action@v31
       # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
       # doesn't fail the job and a warm job skips the downloads.
+      # On main, what this build resolved is written as a dependency graph for the dependency-graph job to submit
+      # (GitHub can't read build.gradle.kts itself). Generating needs no write token, so this job, which runs the
+      # change's own build, keeps a read-only one.
       - uses: gradle/actions/setup-gradle@v4
-        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
+        with:
+          cache-read-only: "${{ github.ref != 'refs/heads/main' }}"
+          dependency-graph: "${{ github.event_name == 'push' && 'generate' || 'disabled' }}"
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
@@ -156,8 +161,13 @@ jobs:
       - uses: cachix/install-nix-action@v31
       # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
       # doesn't fail the job and a warm job skips the downloads.
+      # On main, what this build resolved is written as a dependency graph for the dependency-graph job to submit
+      # (GitHub can't read build.gradle.kts itself). Generating needs no write token, so this job, which runs the
+      # change's own build, keeps a read-only one.
       - uses: gradle/actions/setup-gradle@v4
-        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
+        with:
+          cache-read-only: "${{ github.ref != 'refs/heads/main' }}"
+          dependency-graph: "${{ github.event_name == 'push' && 'generate' || 'disabled' }}"
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
@@ -207,8 +217,13 @@ jobs:
       - uses: cachix/install-nix-action@v31
       # Gradle's downloads (plugins, dependencies, the distribution) kept between runs, so a repository's hiccup
       # doesn't fail the job and a warm job skips the downloads.
+      # On main, what this build resolved is written as a dependency graph for the dependency-graph job to submit
+      # (GitHub can't read build.gradle.kts itself). Generating needs no write token, so this job, which runs the
+      # change's own build, keeps a read-only one.
       - uses: gradle/actions/setup-gradle@v4
-        with: { cache-read-only: "${{ github.ref != 'refs/heads/main' }}" }
+        with:
+          cache-read-only: "${{ github.ref != 'refs/heads/main' }}"
+          dependency-graph: "${{ github.event_name == 'push' && 'generate' || 'disabled' }}"
       - name: The model's tests
         working-directory: bank-access
         run: nix flake check --print-build-logs
@@ -240,3 +255,15 @@ jobs:
           path: ${{ runner.temp }}/gauntlet-reports
           if-no-files-found: ignore
           retention-days: 7
+
+  # Submits the dependency graphs the builds wrote, so Dependabot alerts cover the Gradle builds. Only on a push to
+  # main, and it runs none of the repository's code: it downloads the graph files and submits them, so the write token
+  # it needs never reaches a build.
+  dependency-graph:
+    needs: [lark-bank, bank-approvals, bank-access]
+    if: github.event_name == 'push' && !cancelled()
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: gradle/actions/dependency-submission@v4
+        with: { dependency-graph: download-and-submit }
