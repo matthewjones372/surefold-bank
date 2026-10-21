@@ -24,7 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 /** Bank spec 0024's `trace-calls`, the bank's calls not made through Pelican: bank-access's, from the shadow's thread. */
 class TraceCallsSpec {
     private val tracer = OpenTelemetrySdk.builder()
-        .setTracerProvider(SdkTracerProvider.builder().build())
+        .setTracerProvider(SdkTracerProvider.builder().addSpanProcessor(Unexported).build())
         .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
         .build()
         .getTracer("test")

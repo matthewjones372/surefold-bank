@@ -45,7 +45,11 @@ import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
+import io.opentelemetry.context.Context
+import io.opentelemetry.sdk.trace.ReadWriteSpan
+import io.opentelemetry.sdk.trace.ReadableSpan
 import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
 import liquibase.Scope
@@ -141,6 +145,8 @@ private fun telemetry(settings: TelemetrySettings, web: WebSettings): OpenTeleme
             if (settings.enabled) {
                 val exporter = OtlpHttpSpanExporter.builder().setEndpoint(settings.otlp.trimEnd('/') + "/v1/traces").build()
                 addSpanProcessor(BatchSpanProcessor.builder(exporter).build())
+            } else {
+                addSpanProcessor(Unexported)
             }
         }
         .build()
@@ -148,6 +154,17 @@ private fun telemetry(settings: TelemetrySettings, web: WebSettings): OpenTeleme
         .setTracerProvider(tracing)
         .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
         .build()
+}
+
+/**
+ * Spans kept and sent nowhere. OpenTelemetry 1.67 hands out a no-op tracer when no processor is registered, and
+ * a no-op span carries no `traceparent` in or out: with export off Approvals still continues every caller's trace.
+ */
+private object Unexported : SpanProcessor {
+    override fun onStart(parentContext: Context, span: ReadWriteSpan) = Unit
+    override fun isStartRequired(): Boolean = false
+    override fun onEnd(span: ReadableSpan) = Unit
+    override fun isEndRequired(): Boolean = false
 }
 
 private val SERVICE_NAME = AttributeKey.stringKey("service.name")

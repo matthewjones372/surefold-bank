@@ -93,7 +93,11 @@ import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter
 import io.opentelemetry.sdk.resources.Resource
+import io.opentelemetry.context.Context
+import io.opentelemetry.sdk.trace.ReadWriteSpan
+import io.opentelemetry.sdk.trace.ReadableSpan
 import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -209,6 +213,17 @@ private val telemetry: Module =
         single { sdk: OpenTelemetrySdk -> sdk.getTracer("lark-bank") }.boundTo<Tracer>() +
         single { registry: PrometheusMeterRegistry, sdk: OpenTelemetrySdk -> Watched(registry, sdk) }
 
+/**
+ * Spans kept and sent nowhere. OpenTelemetry 1.67 hands out a no-op tracer when no processor is registered, and
+ * a no-op span carries no `traceparent` in or out: with export off the bank still continues every caller's trace.
+ */
+object Unexported : SpanProcessor {
+    override fun onStart(parentContext: Context, span: ReadWriteSpan) = Unit
+    override fun isStartRequired(): Boolean = false
+    override fun onEnd(span: ReadableSpan) = Unit
+    override fun isEndRequired(): Boolean = false
+}
+
 /** The meters and the spans, as one for the API, which takes both. */
 class Watched(val registry: PrometheusMeterRegistry, val sdk: OpenTelemetrySdk)
 
@@ -227,6 +242,8 @@ private fun openTelemetry(settings: TelemetrySettings, node: NodeSettings): Open
             if (settings.enabled) {
                 val exporter = OtlpHttpSpanExporter.builder().setEndpoint(settings.otlp.trimEnd('/') + "/v1/traces").build()
                 addSpanProcessor(BatchSpanProcessor.builder(exporter).build())
+            } else {
+                addSpanProcessor(Unexported)
             }
         }
         .build()
