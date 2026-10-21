@@ -1,10 +1,7 @@
 val pelicanVersion: String = providers.gradleProperty("pelicanVersion").get()
-val larkVersion: String = providers.gradleProperty("larkVersion").get()
 
 dependencies {
     api(project(":domain"))
-    // The ops stream is a lark Stream, read by Jetty as a Sequence.
-    api("io.github.matthewjones372:lark-stream:$larkVersion")
     api("io.github.matthewjones372:pelican-jetty:$pelicanVersion")
     api("io.github.matthewjones372:pelican-jackson:$pelicanVersion")
     api("io.github.matthewjones372:pelican-jetty-docs:$pelicanVersion")

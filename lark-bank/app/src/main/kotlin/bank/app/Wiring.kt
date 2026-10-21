@@ -410,7 +410,7 @@ private val web: Module =
                 val behind = Behind(persistence.offsets, side.settings.partitions)
                 val gauges = bookGauges(currencies, reads, persistence.heads, behind, readers, side.backend)
                 val publishing = opsPublisher(NodeMeter(node.name, cluster), topic, side.backend)
-                LiveOps(node.name, latest, views, reads, persistence.heads, behind, readers, listOf(gauges, publishing))
+                LiveOps(node.name, latest, views, reads, persistence.heads, behind, readers, listOf(gauges, publishing), side.backend)
             }) { ops, _ -> ops.close() }
         } +
         single { settings: IdentitySettings, rules: Rules, looks: JdbcAccessLog, grants: JdbcGrants, _: AccessPublishing,
@@ -418,10 +418,10 @@ private val web: Module =
             Callers(signing(settings), rules, looks, grants, FgaAudit.of(shadow, grants, reads))
         } +
         single { bank: Bank, currencies: Currencies, reads: JdbcReadModels, payrolls: Payrolls, views: ClusterViews,
-            health: HealthRegistry, watched: Watched, ops: LiveOps, callers: Callers, streams: StreamBackend ->
+            health: HealthRegistry, watched: Watched, ops: LiveOps, callers: Callers ->
             bankApi(
                 bank, currencies, reads, payrolls, views::current, { asked(health) }, { watched.registry.scrape(OPENMETRICS) }, watched.registry,
-                ops::current, streams, callers.signIn, rules = callers.rules, looks = callers.looks, grants = callers.grants,
+                ops::watch, callers.signIn, rules = callers.rules, looks = callers.looks, grants = callers.grants,
                 audit = callers.audit, telemetry = watched.sdk,
             )
         } +

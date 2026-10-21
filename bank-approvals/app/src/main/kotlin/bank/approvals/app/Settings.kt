@@ -76,13 +76,13 @@ val settings: Module =
             EntitySettings(int("shards"), duration("passivateAfter"), duration("askTimeout"), duration("applyEvery"))
         } +
         config<DatabaseSettings>("approvals.database") {
-            DatabaseSettings(string("url"), string("user"), string("password"), int("poolSize"))
+            DatabaseSettings(string("url"), string("user"), secret("password").reveal(), int("poolSize"))
         } +
         config<PolicySettings>("approvals") { PolicySettings(string("policies")) } +
         config<KafkaSettings>("approvals.kafka") {
             KafkaSettings(
                 string("bootstrap"), string("registry"), int("replication").toShort(), int("publishers"), duration("every"),
-                string("username").ifEmpty { null }, string("password").ifEmpty { null },
+                string("username").ifEmpty { null }, secret("password").reveal().ifEmpty { null },
             )
         } +
         config<AuditSettings>("approvals.audit") { AuditSettings(duration("digestEvery")) } +

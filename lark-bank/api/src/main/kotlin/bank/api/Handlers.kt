@@ -21,11 +21,6 @@ import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.metrics.metrics
 import io.github.matthewjones372.pelican.metrics.otel.openTelemetry
 import io.github.matthewjones372.pelican.ok
-import io.github.matthewjones372.lark.stream.Stream
-import io.github.matthewjones372.lark.stream.StreamBackend
-import io.github.matthewjones372.lark.stream.mapPar
-import io.github.matthewjones372.lark.stream.tick
-import io.github.matthewjones372.lark.stream.toSequence
 import io.github.matthewjones372.pelican.jetty.bytesNow
 import io.github.matthewjones372.pelican.jetty.handledNow
 import io.github.matthewjones372.pelican.jetty.handledOrFail
@@ -33,8 +28,6 @@ import io.github.matthewjones372.pelican.jetty.streamedNow
 import io.opentelemetry.api.OpenTelemetry
 import io.micrometer.core.instrument.MeterRegistry
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * What the read models answer. The app answers from Postgres; a test from a list. What a customer's request reads is
@@ -82,8 +75,7 @@ fun bankApi(
     healthy: () -> Healthy,
     scrape: () -> String,
     registry: MeterRegistry,
-    ops: () -> OpsSnapshot,
-    streams: StreamBackend,
+    ops: () -> Sequence<OpsSnapshot>,
     signIn: Signing,
     owners: Owners = Owners(bank),
     rules: Rules = Rules(),
@@ -255,10 +247,9 @@ fun bankApi(
             healthy().let { now -> if (now.ready) ok(now) else notReady(NotReady(now.failing)) }
         },
         metrics bytesNow { sequenceOf(scrape().toByteArray()) },
-        // One snapshot a second, each built on a virtual thread: it asks the read models, which block.
         opsStream streamedNow {
             if (!rules.canSeeOps(this[caller])) throw ApiException(403, "The ops view is for ops")
-            Stream.tick(every = 1.seconds, element = Unit, after = Duration.ZERO).mapPar(1) { ops() }.toSequence(streams)
+            ops()
         },
     ) + signIn.endpoints,
     codecs = JacksonCodecs,
