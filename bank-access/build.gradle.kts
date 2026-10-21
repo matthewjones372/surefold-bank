@@ -23,6 +23,8 @@ subprojects {
     extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
         buildUponDefaultConfig.set(true)
         ignoreFailures.set(true)
+        // `-Pdetekt.autoCorrect=true` lets the ktlint rules rewrite the layout they report.
+        autoCorrect.set(providers.gradleProperty("detekt.autoCorrect").map(String::toBoolean).orElse(false))
     }
 
     repositories {
@@ -36,6 +38,7 @@ subprojects {
     }
 
     dependencies {
+        "detektPlugins"("dev.detekt:detekt-rules-ktlint-wrapper:2.0.0-alpha.6")
         "testImplementation"(kotlin("test"))
         "testImplementation"("org.junit.jupiter:junit-jupiter:6.1.3")
         "testImplementation"("io.kotest:kotest-assertions-core:6.2.4")
