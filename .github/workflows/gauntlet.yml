@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GAUNTLET_URL: "https://github.com/matthewjones372/gauntlet/releases/download/v0.1.0-rc.34/gauntlet-linux-x64"
+  GAUNTLET_URL: "https://github.com/matthewjones372/gauntlet/releases/download/v0.1.0-rc.36/gauntlet-linux-x64"
 
 jobs:
   evidence:
@@ -51,7 +51,7 @@ jobs:
           sha="$EVENT_BASE"
           if [ "$ACTION" = reopened ]; then sha=$(git rev-parse "refs/remotes/origin/$BASE_REF"); fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
-      - name: Install Gauntlet 0.1.0-rc.34
+      - name: Install Gauntlet 0.1.0-rc.36
         run: |
           curl -fsSL "$GAUNTLET_URL" -o "$RUNNER_TEMP/gauntlet"
           curl -fsSL "$(dirname "$GAUNTLET_URL")/checksums.txt" | grep " gauntlet-linux-x64$" | sed "s#gauntlet-linux-x64#$RUNNER_TEMP/gauntlet#" | sha256sum -c -
@@ -155,7 +155,7 @@ jobs:
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: echo "BASE=$(git rev-parse "refs/remotes/origin/$BASE_REF")" >> "$GITHUB_ENV"
-      - name: Install Gauntlet 0.1.0-rc.34
+      - name: Install Gauntlet 0.1.0-rc.36
         run: |
           curl -fsSL "$GAUNTLET_URL" -o "$RUNNER_TEMP/gauntlet"
           curl -fsSL "$(dirname "$GAUNTLET_URL")/checksums.txt" | grep " gauntlet-linux-x64$" | sed "s#gauntlet-linux-x64#$RUNNER_TEMP/gauntlet#" | sha256sum -c -
@@ -251,11 +251,11 @@ jobs:
           else
             gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" > /dev/null
           fi
-          gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" \
-            -f name=gauntlet -f head_sha="$HEAD" -f status=completed \
-            -f conclusion="$(jq -r .conclusion gauntlet-out/status.json)" \
-            -f "output[title]=$(jq -r .title gauntlet-out/status.json)" \
-            -f "output[summary]=$(jq -r .summary gauntlet-out/status.json)" > /dev/null
+          # Findings on the change's lines (surviving mutants, new lint findings) go on the diff as annotations.
+          # GitHub refuses the whole request over one annotation it can't place, and the check matters more.
+          check=$(jq --arg sha "$HEAD" '{name: "gauntlet", head_sha: $sha, status: "completed", conclusion, output: {title, summary, annotations: (.annotations // [])}}' gauntlet-out/status.json)
+          post_check() { gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" --input - > /dev/null; }
+          post_check <<< "$check" || jq '.output.annotations = []' <<< "$check" | post_check
       - name: Approve the pull requests under it
         run: |
           # Approved at the top of a stack: the commit approved contains every pull request under it, and this
