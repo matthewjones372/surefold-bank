@@ -23,7 +23,10 @@ import java.util.concurrent.CopyOnWriteArrayList
 private class Kept : SpanExporter {
     val spans = CopyOnWriteArrayList<SpanData>()
 
-    override fun export(spans: Collection<SpanData>): CompletableResultCode = CompletableResultCode.ofSuccess().also { this.spans += spans }
+    override fun export(spans: Collection<SpanData>): CompletableResultCode = CompletableResultCode.ofSuccess().also {
+        this.spans +=
+            spans
+    }
 
     override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
 
@@ -41,7 +44,11 @@ class TracedSyncSpec {
         val kept = Kept()
         // Never sampled where it starts a trace: what is kept is kept because the publisher's trace was.
         val telemetry = OpenTelemetrySdk.builder()
-            .setTracerProvider(SdkTracerProvider.builder().setSampler(Sampler.parentBased(Sampler.alwaysOff())).addSpanProcessor(SimpleSpanProcessor.create(kept)).build())
+            .setTracerProvider(
+                SdkTracerProvider.builder().setSampler(
+                    Sampler.parentBased(Sampler.alwaysOff()),
+                ).addSpanProcessor(SimpleSpanProcessor.create(kept)).build(),
+            )
             .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
             .build()
         val acc = "traced-$run"
@@ -49,13 +56,23 @@ class TracedSyncSpec {
         val publish = "00f067aa0ba902b7"
         val settings = SyncSettings(
             kafka = KafkaSettings(TestKafka.bootstrap, group = "access-sync-$run"),
-            fgaUrl = TestOpenFga.url, fgaToken = TestOpenFga.KEY, store = fga.store, pocketIdUrl = null, pocketIdKey = null,
+            fgaUrl = TestOpenFga.url,
+            fgaToken = TestOpenFga.KEY,
+            store = fga.store,
+            pocketIdUrl = null,
+            pocketIdKey = null,
         )
         telemetry.use {
             AccessSync(settings, telemetry).use { sync ->
                 sync.start()
-                val opened = AccountEvent.newBuilder().setAccountId(acc).setSequence(1).setAtMillis(System.currentTimeMillis())
-                    .setOpened(Opened.newBuilder().setOwner("ada-$run").setInitial(Money.newBuilder().setCurrency("GBP").setAmount("0.00")).setReference("open:$acc"))
+                val opened = AccountEvent.newBuilder().setAccountId(
+                    acc,
+                ).setSequence(1).setAtMillis(System.currentTimeMillis())
+                    .setOpened(
+                        Opened.newBuilder().setOwner(
+                            "ada-$run",
+                        ).setInitial(Money.newBuilder().setCurrency("GBP").setAmount("0.00")).setReference("open:$acc"),
+                    )
                     .build()
                 TestKafka.send(ACCOUNTS, acc, opened, mapOf("traceparent" to "00-$trace-$publish-01"))
                 TestKafka.send(ACCOUNTS, "untraced-$run", opened.toBuilder().setAccountId("untraced-$run").build())

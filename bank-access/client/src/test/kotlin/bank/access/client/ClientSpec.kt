@@ -37,8 +37,11 @@ object TestKafka {
     /** Every decision on the topic so far keyed [key], once [until] is satisfied or a minute has gone. */
     fun decisions(key: String, until: (List<AccessDecision>) -> Boolean): List<AccessDecision> {
         val properties = mapOf<String, Any>(
-            "bootstrap.servers" to bootstrap, "group.id" to "test-${UUID.randomUUID()}", "auto.offset.reset" to "earliest",
-            "apicurio.registry.url" to registry, "apicurio.registry.serde.read-indexes" to true,
+            "bootstrap.servers" to bootstrap,
+            "group.id" to "test-${UUID.randomUUID()}",
+            "auto.offset.reset" to "earliest",
+            "apicurio.registry.url" to registry,
+            "apicurio.registry.serde.read-indexes" to true,
             "apicurio.registry.serde.read-type-ref" to false,
             "apicurio.registry.deserializer.value.return-class" to AccessDecision::class.java.name,
         )
@@ -115,12 +118,22 @@ class ClientSpec {
 
         // One that answers, but after the budget: refused within it, not after it.
         val slow = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
-            createContext("/") { exchange -> Thread.sleep(2_000); exchange.sendResponseHeaders(200, -1); exchange.close() }
+            createContext(
+                "/",
+            ) { exchange ->
+                Thread.sleep(2_000)
+                exchange.sendResponseHeaders(200, -1)
+                exchange.close()
+            }
             executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()
             start()
         }
         try {
-            val late = Access(Fga("http://127.0.0.1:${slow.address.port}", "any", "bank", Access.BUDGET), Decisions.none, registry)
+            val late = Access(
+                Fga("http://127.0.0.1:${slow.address.port}", "any", "bank", Access.BUDGET),
+                Decisions.none,
+                registry,
+            )
             val started = System.nanoTime()
             late.check(Asker("ada"), Account.viewer, acc).shouldBeInstanceOf<Answer.Unanswered>()
             Duration.ofNanos(System.nanoTime() - started).toMillis() shouldBeLessThan 500
@@ -135,7 +148,11 @@ class ClientSpec {
         KafkaDecisions(DecisionSettings(TestKafka.bootstrap, TestKafka.registry), "test").use { decisions ->
             val access = Access(fga, decisions, SimpleMeterRegistry())
             access.check(Asker("ada"), Account.viewer, acc) shouldBe Answer.Yes
-            access.check(Asker("aud", groups = setOf("auditor"), address = "192.0.2.20"), Account.viewer, acc) shouldBe Answer.Yes
+            access.check(
+                Asker("aud", groups = setOf("auditor"), address = "192.0.2.20"),
+                Account.viewer,
+                acc,
+            ) shouldBe Answer.Yes
             access.check(Asker("eve"), Account.payer, acc) shouldBe Answer.No
             access.check(Asker("ada", actor = "bob"), Account.payer, acc) shouldBe Answer.Yes
 

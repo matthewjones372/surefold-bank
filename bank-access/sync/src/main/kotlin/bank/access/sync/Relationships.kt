@@ -31,6 +31,7 @@ fun AccountEvent.relationships(): List<Tuple> = when (eventCase) {
         Tuple("person:${opened.owner}", "owner", "account:$accountId"),
         Tuple(BANK, "bank", "account:$accountId"),
     )
+
     else -> emptyList()
 }
 
@@ -59,15 +60,19 @@ class Grants {
                 asked[id] = Asked(event.requested.factsMap, event.requested.contentHash)
                 null
             }
+
             EventCase.APPROVAL_GIVEN, EventCase.AUTO_APPROVED -> {
                 asked[id]?.approved = Instant.ofEpochMilli(event.atMillis)
                 null
             }
+
             EventCase.APPLIED -> asked.remove(id)?.takeIf { it.hash == event.applied.contentHash }?.let(::given)
+
             EventCase.REJECTED, EventCase.WITHDRAWN, EventCase.SUPERSEDED, EventCase.EXPIRED -> {
                 asked.remove(id)
                 null
             }
+
             // The rest change nothing here, and a case added after this was built arrives unset.
             else -> null
         }

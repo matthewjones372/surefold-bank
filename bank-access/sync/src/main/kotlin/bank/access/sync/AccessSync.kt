@@ -25,16 +25,23 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** The brokers, and how access-sync signs in to them: as its own SCRAM user, or as nobody where there are no users. */
-data class KafkaSettings(val bootstrap: String, val group: String = "access-sync", val username: String? = null, val password: String? = null) {
+data class KafkaSettings(
+    val bootstrap: String,
+    val group: String = "access-sync",
+    val username: String? = null,
+    val password: String? = null,
+) {
     val client: Map<String, Any>
-        get() = mapOf<String, Any>("bootstrap.servers" to bootstrap) + (username?.let { user ->
-            mapOf(
-                "security.protocol" to "SASL_PLAINTEXT",
-                "sasl.mechanism" to "SCRAM-SHA-512",
-                "sasl.jaas.config" to "org.apache.kafka.common.security.scram.ScramLoginModule required " +
-                    "username=\"$user\" password=\"${password.orEmpty()}\";",
+        get() = mapOf<String, Any>("bootstrap.servers" to bootstrap) + (
+            username?.let { user ->
+                mapOf(
+                    "security.protocol" to "SASL_PLAINTEXT",
+                    "sasl.mechanism" to "SCRAM-SHA-512",
+                    "sasl.jaas.config" to "org.apache.kafka.common.security.scram.ScramLoginModule required " +
+                        "username=\"$user\" password=\"${password.orEmpty()}\";",
+                )
+            } ?: emptyMap()
             )
-        } ?: emptyMap())
 }
 
 /**
@@ -57,7 +64,8 @@ data class SyncSettings(
  * access-sync (lark-bank spec 0022): every relationship in the store, derived from something already recorded. Three
  * readers, each on a thread of its own: the account events, the approval events, and Pocket ID's groups.
  */
-class AccessSync(private val settings: SyncSettings, private val telemetry: OpenTelemetry = OpenTelemetry.noop()) : AutoCloseable {
+class AccessSync(private val settings: SyncSettings, private val telemetry: OpenTelemetry = OpenTelemetry.noop()) :
+    AutoCloseable {
     private val log = LoggerFactory.getLogger("access-sync")
     private val fga = Fga(settings.fgaUrl, settings.fgaToken, settings.store, carried = telemetry::headers)
     private val running = AtomicBoolean(true)
@@ -98,25 +106,37 @@ class AccessSync(private val settings: SyncSettings, private val telemetry: Open
             // The topics are their writers' to make, with their partitions.
             ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG to false,
         ) + (group?.let { mapOf(ConsumerConfig.GROUP_ID_CONFIG to it) } ?: emptyMap())
-        return KafkaConsumer(properties, StringDeserializer(), ByteArrayDeserializer()).also { synchronized(consumers) { consumers += it } }
+        return KafkaConsumer(
+            properties,
+            StringDeserializer(),
+            ByteArrayDeserializer(),
+        ).also { synchronized(consumers) { consumers += it } }
     }
 
     /** Each account opened, its owner's: committed once written, so a restart goes on from there. */
     private fun accounts() = consumer(settings.kafka.group).use { consumer ->
         val rebuilding = settings.fromStart
-        consumer.subscribe(listOf(ACCOUNTS), object : org.apache.kafka.clients.consumer.ConsumerRebalanceListener {
-            override fun onPartitionsRevoked(partitions: Collection<TopicPartition>) = Unit
-            override fun onPartitionsAssigned(partitions: Collection<TopicPartition>) {
-                if (rebuilding) consumer.seekToBeginning(partitions)
-            }
-        })
+        consumer.subscribe(
+            listOf(ACCOUNTS),
+            object : org.apache.kafka.clients.consumer.ConsumerRebalanceListener {
+                override fun onPartitionsRevoked(partitions: Collection<TopicPartition>) = Unit
+                override fun onPartitionsAssigned(partitions: Collection<TopicPartition>) {
+                    if (rebuilding) consumer.seekToBeginning(partitions)
+                }
+            },
+        )
         while (running.get()) {
             val records = consumer.poll(Duration.ofMillis(500))
             if (records.isEmpty) continue
             // A record published inside a trace is written in it, alone; the rest together, as before (lark-bank spec 0024).
             val (inTrace, untraced) = records.partition(::traced)
             fga.write(untraced.flatMap(::relationships))
-            inTrace.forEach { record -> telemetry.handling("access-sync account", record) { fga.write(relationships(record)) } }
+            inTrace.forEach { record ->
+                telemetry.handling(
+                    "access-sync account",
+                    record,
+                ) { fga.write(relationships(record)) }
+            }
             consumer.commitSync()
         }
     }
@@ -165,7 +185,15 @@ class AccessSync(private val settings: SyncSettings, private val telemetry: Open
         val pocketId = PocketIdGroups(checkNotNull(settings.pocketIdUrl), checkNotNull(settings.pocketIdKey))
         while (running.get()) {
             val members = pocketId.members()
-            val wanted = members.flatMap { (group, people) -> people.map { Tuple("person:$it", "member", "group:$group") } }
+            val wanted = members.flatMap { (group, people) ->
+                people.map {
+                    Tuple(
+                        "person:$it",
+                        "member",
+                        "group:$group",
+                    )
+                }
+            }
             // A group gone from Pocket ID is emptied too, if the model knows it.
             val held = (members.keys + KNOWN_GROUPS).flatMap { fga.read(relation = "member", obj = "group:$it") }
             val add = wanted.filter { want -> held.none { it.key == want.key } }
@@ -187,7 +215,9 @@ class AccessSync(private val settings: SyncSettings, private val telemetry: Open
 
 /** A record's Protobuf message, after Apicurio's framing: a zero, the schema's content id, then the message index. */
 fun unframed(bytes: ByteArray): ByteArray {
-    require(bytes.size >= 6 && bytes[0] == 0.toByte() && bytes[5] == 0.toByte()) { "not a record framed for the topic's first message" }
+    require(
+        bytes.size >= 6 && bytes[0] == 0.toByte() && bytes[5] == 0.toByte(),
+    ) { "not a record framed for the topic's first message" }
     return bytes.copyOfRange(6, bytes.size)
 }
 
@@ -204,14 +234,21 @@ class PocketIdGroups(private val url: String, private val key: String) {
             answer.path("data").forEach { groups[it.path("id").asText()] = it.path("name").asText() }
             val pages = answer.path("pagination").path("totalPages").asInt(1)
         } while (page++ < pages)
-        return groups.entries.associate { (id, name) -> name to get("/api/user-groups/$id").path("users").map { it.path("id").asText() }.toSet() }
+        return groups.entries.associate { (id, name) ->
+            name to get(
+                "/api/user-groups/$id",
+            ).path("users").map { it.path("id").asText() }.toSet()
+        }
     }
 
-    private fun query(vararg pairs: Pair<String, String>) =
-        pairs.joinToString("&") { (k, v) -> URLEncoder.encode(k, Charsets.UTF_8) + "=" + URLEncoder.encode(v, Charsets.UTF_8) }
+    private fun query(vararg pairs: Pair<String, String>) = pairs.joinToString(
+        "&",
+    ) { (k, v) -> URLEncoder.encode(k, Charsets.UTF_8) + "=" + URLEncoder.encode(v, Charsets.UTF_8) }
 
     private fun get(path: String) = http.send(
-        HttpRequest.newBuilder(URI.create(url.trimEnd('/') + path)).timeout(Duration.ofSeconds(10)).header("X-API-KEY", key).build(),
+        HttpRequest.newBuilder(
+            URI.create(url.trimEnd('/') + path),
+        ).timeout(Duration.ofSeconds(10)).header("X-API-KEY", key).build(),
         HttpResponse.BodyHandlers.ofString(),
     ).let { answer ->
         if (answer.statusCode() != 200) throw IOException("Pocket ID answered $path with ${answer.statusCode()}")

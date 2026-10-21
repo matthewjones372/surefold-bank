@@ -39,7 +39,12 @@ object TestKafka {
     }
 
     /** [message] keyed by [key], framed as Apicurio's serializer frames it: a zero, a content id, a zero index. */
-    fun send(topic: String, key: String, message: com.google.protobuf.Message, headers: Map<String, String> = emptyMap()) {
+    fun send(
+        topic: String,
+        key: String,
+        message: com.google.protobuf.Message,
+        headers: Map<String, String> = emptyMap(),
+    ) {
         val out = ByteArrayOutputStream()
         out.write(0)
         out.write(ByteBuffer.allocate(4).putInt(1).array())
@@ -68,7 +73,10 @@ class StubPocketId : AutoCloseable {
                 """{"id":"$id","name":"$name","users":[$users]}"""
             }
             val bytes = body.toByteArray()
-            exchange.sendResponseHeaders(if (exchange.requestHeaders.getFirst("X-API-KEY") == "pocket-key") 200 else 401, bytes.size.toLong())
+            exchange.sendResponseHeaders(
+                if (exchange.requestHeaders.getFirst("X-API-KEY") == "pocket-key") 200 else 401,
+                bytes.size.toLong(),
+            )
             exchange.responseBody.use { it.write(bytes) }
         }
         start()
@@ -92,14 +100,22 @@ class SyncSpec {
 
     private fun settings(fga: Fga, pocketId: StubPocketId, fromStart: Boolean = false) = SyncSettings(
         kafka = KafkaSettings(TestKafka.bootstrap, group = "access-sync-$run"),
-        fgaUrl = TestOpenFga.url, fgaToken = TestOpenFga.KEY, store = fga.store,
-        pocketIdUrl = pocketId.url, pocketIdKey = "pocket-key",
-        groupsEvery = java.time.Duration.ofSeconds(1), fromStart = fromStart,
+        fgaUrl = TestOpenFga.url,
+        fgaToken = TestOpenFga.KEY,
+        store = fga.store,
+        pocketIdUrl = pocketId.url,
+        pocketIdKey = "pocket-key",
+        groupsEvery = java.time.Duration.ofSeconds(1),
+        fromStart = fromStart,
     )
 
     private fun opened(account: String, owner: String) = AccountEvent.newBuilder().setAccountId(account).setSequence(1)
         .setAtMillis(System.currentTimeMillis())
-        .setOpened(Opened.newBuilder().setOwner(owner).setInitial(Money.newBuilder().setCurrency("GBP").setAmount("0.00")).setReference("open:$account"))
+        .setOpened(
+            Opened.newBuilder().setOwner(
+                owner,
+            ).setInitial(Money.newBuilder().setCurrency("GBP").setAmount("0.00")).setReference("open:$account"),
+        )
         .build()
 
     private fun approval(request: String, sequence: Long, at: Instant, body: ApprovalEvent.Builder.() -> Unit) =
@@ -113,10 +129,16 @@ class SyncSpec {
             approval(request, 1, approved) {
                 setRequested(
                     ApprovalEvent.Requested.newBuilder().setTitle(request).putAllFacts(facts + ("person" to person))
-                        .setRequester(ApprovalEvent.Person.newBuilder().setSubject(person).addGroups("support")).setContentHash(hash),
+                        .setRequester(
+                            ApprovalEvent.Person.newBuilder().setSubject(person).addGroups("support"),
+                        ).setContentHash(hash),
                 )
             },
-            approval(request, 2, approved) { setApprovalGiven(ApprovalEvent.ApprovalGiven.newBuilder().addApprovers("gil").setContentHash(hash)) },
+            approval(
+                request,
+                2,
+                approved,
+            ) { setApprovalGiven(ApprovalEvent.ApprovalGiven.newBuilder().addApprovers("gil").setContentHash(hash)) },
             approval(request, 3, approved) { setApplied(ApprovalEvent.Applied.newBuilder().setContentHash(hash)) },
         ).forEach { TestKafka.send(APPROVALS, request, it) }
     }
@@ -141,7 +163,12 @@ class SyncSpec {
                 eventually("Bob sees $acc") { fga.check("person:bob-$run", "viewer", "account:$acc") }
                 fga.check("person:bob-$run", "payer", "account:$acc") shouldBe false
                 // And a grant to act as Ada, which the bank asks before anything else when Bob acts as her.
-                grant("act-$run", "bob-$run", mapOf("access" to "act-as", "customer" to "ada-$run", "for" to "PT10M"), approved)
+                grant(
+                    "act-$run",
+                    "bob-$run",
+                    mapOf("access" to "act-as", "customer" to "ada-$run", "for" to "PT10M"),
+                    approved,
+                )
                 eventually("Bob may act as Ada") { fga.check("person:bob-$run", "impersonator", "person:ada-$run") }
 
                 // Pocket ID's auditors see every account; one taken out of the group no longer does.
@@ -166,7 +193,12 @@ class SyncSpec {
             AccessSync(settings(fga, pocketId)).use { sync ->
                 sync.start()
                 accounts.forEachIndexed { i, acc -> TestKafka.send(ACCOUNTS, acc, opened(acc, "owner-$i-$run")) }
-                grant("rebuild-$run", "bob-$run", mapOf("access" to "view", "account" to accounts[0], "for" to "PT1H"), Instant.now())
+                grant(
+                    "rebuild-$run",
+                    "bob-$run",
+                    mapOf("access" to "view", "account" to accounts[0], "for" to "PT1H"),
+                    Instant.now(),
+                )
                 eventually("every relationship written") {
                     fga.check("person:owner-2-$run", "viewer", "account:${accounts[2]}") &&
                         fga.check("person:bob-$run", "viewer", "account:${accounts[0]}") &&
@@ -174,7 +206,14 @@ class SyncSpec {
                 }
             }
             val people = listOf("owner-0", "owner-1", "owner-2", "bob", "aud", "eve").map { "person:$it-$run" }
-            val asked = people.flatMap { who -> accounts.flatMap { acc -> listOf("viewer", "payer").map { Triple(who, it, "account:$acc") } } }
+            val asked = people.flatMap { who ->
+                accounts.flatMap { acc ->
+                    listOf(
+                        "viewer",
+                        "payer",
+                    ).map { Triple(who, it, "account:$acc") }
+                }
+            }
             val before = asked.associateWith { (who, relation, obj) -> fga.check(who, relation, obj) }
 
             val all = fga.read()

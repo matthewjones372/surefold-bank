@@ -75,7 +75,11 @@ class Fga(
         val body = json.createObjectNode()
         val deletes = body.putObject("deletes").put("on_missing", "ignore")
         val keys = deletes.putArray("tuple_keys")
-        some.forEach { keys.add(json.createObjectNode().put("user", it.user).put("relation", it.relation).put("object", it.obj)) }
+        some.forEach {
+            keys.add(
+                json.createObjectNode().put("user", it.user).put("relation", it.relation).put("object", it.obj),
+            )
+        }
         call("POST", "/stores/$storeId/write", body)
     }
 
@@ -98,8 +102,15 @@ class Fga(
             val page = call("POST", "/stores/$storeId/read", body)
             page.path("tuples").forEach { found ->
                 val key = found.path("key")
-                val expires = key.path("condition").path("context").path("expires").takeIf { !it.isMissingNode }?.asText()
-                read += Tuple(key.path("user").asText(), key.path("relation").asText(), key.path("object").asText(), expires?.let(Instant::parse))
+                val expires = key.path(
+                    "condition",
+                ).path("context").path("expires").takeIf { !it.isMissingNode }?.asText()
+                read += Tuple(
+                    key.path("user").asText(),
+                    key.path("relation").asText(),
+                    key.path("object").asText(),
+                    expires?.let(Instant::parse),
+                )
             }
             continuation = page.path("continuation_token").asText("")
         } while (continuation.isNotEmpty())
@@ -108,7 +119,11 @@ class Fga(
 
     private fun Tuple.toJson(): ObjectNode {
         val key = json.createObjectNode().put("user", user).put("relation", relation).put("object", obj)
-        expires?.let { key.putObject("condition").put("name", "not_expired").putObject("context").put("expires", it.toString()) }
+        expires?.let {
+            key.putObject(
+                "condition",
+            ).put("name", "not_expired").putObject("context").put("expires", it.toString())
+        }
         return key
     }
 
@@ -124,7 +139,15 @@ class Fga(
             val http = HttpClient.newHttpClient()
             val timeout = Duration.ofSeconds(10)
             val id = storeNamed(url, token, http, timeout, store)
-                ?: send(http, url, token, timeout, "POST", "/stores", json.createObjectNode().put("name", store)).path("id").asText()
+                ?: send(
+                    http,
+                    url,
+                    token,
+                    timeout,
+                    "POST",
+                    "/stores",
+                    json.createObjectNode().put("name", store),
+                ).path("id").asText()
             send(http, url, token, timeout, "POST", "/stores/$id/authorization-models", json.readTree(modelJson))
         }
 
@@ -165,14 +188,25 @@ class Fga(
             val request = HttpRequest.newBuilder(URI.create(url.trimEnd('/') + path)).timeout(timeout)
                 .header("Authorization", "Bearer $token").header("Content-Type", "application/json")
                 .apply { headers.forEach { (name, value) -> header(name, value) } }
-                .method(method, body?.let { HttpRequest.BodyPublishers.ofString(it.toString()) } ?: HttpRequest.BodyPublishers.noBody())
+                .method(
+                    method,
+                    body?.let {
+                        HttpRequest.BodyPublishers.ofString(
+                            it.toString(),
+                        )
+                    } ?: HttpRequest.BodyPublishers.noBody(),
+                )
                 .build()
             val answer = try {
                 http.send(request, HttpResponse.BodyHandlers.ofString())
             } catch (failed: IOException) {
                 throw FgaUnavailable("OpenFGA did not answer $method $path: ${failed.message}", failed)
             }
-            if (answer.statusCode() !in 200..299) throw FgaUnavailable("OpenFGA answered $method $path with ${answer.statusCode()}: ${answer.body()}")
+            if (answer.statusCode() !in 200..299) {
+                throw FgaUnavailable(
+                    "OpenFGA answered $method $path with ${answer.statusCode()}: ${answer.body()}",
+                )
+            }
             return json.readTree(answer.body().ifEmpty { "{}" })
         }
     }

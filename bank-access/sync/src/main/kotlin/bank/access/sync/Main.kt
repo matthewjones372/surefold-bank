@@ -12,7 +12,12 @@ fun main() {
     // The level Estate's debug switch writes to the access-sync-logging ConfigMap, mounted here (lark-bank spec 0026).
     env("LOG_LEVEL_FILE")?.let { LevelFile(Path.of(it)).follow(10.seconds) }
     val settings = SyncSettings(
-        kafka = KafkaSettings(need("KAFKA_BOOTSTRAP"), env("KAFKA_GROUP") ?: "access-sync", env("KAFKA_USERNAME"), env("KAFKA_PASSWORD")),
+        kafka = KafkaSettings(
+            need("KAFKA_BOOTSTRAP"),
+            env("KAFKA_GROUP") ?: "access-sync",
+            env("KAFKA_USERNAME"),
+            env("KAFKA_PASSWORD"),
+        ),
         fgaUrl = need("FGA_API_URL"),
         fgaToken = need("FGA_API_TOKEN"),
         store = env("FGA_STORE") ?: "bank",
