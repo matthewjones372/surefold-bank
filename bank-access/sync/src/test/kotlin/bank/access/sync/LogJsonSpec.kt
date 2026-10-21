@@ -18,7 +18,11 @@ class LogJsonSpec {
         val context = LoggerFactory.getILoggerFactory() as LoggerContext
         fun configure(name: String) {
             context.reset()
-            JoranConfigurator().apply { setContext(context) }.doConfigure(requireNotNull(javaClass.classLoader.getResource(name)))
+            JoranConfigurator().apply {
+                setContext(
+                    context,
+                )
+            }.doConfigure(requireNotNull(javaClass.classLoader.getResource(name)))
         }
         val out = ByteArrayOutputStream()
         val before = System.out
@@ -26,7 +30,9 @@ class LogJsonSpec {
         try {
             configure("logback.xml")
             MDC.putCloseable("trace_id", "4bf92f3577b34da6a3ce929d0e0e4736").use {
-                LoggerFactory.getLogger("access-sync").warn("accounts failed, starting again in 2 s", IllegalStateException("OpenFGA away"))
+                LoggerFactory.getLogger(
+                    "access-sync",
+                ).warn("accounts failed, starting again in 2 s", IllegalStateException("OpenFGA away"))
             }
         } finally {
             configure("logback-test.xml")

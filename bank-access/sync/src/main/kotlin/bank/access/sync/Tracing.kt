@@ -23,11 +23,19 @@ data class TraceSettings(val otlp: String? = null, val sampled: Double = 0.1)
 /** The SDK as the estate's services build it (lark-bank spec 0024): W3C trace context, following the caller's choice. */
 fun openTelemetry(settings: TraceSettings): OpenTelemetrySdk {
     val tracing = SdkTracerProvider.builder()
-        .setResource(Resource.getDefault().merge(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "access-sync"))))
+        .setResource(
+            Resource.getDefault().merge(
+                Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "access-sync")),
+            ),
+        )
         .setSampler(Sampler.parentBased(Sampler.traceIdRatioBased(settings.sampled)))
         .apply {
             settings.otlp?.let { otlp ->
-                addSpanProcessor(BatchSpanProcessor.builder(OtlpHttpSpanExporter.builder().setEndpoint(otlp.trimEnd('/') + "/v1/traces").build()).build())
+                addSpanProcessor(
+                    BatchSpanProcessor.builder(
+                        OtlpHttpSpanExporter.builder().setEndpoint(otlp.trimEnd('/') + "/v1/traces").build(),
+                    ).build(),
+                )
             }
         }
         .build()

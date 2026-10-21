@@ -47,11 +47,7 @@ class Memo {
  * each within the [fga]'s timeout, which is the request's budget for it. No answer in time is [Answer.Unanswered],
  * never yes. Every refusal, and every check by staff or one acting, is kept in [decisions].
  */
-class Access(
-    private val fga: Fga,
-    private val decisions: Decisions,
-    private val registry: MeterRegistry,
-) {
+class Access(private val fga: Fga, private val decisions: Decisions, private val registry: MeterRegistry) {
     private val unanswered = registry.counter("bank.access.unanswered")
     private val timer = Timer.builder("bank.access.check.duration").publishPercentileHistogram().register(registry)
 
@@ -74,15 +70,33 @@ class Access(
 
     /** Every object of [relation]'s type [who] has it to; nothing at all when bank-access does not answer. */
     fun listObjects(who: Asker, relation: Relation): Set<String> = try {
-        if (who.actor != null && !fga.check("person:${who.actor}", Person.impersonator.name, "person:${who.subject}")) emptySet()
-        else fga.listObjects("person:${who.subject}", relation.name, relation.type).map { it.substringAfter(':') }.toSet()
+        if (who.actor != null && !fga.check(
+                "person:${who.actor}",
+                Person.impersonator.name,
+                "person:${who.subject}",
+            )
+        ) {
+            emptySet()
+        } else {
+            fga.listObjects(
+                "person:${who.subject}",
+                relation.name,
+                relation.type,
+            ).map { it.substringAfter(':') }.toSet()
+        }
     } catch (failed: FgaUnavailable) {
         unanswered.increment()
         emptySet()
     }
 
     private fun ask(who: Asker, relation: Relation, obj: String): Answer = try {
-        val acting = who.actor?.let { fga.check("person:$it", Person.impersonator.name, "person:${who.subject}") } ?: true
+        val acting = who.actor?.let {
+            fga.check(
+                "person:$it",
+                Person.impersonator.name,
+                "person:${who.subject}",
+            )
+        } ?: true
         if (acting && fga.check("person:${who.subject}", relation.name, obj)) Answer.Yes else Answer.No
     } catch (failed: FgaUnavailable) {
         Answer.Unanswered(failed.message ?: "bank-access did not answer")
