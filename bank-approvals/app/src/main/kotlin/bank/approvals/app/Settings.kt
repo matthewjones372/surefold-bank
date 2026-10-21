@@ -88,7 +88,8 @@ val settings: Module =
         config<AuditSettings>("approvals.audit") { AuditSettings(duration("digestEvery")) } +
         config<IdentitySettings>("approvals.identity") {
             IdentitySettings(
-                string("issuer"), string("audience"), string("clientId"), string("clientSecret"), string("callbackUrl"), string("sessionKey"),
+                string("issuer"), string("audience"), string("clientId"), secret("clientSecret").reveal(), string("callbackUrl"),
+                secret("sessionKey").reveal(),
                 string("services").split(',').map(String::trim).filter(String::isNotEmpty),
             )
         }

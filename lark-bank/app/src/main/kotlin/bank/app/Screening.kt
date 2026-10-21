@@ -11,8 +11,9 @@ import bank.domain.TransferId
 import bank.domain.WhenUnanswered
 import io.github.matthewjones372.lark.timed
 import io.github.matthewjones372.pelican.ClientRequest
+import io.github.matthewjones372.pelican.ClientTransport
 import io.github.matthewjones372.pelican.Method
-import io.github.matthewjones372.pelican.client.pekko.PekkoHttpTransport
+import io.github.matthewjones372.pelican.client.jetty.JettyHttpTransport
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
@@ -34,22 +35,28 @@ sealed interface Screening {
     data class On(val screener: Screener, val timeout: Duration, val whenUnanswered: WhenUnanswered) : Screening
 }
 
-fun screening(settings: ScreeningSettings, telemetry: OpenTelemetry = OpenTelemetry.noop()): Screening =
+fun screening(settings: ScreeningSettings, telemetry: OpenTelemetry, transport: ClientTransport): Screening =
     if (!settings.enabled) Screening.Off
-    else Screening.On(PelicanScreener(settings.url, settings.timeout, telemetry), settings.timeout, settings.whenUnanswered)
+    else Screening.On(PelicanScreener(settings.url, settings.timeout, telemetry, transport), settings.timeout, settings.whenUnanswered)
 
 /**
  * The check's `POST /screen`, through the client generated from its description, translated at this edge: nothing
- * of Screening's own types gets past it.
+ * of Screening's own types gets past it. Jetty's client defaults, 64 connections and 1,024 requests queued per
+ * destination, take a few hundred transfers a second at once without refusing one (spec 0018).
  */
-class PelicanScreener(url: String, timeout: Duration, telemetry: OpenTelemetry = OpenTelemetry.noop()) : Screener {
+class PelicanScreener(
+    url: String,
+    timeout: Duration,
+    telemetry: OpenTelemetry = OpenTelemetry.noop(),
+    transport: ClientTransport = JettyHttpTransport(),
+) : Screener {
     // Each call a client span, its traceparent sent, so the check continues the transfer's trace (bank spec 0024).
-    private val transport = PekkoHttpTransport().traced(telemetry)
-    private val client = ScreeningClient(url, JacksonCodecs, transport, timeout.toJavaDuration())
+    private val transport = transport.traced(telemetry)
+    private val client = ScreeningClient(url, JacksonCodecs, this.transport, timeout.toJavaDuration())
 
     init {
-        // The client's first call starts its actor system and opens a connection, about 450 ms: longer than the
-        // timeout, so the first transfer after every start would go unscreened. The check's /health pays it instead.
+        // The client's first call starts it and opens a connection, which can take longer than the timeout, so the
+        // first transfer after every start would go unscreened. The check's /health pays it instead.
         transport.send(ClientRequest(Method.GET, url.trimEnd('/') + "/health"))
             .whenComplete { response, _ -> response?.body?.close() }
     }

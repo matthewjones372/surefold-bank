@@ -184,14 +184,14 @@ val settings: Module =
         } +
         config<IdentitySettings>("bank.identity") {
             IdentitySettings(
-                string("issuer"), string("audience"), string("clientId"), string("clientSecret").ifEmpty { null },
-                string("callbackUrl"), string("sessionKey"),
+                string("issuer"), string("audience"), string("clientId"), secret("clientSecret").reveal().ifEmpty { null },
+                string("callbackUrl"), secret("sessionKey").reveal(),
             )
         } +
         config<AccessSettings>("bank.access") {
             AccessSettings(
                 boolean("enabled"), string("approvalsUrl"), string("tokenUrl"), string("tokenForm"),
-                string("clientSecret").ifEmpty { null },
+                secret("clientSecret").reveal().ifEmpty { null },
             )
         } +
         config<AccessShadowSettings>("bank.accessShadow") {

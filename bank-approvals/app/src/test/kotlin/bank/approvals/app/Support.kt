@@ -11,7 +11,7 @@ import io.github.matthewjones372.lark.app.typesafe.overridingConfig
 import io.github.matthewjones372.lark.app.use
 import io.github.matthewjones372.lark.cluster.Cluster
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
-import io.github.matthewjones372.pelican.pekko.PelicanServer
+import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.RequestSpec
 import io.github.matthewjones372.pelican.test.ResponseSpec

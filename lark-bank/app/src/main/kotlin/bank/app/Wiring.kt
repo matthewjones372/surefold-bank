@@ -45,7 +45,6 @@ import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcSnapshots
 import io.github.matthewjones372.lark.actor.remote.node
 import io.github.matthewjones372.lark.actor.snapshots
 import io.github.matthewjones372.lark.actor.spawn
-import io.github.matthewjones372.lark.app.AppScope
 import io.github.matthewjones372.lark.app.Health
 import io.github.matthewjones372.lark.app.HealthRegistry
 import io.github.matthewjones372.lark.app.LarkApp
@@ -55,6 +54,7 @@ import io.github.matthewjones372.lark.app.actor.actors
 import io.github.matthewjones372.lark.app.actor.spawn
 import io.github.matthewjones372.lark.app.cluster.cluster
 import io.github.matthewjones372.lark.app.boundTo
+import io.github.matthewjones372.lark.app.closingOf
 import io.github.matthewjones372.lark.app.liquibase.Migrated
 import io.github.matthewjones372.lark.app.liquibase.migrations
 import io.github.matthewjones372.lark.app.probe
@@ -71,8 +71,9 @@ import io.github.matthewjones372.lark.stream.StreamBackend
 import io.github.matthewjones372.lark.stream.Running
 import io.github.matthewjones372.lark.stream.start
 import io.github.matthewjones372.pelican.openapi.docs
-import io.github.matthewjones372.pelican.pekko.PelicanServer
-import io.github.matthewjones372.pelican.pekko.docs.startWithDocs
+import io.github.matthewjones372.pelican.client.jetty.JettyHttpTransport
+import io.github.matthewjones372.pelican.jetty.PelicanServer
+import io.github.matthewjones372.pelican.jetty.docs.startWithDocs
 import io.micrometer.core.instrument.Metrics as MicrometerRegistries
 import io.micrometer.core.instrument.Meter
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -96,8 +97,6 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
 import io.opentelemetry.sdk.OpenTelemetrySdk
-import org.apache.pekko.actor.typed.ActorSystem
-import org.apache.pekko.actor.typed.javadsl.Behaviors
 import org.slf4j.bridge.SLF4JBridgeHandler
 import javax.sql.DataSource
 import liquibase.Contexts
@@ -270,7 +269,8 @@ private val clustered: Module =
         } +
         // Joined as bank.cluster says, through whichever backend `join` names (lark spec 0096); ready once fully in.
         cluster("bank.cluster") +
-        single { settings: ScreeningSettings, sdk: OpenTelemetrySdk -> screening(settings, sdk) } +
+        closingOf { -> JettyHttpTransport() } +
+        single { settings: ScreeningSettings, sdk: OpenTelemetrySdk, transport: JettyHttpTransport -> screening(settings, sdk, transport) } +
         single { actors: Actors, cluster: Cluster, settings: EntitySettings, persistence: Persistence, kafka: KafkaSettings,
             reading: ReadModelSettings, screening: Screening, tracer: Tracer ->
             // Old events go only once every read model that reads accounts has read them, in the id's own partition.
@@ -387,9 +387,8 @@ class Callers(val signIn: Signing, val rules: Rules, val looks: JdbcAccessLog, v
 class AccessPublishing(val running: Running<Nothing, Long>?)
 
 private val web: Module =
-    singleOf<ActorSystem<Void>>({ ActorSystem.create(Behaviors.empty(), "bank-http") }, { system -> system.terminate() }) +
-        // Everything that runs in the background is started before the port opens.
-        single { cluster: Cluster, readModels: ActorRef<WhereAreReadModels> ->
+    // Everything that runs in the background is started before the port opens.
+    single { cluster: Cluster, readModels: ActorRef<WhereAreReadModels> ->
             ClusterViews { clusterView(cluster, readModels) }
         } +
         // Every node publishes itself to the `ops` topic, and hears every other (bank spec 0007).
@@ -419,19 +418,20 @@ private val web: Module =
             Callers(signing(settings), rules, looks, grants, FgaAudit.of(shadow, grants, reads))
         } +
         single { bank: Bank, currencies: Currencies, reads: JdbcReadModels, payrolls: Payrolls, views: ClusterViews,
-            health: HealthRegistry, watched: Watched, ops: LiveOps, callers: Callers ->
+            health: HealthRegistry, watched: Watched, ops: LiveOps, callers: Callers, streams: StreamBackend ->
             bankApi(
                 bank, currencies, reads, payrolls, views::current, { asked(health) }, { watched.registry.scrape(OPENMETRICS) }, watched.registry,
-                ops::current, callers.signIn, rules = callers.rules, looks = callers.looks, grants = callers.grants,
+                ops::current, streams, callers.signIn, rules = callers.rules, looks = callers.looks, grants = callers.grants,
                 audit = callers.audit, telemetry = watched.sdk,
             )
         } +
-        singleOf(
-            { api: Api, settings: WebSettings, system: ActorSystem<Void> ->
-                api.startWithDocs(system, port = settings.port, host = settings.host, docs = docs { docsPath = "/api-docs" })
-            },
-            { server -> server.stop() },
-        )
+        single { api: Api, settings: WebSettings ->
+            install({ api.startWithDocs(port = settings.port, host = settings.host, docs = docs { docsPath = "/api-docs" }) }) { server, _ ->
+                server.stop()
+            }.also { server ->
+                onStarted { logInfo("Lark Bank on ${server.baseUrl}, docs at ${server.baseUrl}/api-docs") }
+            }
+        }
 
 private fun asked(health: HealthRegistry): Healthy = when (val readiness = health.readiness()) {
     is Health.Up -> Healthy(ready = true, failing = emptyList())
@@ -444,9 +444,4 @@ val bankModule: Module = settings + telemetry + storage + clustered + theBank + 
 /** The application as a value: the build reads the graph from here, and `main` runs it. */
 object LarkBank : LarkApp<PelicanServer>() {
     override val module: Module = bankModule
-
-    override fun AppScope.run(root: PelicanServer) {
-        logInfo("Lark Bank on ${root.baseUrl}, docs at ${root.baseUrl}/api-docs")
-        root.block()
-    }
 }

@@ -18,20 +18,17 @@ import io.github.matthewjones372.pelican.Authenticator
 import io.github.matthewjones372.pelican.PageGuard
 import io.github.matthewjones372.pelican.ServerEndpoint
 import io.github.matthewjones372.pelican.pages
-import io.github.matthewjones372.pelican.pekko.handledNow
+import io.github.matthewjones372.pelican.jetty.handledNow
 import java.time.Instant
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.api
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.ok
-import io.github.matthewjones372.pelican.pekko.handledOrFail
+import io.github.matthewjones372.pelican.jetty.handledOrFail
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
-import io.github.matthewjones372.pelican.Params
 import io.github.matthewjones372.pelican.metrics.otel.openTelemetry
-import io.github.matthewjones372.pelican.pekko.request
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.context.propagation.TextMapGetter
 
 /** Why approvals could not answer: nothing asked under that id, the request's own refusal, or no answer in time. */
 sealed interface Unanswered {
@@ -169,14 +166,7 @@ fun approvalsApi(
     pages = pages("ui").guardedBy(signing.guard)
     authenticate(bearer, signing.authenticator)
     // A server span per request, continuing the caller's trace (lark-bank spec 0024); outermost, so a refusal is in it.
-    filter(openTelemetry(telemetry, incomingHeaders = pekkoHeaders))
-}
-
-/** An inbound `traceparent`, read off Pekko's own request: the one header Pelican's filter cannot read for itself. */
-private val pekkoHeaders: TextMapGetter<Params> = object : TextMapGetter<Params> {
-    override fun keys(carrier: Params): Iterable<String> = carrier.request.headers.map { it.lowercaseName() }
-
-    override fun get(carrier: Params?, key: String): String? = carrier?.request?.getHeader(key)?.map { it.value() }?.orElse(null)
+    filter(openTelemetry(telemetry))
 }
 
 /** The most a list shows: the most recently moved. */

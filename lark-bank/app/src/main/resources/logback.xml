@@ -23,7 +23,6 @@
   <!-- lark's own lines and the bank's, at INFO; everything underneath only when it has something to say. -->
   <logger name="lark" level="INFO"/>
   <logger name="org.apache.kafka" level="WARN"/>
-  <logger name="org.apache.pekko" level="WARN"/>
   <logger name="io.fabric8" level="WARN"/>
   <logger name="liquibase" level="WARN"/>
   <logger name="com.zaxxer" level="WARN"/>

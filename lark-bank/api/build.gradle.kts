@@ -1,28 +1,24 @@
 val pelicanVersion: String = providers.gradleProperty("pelicanVersion").get()
-val pekkoVersion = "1.2.1"
+val larkVersion: String = providers.gradleProperty("larkVersion").get()
 
 dependencies {
     api(project(":domain"))
-    api("io.github.matthewjones372:pelican-pekko:$pelicanVersion")
+    // The ops stream is a lark Stream, read by Jetty as a Sequence.
+    api("io.github.matthewjones372:lark-stream:$larkVersion")
+    api("io.github.matthewjones372:pelican-jetty:$pelicanVersion")
     api("io.github.matthewjones372:pelican-jackson:$pelicanVersion")
-    api("io.github.matthewjones372:pelican-pekko-docs:$pelicanVersion")
+    api("io.github.matthewjones372:pelican-jetty-docs:$pelicanVersion")
     // Either into Outcome: the domain answers in Arrow, and an endpoint with one declared failure converts in one call.
     api("io.github.matthewjones372:pelican-arrow:$pelicanVersion")
     // One filter: a request counter and a duration timer per endpoint, tagged by its template, never its ids.
     api("io.github.matthewjones372:pelican-metrics:$pelicanVersion")
     // And a server span per request, continuing the caller's trace (bank spec 0024).
     api("io.github.matthewjones372:pelican-metrics-otel:$pelicanVersion")
-
-    // Pelican ships no Scala cross-build, so the Pekko that runs is named here.
-    api(platform("org.apache.pekko:pekko-bom_2.13:$pekkoVersion"))
-    api("org.apache.pekko:pekko-actor-typed_2.13")
-    api("org.apache.pekko:pekko-stream_2.13")
-    api("org.apache.pekko:pekko-http_2.13:1.3.0")
-    // The bank's side of Screening (spec 0018): its client sends through Pekko HTTP's client, on the Pekko above.
-    api("io.github.matthewjones372:pelican-client-pekko:$pelicanVersion")
+    // The bank's side of Screening (spec 0018): its client sends through Jetty's HttpClient.
+    api("io.github.matthewjones372:pelican-client-jetty:$pelicanVersion")
 
     testImplementation("io.github.matthewjones372:pelican-test:$pelicanVersion")
-    testImplementation("io.github.matthewjones372:pelican-test-pekko:$pelicanVersion")
+    testImplementation("io.github.matthewjones372:pelican-test-jetty:$pelicanVersion")
     // Generates Screening's client from its description, so ScreeningClientSpec can say the committed one matches.
     testImplementation("io.github.matthewjones372:pelican-codegen:$pelicanVersion")
     // Holds the bank's description of POST /screen to the OpenAPI document the check serves.
