@@ -5,7 +5,10 @@
       "mcp__gauntlet__explain",
       "mcp__gauntlet__get_examples",
       "mcp__gauntlet__get_grammar",
-      "mcp__gauntlet__validate"
+      "mcp__gauntlet__validate",
+      "Bash(git push -u origin *)",
+      "Bash(git push origin *)",
+      "Bash(gh pr create *)"
     ],
     "deny": [
       "Edit(**/gradle.properties)",
@@ -246,6 +249,30 @@
           {
             "type": "command",
             "command": "command -v gauntlet >/dev/null 2>&1 || exit 0; exec gauntlet hook pre-tool-use"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v gauntlet >/dev/null 2>&1; then exec gauntlet hook stop; fi; echo \"Gauntlet isn't installed on this machine, so this work wasn't checked. Install it with: curl -fsSL https://raw.githubusercontent.com/matthewjones372/gauntlet/main/install.sh | sh\" >&2; exit 1",
+            "statusMessage": "Gauntlet is checking the subagent's change (build, tests, coverage)…",
+            "timeout": 1800
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-.}\"; if [ \"$(git -C \"$d\" symbolic-ref --short -q HEAD)\" = main ]; then git -C \"$d\" fetch -q origin; else git -C \"$d\" fetch -q origin main:main || git -C \"$d\" fetch -q origin; fi 2>/dev/null || true",
+            "async": true,
+            "statusMessage": "Bringing local main up to date for Gauntlet"
           }
         ]
       }
