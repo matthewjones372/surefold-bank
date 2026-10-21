@@ -2,7 +2,7 @@
 // then set up with its owner: zones, layers, coverage, lint and mutation.
 gauntlet "tweet-street"
 use jvm in "bank-access", "bank-approvals", "lark-bank", "lark-bank/events", scala in "bank-checks"
-mode enforce // failing gates block the change
+mode shadow // advisory, at the owner's request: report only, never block. `mode enforce` blocks again.
 owners @matthewjones372
 
 protect {
