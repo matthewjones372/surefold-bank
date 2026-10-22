@@ -129,6 +129,13 @@ create policy visible on transfer_status for select using (
     exists (select 1 from account_balance b where b.account_id in (transfer_status.from_account, transfer_status.to_account))
 );
 
+--changeset lark-bank:ledger-totals-by-share
+-- A row per currency and share (bank spec 0032), so the partitions' batches each add to a row of their own rather than
+-- all queueing on one currency's row. The ledger is their sum. Rows written before this keep the share ''.
+alter table ledger_totals add column share text not null default '';
+alter table ledger_totals drop constraint ledger_totals_pkey;
+alter table ledger_totals add primary key (currency, share);
+
 --changeset lark-bank:read-roles runAlways:true splitStatements:false
 -- The readers, made if they are not there and granted what they read, at every start: at home the operator makes them
 -- (deploy/k8s/postgres.yaml), perhaps after the first start, and a login there may not create roles. bank_reader is

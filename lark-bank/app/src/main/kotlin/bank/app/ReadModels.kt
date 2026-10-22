@@ -39,7 +39,7 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
      * by the balance read first: the totals add only the lines this batch inserted, a balance is only ever moved
      * forward, and the totals' rows are written in one order, so two batches never wait on each other in a circle.
      */
-    fun project(batch: List<Sequenced<AccountEvent>>): Int = transaction(derived = true) { connection ->
+    fun project(batch: List<Sequenced<AccountEvent>>, share: String = ""): Int = transaction(derived = true) { connection ->
         val ids = batch.map { it.id }.distinct()
         val known = connection.balances(ids)
         // Only events that move money reach the statements and the ledger: a transfer's legs closing moves none.
@@ -91,22 +91,7 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
             }
             upsert.executeBatch()
         }
-        connection.prepareStatement(
-            "insert into ledger_totals (currency, exponent, paid_in, paid_out, in_flight, events) values (?, ?, ?, ?, ?, ?) " +
-                "on conflict (currency) do update set paid_in = ledger_totals.paid_in + excluded.paid_in, " +
-                "paid_out = ledger_totals.paid_out + excluded.paid_out, in_flight = ledger_totals.in_flight + excluded.in_flight, " +
-                "events = ledger_totals.events + excluded.events",
-        ).use { upsert ->
-            totals.values.forEach { (currency, moved) ->
-                upsert.setCurrency(1, currency)
-                upsert.setBigDecimal(3, moved.paidIn.setScale(currency.exponent))
-                upsert.setBigDecimal(4, moved.paidOut.setScale(currency.exponent))
-                upsert.setBigDecimal(5, moved.inFlight.setScale(currency.exponent))
-                upsert.setLong(6, moved.events)
-                upsert.addBatch()
-            }
-            if (totals.isNotEmpty()) upsert.executeBatch()
-        }
+        connection.addToTotals(share, totals.values)
         inserted.count { it > 0 }
     }
 
@@ -255,7 +240,8 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
         }
         connection.createStatement().use { query ->
             query.executeQuery(
-                "select currency, exponent, paid_in, paid_out, in_flight, events from ledger_totals order by currency",
+                "select currency, max(exponent), sum(paid_in), sum(paid_out), sum(in_flight), sum(events) " +
+                    "from ledger_totals group by currency order by currency",
             ).use { rows ->
                 generateSequence {
                     if (!rows.next()) {
@@ -408,6 +394,38 @@ private fun java.sql.PreparedStatement.setCurrency(index: Int, currency: Currenc
     setString(index, currency.code)
     setInt(index + 1, currency.exponent)
 }
+
+/**
+ * What a batch moved, added to [share]'s row of each currency's totals (bank spec 0032): no other share writes that
+ * row, so batches of different partitions never wait on one another here.
+ */
+private fun Connection.addToTotals(share: String, totals: Collection<Pair<Currency, Totals>>) {
+    if (totals.isEmpty()) return
+    prepareStatement(
+        "insert into ledger_totals (currency, exponent, share, paid_in, paid_out, in_flight, events) " +
+            "values (?, ?, ?, ?, ?, ?, ?) " +
+            "on conflict (currency, share) do update set paid_in = ledger_totals.paid_in + excluded.paid_in, " +
+            "paid_out = ledger_totals.paid_out + excluded.paid_out, in_flight = ledger_totals.in_flight + excluded.in_flight, " +
+            "events = ledger_totals.events + excluded.events",
+    ).use { upsert ->
+        totals.forEach { (currency, moved) ->
+            upsert.setCurrency(1, currency)
+            val rest = listOf(
+                share,
+                moved.paidIn.setScale(currency.exponent),
+                moved.paidOut.setScale(currency.exponent),
+                moved.inFlight.setScale(currency.exponent),
+                moved.events,
+            )
+            rest.forEachIndexed { at, value -> upsert.setObject(AFTER_CURRENCY + at, value) }
+            upsert.addBatch()
+        }
+        upsert.executeBatch()
+    }
+}
+
+/** The first parameter after a currency's code and exponent. */
+private const val AFTER_CURRENCY = 3
 
 private fun Connection.balances(ids: List<String>): Map<String, Row> = prepareStatement(
     "select account_id, owner, currency, exponent, balance, last_seq from account_balance where account_id = any(?)",

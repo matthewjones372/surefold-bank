@@ -71,6 +71,9 @@ class Share(val feed: SlicedFeed, val database: String, val partition: Int, val 
 
     /** What read model [name]'s offset for this share is saved under. */
     fun progress(name: String) = ShardedJournal.progress(name, database, partition)
+
+    /** This share's own row of the ledger's totals (bank spec 0032), which no other share's batches write. */
+    val ledgerRow: String get() = "$database/$partition"
 }
 
 /**
@@ -226,7 +229,9 @@ fun startReadModels(
     backend: StreamBackend,
 ): ReadModelRuns = ReadModelRuns(
     listOfNotNull(
-        batched(share, offsets, Kinds.ACCOUNT, AccountEvents, ReadModelNames.STATEMENTS, settings, reads::project),
+        batched(share, offsets, Kinds.ACCOUNT, AccountEvents, ReadModelNames.STATEMENTS, settings) { batch ->
+            reads.project(batch, share.ledgerRow)
+        },
         batched(
             share,
             offsets,

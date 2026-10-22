@@ -71,7 +71,7 @@ Nothing. `GroupCommit` already takes both numbers.
 - [x] **`derived-writes-async`**: `set local synchronous_commit = off` in the read-model and offset transactions.
       Done when: `ReadModelsSpec` passes, and a test kills Postgres mid-projection and the ledger still conserves after
       a restart.
-- [ ] **`ledger-totals-per-partition`**: a migration adds `partition` to the key; reads sum it.
+- [x] **`ledger-totals-per-partition`**: a migration adds `partition` to the key; reads sum it.
       Done when: the ledger endpoint answers the same as before on `ApiSpec`'s data.
 - [ ] **`access-log-batched`**: one writer per node, batched.
       Done when: `AccessLogSpec` passes, and a staff page's 1,000 requests make at most 20 inserts.
