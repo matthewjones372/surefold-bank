@@ -55,6 +55,12 @@ data class JournalSettings(
     val committers: Int,
 )
 
+/**
+ * How a node sends payrolls' credits (bank spec 0033): through [senders] reliable producers, each with up to [window]
+ * credits unconfirmed at once. Each account's credits go through one of them, so they arrive in order.
+ */
+data class PayrollSettings(val senders: Int, val window: Int)
+
 /** `db-1=jdbc:postgresql://…,db-2=jdbc:postgresql://…` as named URLs, in order. */
 private fun named(databases: String): List<Pair<String, String>> =
     databases.split(',').map(String::trim).filter(String::isNotEmpty).map { entry ->
@@ -206,6 +212,7 @@ val settings: Module =
                 int("committers"),
             )
         } +
+        config<PayrollSettings>("bank.payroll") { PayrollSettings(int("senders"), int("window")) } +
         config<KafkaSettings>("bank.kafka") {
             KafkaSettings(
                 boolean("enabled"),

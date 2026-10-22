@@ -26,6 +26,9 @@ x-bank-env: &bank-env
   # Each commit's size and how many run at once on each database (bank spec 0032), for a ramp to try.
   JOURNAL_GROUP_MAX_APPENDS: ${JOURNAL_GROUP_MAX_APPENDS:-64}
   JOURNAL_GROUP_COMMITTERS: ${JOURNAL_GROUP_COMMITTERS:-2}
+  # Payroll's producers on each node and each one's window (bank spec 0033).
+  PAYROLL_SENDERS: ${PAYROLL_SENDERS:-4}
+  PAYROLL_WINDOW: ${PAYROLL_WINDOW:-1000}
   # How long a transfer is waited on before it is answered as pending (bank spec 0001).
   TRANSFER_WAIT: ${TRANSFER_WAIT:-1s}
   # Every event published (bank spec 0015): Kafka for the records, Apicurio for their schemas.

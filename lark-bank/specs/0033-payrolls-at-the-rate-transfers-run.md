@@ -63,10 +63,10 @@ Until then, the senders spread the cost over several threads, and each copies a 
 
 ## Stack
 
-- [ ] **`payroll-senders`**: `payroll.senders` and `payroll.window` in config, and the senders chosen by account.
+- [x] **`payroll-senders`**: `payroll.senders` and `payroll.window` in config, and the senders chosen by account.
       Done when: a test sends one payroll over 4 senders and every credit is confirmed once, and the payroll scenario
       at 20/s fails fewer than 1 in 1,000.
-- [ ] **`payroll-load-reports-credits`**: the load reports credits a second for payroll.
+- [x] **`payroll-load-reports-credits`**: the load reports credits a second for payroll.
       Done when: the payroll run's summary has a credits-a-second line.
 - [ ] **`payroll-send-all`**: credits handed over in one call per sender, once lark has `sendAll`.
       Done when: a payroll of 100 makes at most `senders` tells.

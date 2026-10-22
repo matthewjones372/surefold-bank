@@ -47,4 +47,4 @@ home overlay, by name.
 | [0030](0030-a-leg-refused-stays-refused.md) | a debit or credit an account refused is kept until its transfer closes, so a retry is refused alike and no late retry moves money; built to `leg-refused` |
 | [0031](0031-a-transfer-in-fewer-writes.md) | a transfer in four appends on its path instead of five: no `SourceDebited`, one drive on start, `LegsClosed` batched, no recovery read for a new transfer; built to `transfer-no-source-debited` |
 | [0032](0032-the-journals-commits-sized-and-the-rest-cheaper.md) | group commit sized in config, read-model writes not waiting for a durable flush, `ledger_totals` per partition, the access log batched, and a ramp to measure each; built to `derived-writes-async` |
-| [0033](0033-payrolls-at-the-rate-transfers-run.md) | payroll through several senders per node, and the two changes lark's `Producer` needs; draft |
+| [0033](0033-payrolls-at-the-rate-transfers-run.md) | payroll through several senders per node, and the two changes lark's `Producer` needs; built to `payroll-load-reports-credits` |

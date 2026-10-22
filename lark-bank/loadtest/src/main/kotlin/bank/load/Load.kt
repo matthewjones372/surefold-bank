@@ -80,6 +80,7 @@ private val move = step("deposit or withdraw")
 private val pay = step("pay the merchant")
 private val send = step("transfer")
 private val bulk = step("payroll of 100")
+private const val CREDITS_PER_PAYROLL = 100
 
 /** A refusal the bank declared is the bank working; anything else — a 503, a timeout, a 500 — is a failure. */
 private fun StepScope.expect(outcome: Outcome<*, *>, declared: (Any?) -> Boolean) {
@@ -163,7 +164,9 @@ fun scenarioFor(plan: Plan, customer: Nodes, ops: Nodes): Scenario = when (plan.
     // Credits sent in bulk through a reliable producer: many writes per request, confirmed rather than answered.
     "payroll" -> scenario("payroll") {
         exec(bulk) { step ->
-            val credits = (1..100).map { account(plan).let { PayrollCredit(it, amountOf(heldBy(it), most = 1)) } }
+            val credits = (1..CREDITS_PER_PAYROLL).map {
+                account(plan).let { PayrollCredit(it, amountOf(heldBy(it), most = 1)) }
+            }
             step.expect(ops.any().outcome(payroll, In2(UUID.randomUUID().toString(), Payroll(credits)))) { false }
         }
     }
@@ -260,6 +263,10 @@ fun main() {
         Files.createDirectories(plan.reports)
         result.writeHtmlReport(plan.reports.resolve("${plan.scenario}.html"))
         println(summary(result))
+        // A payroll carries 100 credits, each a write to an account: this is what compares with transfers a second.
+        if (plan.scenario == "payroll") {
+            println("credits a second: ${result.ok * CREDITS_PER_PAYROLL / plan.over.inWholeSeconds}")
+        }
         val balanced = settles(client)
         println(if (balanced) "LEDGER CONSERVED" else "LEDGER DID NOT BALANCE")
         balanced && result.failed * 1_000 <= result.count
