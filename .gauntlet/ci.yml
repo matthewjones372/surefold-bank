@@ -31,11 +31,11 @@ setup:
 builds: 
   lark-bank: 
     wrap: "nix develop .#ci -c"
-    tool: "./gradlew -PlarkSource=$GITHUB_WORKSPACE/deps/lark -PpelicanSource=$GITHUB_WORKSPACE/deps/pelican -PaccessSource=$GITHUB_WORKSPACE/bank-access -Porg.gradle.java.installations.fromEnv=JDK25,JDK21 -Porg.gradle.java.installations.auto-download=false"
-  bank-checks: 
+    tool: "./gradlew -PlarkSource=$GITHUB_WORKSPACE/deps/lark -PpelicanSource=$GITHUB_WORKSPACE/deps/pelican -PaccessSource=$GITHUB_WORKSPACE/bank-access -Porg.gradle.java.installations.fromEnv=JDK25,JDK21 -Porg.gradle.java.installations.auto-download=false -Pkotlin.compiler.execution.strategy=in-process"
+  bank-checks:
     wrap: nix develop -c
   bank-approvals: 
     wrap: "nix develop .#ci -c"
-    tool: ./gradlew -PlarkSource=$GITHUB_WORKSPACE/deps/lark -PpelicanSource=$GITHUB_WORKSPACE/deps/pelican
+    tool: "./gradlew -PlarkSource=$GITHUB_WORKSPACE/deps/lark -PpelicanSource=$GITHUB_WORKSPACE/deps/pelican -Pkotlin.compiler.execution.strategy=in-process"
   bank-access: 
     wrap: nix develop -c
