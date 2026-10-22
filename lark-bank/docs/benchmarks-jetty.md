@@ -5,8 +5,6 @@ The same load scenarios against two builds of the bank, on one machine, one buil
 - **Before**: Pelican's Pekko backend, for the server and for the screening client.
 - **After**: Pelican's Jetty backend for both, with no Pekko or Scala on the runtime classpath.
 
-The README's and the specs' figures are not changed by this page.
-
 ## Summary
 
 | Scenario, 60 s each | Failed, before | Failed, after | p99, before | p99, after | Larger than the noise? |
