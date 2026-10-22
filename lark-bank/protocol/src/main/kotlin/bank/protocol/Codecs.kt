@@ -180,6 +180,9 @@ internal object TransferAnswers : MessageCodec<TransferAnswer> {
 }
 
 /** An account's protocol between nodes: an asked request, or a reliably delivered credit. */
+/** [WriteClosed]'s tag: an account's own timer, never sent between nodes, but encodable as every message is. */
+private const val WRITE_CLOSED = 3
+
 object AccountMessages : MessageCodec<AccountMessage> {
     override fun write(message: AccountMessage, out: WireOut) = when (message) {
         is AccountAsk -> {
@@ -194,7 +197,7 @@ object AccountMessages : MessageCodec<AccountMessage> {
             out.delivery(message.delivery)
         }
 
-        WriteClosed -> out.int(3)
+        WriteClosed -> out.int(WRITE_CLOSED)
     }
 
     override fun read(input: WireIn): AccountMessage = when (val tag = input.int()) {
@@ -206,7 +209,7 @@ object AccountMessages : MessageCodec<AccountMessage> {
 
         2 -> BulkCreditSent(wired { bulkCredits.read(input.bytes()) }.toDomain(), input.delivery())
 
-        3 -> WriteClosed
+        WRITE_CLOSED -> WriteClosed
 
         else -> throw WireException("no account message has the tag $tag")
     }
