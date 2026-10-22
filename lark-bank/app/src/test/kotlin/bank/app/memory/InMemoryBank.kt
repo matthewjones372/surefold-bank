@@ -98,6 +98,15 @@ class InMemoryBank internal constructor(
     /** A nudge told straight to the saga, as the sweeper sends one to a transfer it finds stuck. */
     fun nudge(id: TransferId) = actors.sagaOf(id.value).tell(Nudge)
 
+    /** The saga crashed as its node's death would: its timers gone, and its next message recovers it. */
+    fun crash(id: TransferId) = sim.crash(actors.sagaOf(id.value))
+
+    /** A status asked straight of the saga, whose answer nobody hears: the message a recovery waits for. */
+    fun poke(id: TransferId) = actors.sagaOf(id.value).tell(TransferAsk(TransferRequest.Status, Unheard))
+
+    /** Runs every message waiting, and what they tell, to idle, without moving the test's time on. */
+    fun settle() = sim.settle()
+
     /** Every delivery, loss, duplicate, delay and crash so far, to read when a seed fails. */
     val trace: List<TraceEntry> get() = sim.trace
 

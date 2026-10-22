@@ -130,7 +130,7 @@ class ScreeningSpec {
     fun `a check that answers before the timeout is waited for, and the timer then fires on nothing`() {
         screened(Check.held(approved.right()), whenUnanswered = WhenUnanswered.Decline) {
             start()
-            // The start and the saga's own nudge both drive it while it waits: the check is asked once.
+            // Started twice while it waits: the check is asked once.
             start()
             check.release()
 
