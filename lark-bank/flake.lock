@@ -1,12 +1,24 @@
 {
   "nodes": {
+    "bank-access": {
+      "flake": false,
+      "locked": {
+        "path": "../bank-access",
+        "type": "path"
+      },
+      "original": {
+        "path": "../bank-access",
+        "type": "path"
+      },
+      "parent": []
+    },
     "lark": {
       "flake": false,
       "locked": {
-        "lastModified": 1791878847,
-        "narHash": "sha256-we4fYzvHoQvFxQGyhpENN4EZZt4jkRnZ1Tj0mI7ue58=",
+        "lastModified": 1792612763,
+        "narHash": "sha256-AhevTlIpXtB4JtwOL6OjoTW0mNeo9Pan2ECDTODYMPc=",
         "ref": "refs/heads/main",
-        "rev": "3dbffec46baa36534502af5dc6840429c837bc53",
+        "rev": "e2710b5bf8740f4243fa78c031ca0ae1e282ef98",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/matthewjones372/lark"
@@ -33,10 +45,10 @@
     "pelican": {
       "flake": false,
       "locked": {
-        "lastModified": 1791296611,
-        "narHash": "sha256-CPjehCnS2YyVR6YHKcfU+ExP0eWLifis7LeY3Z81pOY=",
+        "lastModified": 1792576907,
+        "narHash": "sha256-wToivD59/8cRAWvWoIVmSOhdagJPBQhUoLbLjLLao84=",
         "ref": "refs/heads/main",
-        "rev": "a2024349bc5504ab4466a1a7bc0c1f0382c2a14a",
+        "rev": "53efbe3c579a1853f13c6327f9306fd6ccbbba65",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/matthewjones372/pelican"
@@ -49,6 +61,7 @@
     },
     "root": {
       "inputs": {
+        "bank-access": "bank-access",
         "lark": "lark",
         "nixpkgs": "nixpkgs",
         "pelican": "pelican"

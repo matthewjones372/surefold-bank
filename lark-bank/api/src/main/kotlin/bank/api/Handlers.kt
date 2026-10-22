@@ -1,11 +1,5 @@
 package bank.api
 
-import io.github.matthewjones372.pelican.pekko.streamedNow
-import java.util.concurrent.Executors
-import java.time.Duration
-import org.apache.pekko.stream.javadsl.Source
-import org.apache.pekko.NotUsed
-import org.apache.pekko.util.ByteString
 import arrow.core.Either
 import arrow.core.flatMap
 import bank.domain.AccountError
@@ -20,7 +14,6 @@ import bank.domain.TransferId
 import bank.domain.Unavailable
 import io.github.matthewjones372.pelican.ApiException
 import io.github.matthewjones372.pelican.Outcome
-import io.github.matthewjones372.pelican.Params
 import io.github.matthewjones372.pelican.api
 import io.github.matthewjones372.pelican.arrow.toOutcome
 import io.github.matthewjones372.pelican.pages
@@ -28,14 +21,12 @@ import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.metrics.metrics
 import io.github.matthewjones372.pelican.metrics.otel.openTelemetry
 import io.github.matthewjones372.pelican.ok
-import io.github.matthewjones372.pelican.pekko.handledOrFail
-import io.github.matthewjones372.pelican.pekko.bytesNow
-import io.github.matthewjones372.pelican.pekko.handledNow
-import io.github.matthewjones372.pelican.pekko.request
+import io.github.matthewjones372.pelican.jetty.bytesNow
+import io.github.matthewjones372.pelican.jetty.handledNow
+import io.github.matthewjones372.pelican.jetty.handledOrFail
+import io.github.matthewjones372.pelican.jetty.streamedNow
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.context.propagation.TextMapGetter
 import io.micrometer.core.instrument.MeterRegistry
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -75,8 +66,6 @@ interface Signing {
 /** While acting as someone, nothing changes: what support may do is look (bank spec 0021). */
 private val readOnly = Forbidden("Acting as a customer is read-only: nothing is moved or changed while acting")
 
-private val opsThreads = Executors.newVirtualThreadPerTaskExecutor()
-
 fun bankApi(
     bank: Bank,
     currencies: Currencies,
@@ -86,7 +75,7 @@ fun bankApi(
     healthy: () -> Healthy,
     scrape: () -> String,
     registry: MeterRegistry,
-    ops: () -> OpsSnapshot,
+    ops: () -> Sequence<OpsSnapshot>,
     signIn: Signing,
     owners: Owners = Owners(bank),
     rules: Rules = Rules(),
@@ -257,13 +246,10 @@ fun bankApi(
         ready handledOrFail {
             healthy().let { now -> if (now.ready) ok(now) else notReady(NotReady(now.failing)) }
         },
-        metrics bytesNow { Source.single(ByteString.fromString(scrape())) },
-        // One snapshot a second, each built on a virtual thread: it asks the read models, which block.
+        metrics bytesNow { sequenceOf(scrape().toByteArray()) },
         opsStream streamedNow {
             if (!rules.canSeeOps(this[caller])) throw ApiException(403, "The ops view is for ops")
-            Source.tick(Duration.ZERO, Duration.ofSeconds(1), Unit)
-                .mapAsync(1) { CompletableFuture.supplyAsync(ops, opsThreads) }
-                .mapMaterializedValue { NotUsed.getInstance() }
+            ops()
         },
     ) + signIn.endpoints,
     codecs = JacksonCodecs,
@@ -275,17 +261,10 @@ fun bankApi(
     pages = pages("ui").guardedBy(signIn.guard)
     authenticate(bearer, signIn.authenticator)
     // A server span per request, continuing the caller's trace (bank spec 0024); outermost, so a refusal is in it too.
-    filter(openTelemetry(telemetry, incomingHeaders = pekkoHeaders))
+    filter(openTelemetry(telemetry))
     filter(metrics(registry))
     filter(completedInTrace)
     filter(recording(looks, grants))
-}
-
-/** An inbound `traceparent`, read off Pekko's own request: the one header Pelican's filter cannot read for itself. */
-private val pekkoHeaders: TextMapGetter<Params> = object : TextMapGetter<Params> {
-    override fun keys(carrier: Params): Iterable<String> = carrier.request.headers.map { it.lowercaseName() }
-
-    override fun get(carrier: Params?, key: String): String? = carrier?.request?.getHeader(key)?.map { it.value() }?.orElse(null)
 }
 
 // ---- amounts, in and out (bank spec 0011) ----

@@ -50,7 +50,7 @@ dependencies {
     implementation(lark("lark-micrometer"))
     implementation(lark("lark-otel"))
     // Spans exported to Tempo over OTLP/HTTP (bank spec 0024), sent with the JDK's HTTP client rather than OkHttp.
-    implementation(platform("io.opentelemetry:opentelemetry-bom:1.66.0"))
+    implementation(platform("io.opentelemetry:opentelemetry-bom:1.67.0"))
     implementation("io.opentelemetry:opentelemetry-sdk")
     implementation("io.opentelemetry:opentelemetry-exporter-otlp") {
         exclude(group = "io.opentelemetry", module = "opentelemetry-exporter-sender-okhttp")
@@ -86,3 +86,18 @@ dependencies {
 tasks.withType<Test> {
     maxHeapSize = "2g"
 }
+
+// The bank runs on Jetty: a dependency that brings Pekko or Scala back fails `check`.
+val checkRuntimeClasspath = tasks.register("checkRuntimeClasspath") {
+    description = "Fails if the bank's runtime classpath holds Pekko or Scala."
+    group = "verification"
+    val forbidden = listOf("org.apache.pekko", "pekko-", "scala-library")
+    val entries = configurations.runtimeClasspath.flatMap { it.incoming.artifacts.resolvedArtifacts }
+        .map { artifacts -> artifacts.map { "${it.file.name} ${it.id.componentIdentifier.displayName}" } }
+    inputs.property("entries", entries)
+    doLast {
+        val refused = entries.get().filter { entry -> forbidden.any { entry.contains(it) } }
+        if (refused.isNotEmpty()) throw GradleException("The runtime classpath has ${refused.joinToString()}")
+    }
+}
+tasks.named("check") { dependsOn(checkRuntimeClasspath) }

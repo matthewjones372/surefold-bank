@@ -1,7 +1,6 @@
 package bank.api
 
 import io.github.matthewjones372.pelican.Filter
-import io.github.matthewjones372.pelican.Params
 import io.github.matthewjones372.pelican.afterStatus
 import java.time.Instant
 import java.util.concurrent.Executors
@@ -58,17 +57,13 @@ fun recording(log: AccessLog, grants: Grants): Filter = afterStatus { params, st
             endpoint = "${endpoint.method.name} ${endpoint.pathSpec.template}",
             account = account,
             status = status,
-            address = params.header("X-Forwarded-For")?.substringBefore(',')?.trim(),
-            userAgent = params.header("User-Agent"),
+            address = params.requestHeader("X-Forwarded-For")?.substringBefore(',')?.trim(),
+            userAgent = params.requestHeader("User-Agent"),
             grant = grants.grantUsed(who, account),
         )
         writes.execute { log.record(look) }
     }
 }
-
-/** A request header, from the backend's own request: these are recorded, not inputs any endpoint declares. */
-private fun Params.header(name: String): String? =
-    (underlying as? org.apache.pekko.http.javadsl.model.HttpRequest)?.getHeader(name)?.orElse(null)?.value()
 
 /** What a customer is told of each look: the role and what it was, never the name. */
 fun Look.role(): String = when {

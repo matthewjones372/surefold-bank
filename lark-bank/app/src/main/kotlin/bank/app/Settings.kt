@@ -165,7 +165,7 @@ val settings: Module =
             ReadModelSettings(int("batch"), duration("within"), duration("sweepEvery"), duration("stuckAfter"), int("partitions"))
         } +
         config<DatabaseSettings>("bank.database") {
-            DatabaseSettings(string("url"), string("user"), string("password"), int("poolSize"))
+            DatabaseSettings(string("url"), string("user"), secret("password").reveal(), int("poolSize"))
         } +
         config<JournalSettings>("bank.journal") {
             JournalSettings(string("primary"), named(string("databases")), boolean("groupCommit"))
@@ -173,7 +173,7 @@ val settings: Module =
         config<KafkaSettings>("bank.kafka") {
             KafkaSettings(
                 boolean("enabled"), string("bootstrap"), string("registry"), int("replication").toShort(),
-                string("username").ifEmpty { null }, string("password").ifEmpty { null },
+                string("username").ifEmpty { null }, secret("password").reveal().ifEmpty { null },
             )
         } +
         config<ScreeningSettings>("bank.screening") {
@@ -184,14 +184,14 @@ val settings: Module =
         } +
         config<IdentitySettings>("bank.identity") {
             IdentitySettings(
-                string("issuer"), string("audience"), string("clientId"), string("clientSecret").ifEmpty { null },
-                string("callbackUrl"), string("sessionKey"),
+                string("issuer"), string("audience"), string("clientId"), secret("clientSecret").reveal().ifEmpty { null },
+                string("callbackUrl"), secret("sessionKey").reveal(),
             )
         } +
         config<AccessSettings>("bank.access") {
             AccessSettings(
                 boolean("enabled"), string("approvalsUrl"), string("tokenUrl"), string("tokenForm"),
-                string("clientSecret").ifEmpty { null },
+                secret("clientSecret").reveal().ifEmpty { null },
             )
         } +
         config<AccessShadowSettings>("bank.accessShadow") {

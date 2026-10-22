@@ -18,7 +18,6 @@ import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcOffsets
 import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcSnapshots
 import io.github.matthewjones372.lark.actor.projection.Projection
 import io.github.matthewjones372.lark.actor.snapshots
-import io.github.matthewjones372.lark.app.AppScope
 import io.github.matthewjones372.lark.app.LarkApp
 import io.github.matthewjones372.lark.app.Module
 import io.github.matthewjones372.lark.app.actor.Actors
@@ -37,8 +36,8 @@ import io.github.matthewjones372.lark.logInfo
 import io.github.matthewjones372.lark.stream.start
 import io.github.matthewjones372.pelican.Api
 import io.github.matthewjones372.pelican.openapi.docs
-import io.github.matthewjones372.pelican.pekko.PelicanServer
-import io.github.matthewjones372.pelican.pekko.docs.startWithDocs
+import io.github.matthewjones372.pelican.jetty.PelicanServer
+import io.github.matthewjones372.pelican.jetty.docs.startWithDocs
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -46,13 +45,15 @@ import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
+import io.opentelemetry.context.Context
+import io.opentelemetry.sdk.trace.ReadWriteSpan
+import io.opentelemetry.sdk.trace.ReadableSpan
 import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
 import liquibase.Scope
 import liquibase.ui.LoggerUIService
-import org.apache.pekko.actor.typed.ActorSystem
-import org.apache.pekko.actor.typed.javadsl.Behaviors
 import org.slf4j.bridge.SLF4JBridgeHandler
 import java.nio.file.Path
 import javax.sql.DataSource
@@ -144,6 +145,8 @@ private fun telemetry(settings: TelemetrySettings, web: WebSettings): OpenTeleme
             if (settings.enabled) {
                 val exporter = OtlpHttpSpanExporter.builder().setEndpoint(settings.otlp.trimEnd('/') + "/v1/traces").build()
                 addSpanProcessor(BatchSpanProcessor.builder(exporter).build())
+            } else {
+                addSpanProcessor(Unexported)
             }
         }
         .build()
@@ -151,6 +154,17 @@ private fun telemetry(settings: TelemetrySettings, web: WebSettings): OpenTeleme
         .setTracerProvider(tracing)
         .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
         .build()
+}
+
+/**
+ * Spans kept and sent nowhere. OpenTelemetry 1.67 hands out a no-op tracer when no processor is registered, and
+ * a no-op span carries no `traceparent` in or out: with export off Approvals still continues every caller's trace.
+ */
+private object Unexported : SpanProcessor {
+    override fun onStart(parentContext: Context, span: ReadWriteSpan) = Unit
+    override fun isStartRequired(): Boolean = false
+    override fun onEnd(span: ReadableSpan) = Unit
+    override fun isEndRequired(): Boolean = false
 }
 
 private val SERVICE_NAME = AttributeKey.stringKey("service.name")
@@ -182,18 +196,18 @@ private val web: Module =
         single { entities: Entities, settings: EntitySettings, policies: PolicyFile ->
             ShardedApprovals(entities::request, entities::subject, policies::current, settings.askTimeout)
         }.boundTo<Approvals>() +
-        singleOf<ActorSystem<Void>>({ ActorSystem.create(Behaviors.empty(), "approvals-http") }, { system -> system.terminate() }) +
         single { identity: IdentitySettings -> signing(identity) } +
         single { settings: TelemetrySettings, web: WebSettings -> install({ telemetry(settings, web) }) { sdk, _ -> sdk.close() } } +
         single { approvals: Approvals, audit: JournalAudit, signing: Signing, policies: PolicyFile, sdk: OpenTelemetrySdk ->
             approvalsApi(approvals, audit, audit, signing, sdk) { policies.current().approverGroups }
         } +
-        singleOf(
-            { api: Api, settings: WebSettings, system: ActorSystem<Void>, _: Published, _: Digesting ->
-                api.startWithDocs(system, port = settings.port, host = settings.host, docs = docs { docsPath = "/api-docs" })
-            },
-            { server -> server.stop() },
-        )
+        single { api: Api, settings: WebSettings, _: Published, _: Digesting ->
+            install({ api.startWithDocs(port = settings.port, host = settings.host, docs = docs { docsPath = "/api-docs" }) }) { server, _ ->
+                server.stop()
+            }.also { server ->
+                onStarted { logInfo("Approvals on ${server.baseUrl}, docs at ${server.baseUrl}/api-docs") }
+            }
+        }
 
 // ---- the audit (lark-bank spec 0019) ----
 
@@ -217,9 +231,4 @@ fun approvalsModule(owners: Module = kafkaOwners): Module = settings + storage +
 /** The application as a value: the build reads the graph from here, and `main` runs it. */
 object BankApprovals : LarkApp<PelicanServer>() {
     override val module: Module = approvalsModule()
-
-    override fun AppScope.run(root: PelicanServer) {
-        logInfo("Approvals on ${root.baseUrl}, docs at ${root.baseUrl}/api-docs")
-        root.block()
-    }
 }

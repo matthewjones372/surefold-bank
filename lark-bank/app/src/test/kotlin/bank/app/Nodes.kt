@@ -9,7 +9,7 @@ import io.github.matthewjones372.lark.app.single
 import io.github.matthewjones372.lark.app.typesafe.overridingConfig
 import io.github.matthewjones372.lark.app.use
 import io.github.matthewjones372.lark.cluster.Cluster
-import io.github.matthewjones372.pelican.pekko.PelicanServer
+import io.github.matthewjones372.pelican.jetty.PelicanServer
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.io.IOException

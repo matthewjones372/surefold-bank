@@ -435,9 +435,9 @@ In bank-checks:
 
 In lark-bank:
 
-- **The client is warmed at start.** Its first call starts Pekko's actor system and opens a connection, about 450 ms:
-  past the timeout, so the first transfer on each node after a start went unscreened, which the first run against the
-  real check showed. A `GET /health` to the check at start pays it instead.
+- **The client is warmed at start.** Its first call starts the client and opens a connection, which can take longer
+  than the timeout, so the first transfer on each node after a start would go unscreened. A `GET /health` to the
+  check at start pays it instead.
 - **The stand-in stays** for the measurements (`SCREENING_URL` unset); `scripts/checks-docker.sh` runs the real check
   under compose's `checks` profile.
 
@@ -450,8 +450,9 @@ In lark-bank:
 - **A saga may ask more than once.** The sweeper nudges a saga still screening after `stuckAfter`, and it asks again;
   the check answers its first decision, and the saga takes the first answer that reaches it.
 - **`Step.Screen` carries when the transfer was requested**, so the call needs nothing but the step.
-- **The HTTP client's pool is sized in `application.conf`**: Pekko's default, 4 connections and 32 requests queued,
-  refused most calls at 200 transfers a second, and each refusal was a transfer approved unscreened. 64 and 1,024.
+- **The HTTP client's pool holds 64 connections and queues 1,024 requests** per destination, Jetty's `HttpClient`
+  defaults. A pool of 4 connections and 32 queued refused most calls at 200 transfers a second, and each refusal was a
+  transfer approved unscreened.
 - **A saga asks once while a call is in flight.** A new saga is driven twice at once, by its start and by the nudge
   it sends itself, and asked the check twice until it kept a flag; the timer still ends every wait.
 - **The bank times each call**, as `bank.screening.duration`, and counts `bank.transfer.screened_unanswered`.

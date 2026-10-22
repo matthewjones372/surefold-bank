@@ -12,10 +12,12 @@ import io.github.matthewjones372.lark.stream.Running
 import io.github.matthewjones372.lark.stream.Stream
 import io.github.matthewjones372.lark.stream.StreamBackend
 import io.github.matthewjones372.lark.stream.map
+import io.github.matthewjones372.lark.stream.mapPar
 import io.github.matthewjones372.lark.stream.restartOnDefect
 import io.github.matthewjones372.lark.stream.runFold
 import io.github.matthewjones372.lark.stream.start
 import io.github.matthewjones372.lark.stream.tick
+import io.github.matthewjones372.lark.stream.toSequence
 import io.github.matthewjones372.lark.Reading
 import io.github.matthewjones372.lark.gauge
 import io.github.matthewjones372.lark.logWarn
@@ -25,6 +27,7 @@ import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -132,7 +135,12 @@ class LiveOps(
     private val behind: Behind,
     private val readers: List<String>,
     private val running: List<Running<Nothing, Long>>,
+    private val backend: StreamBackend,
 ) {
+    /** A snapshot a second for one watcher, each built on a virtual thread: it asks the read models, which block. */
+    fun watch(): Sequence<OpsSnapshot> =
+        Stream.tick(every = 1.seconds, element = Unit, after = Duration.ZERO).mapPar(1) { current() }.toSequence(backend)
+
     fun current(): OpsSnapshot {
         val now = System.currentTimeMillis()
         val view = views.current()
