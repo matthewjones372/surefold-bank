@@ -79,7 +79,9 @@ class ApprovalEvents(private val producer: Producer<String, ByteArray>, private 
      * in, so whoever handles it continues that trace (lark-bank spec 0024).
      */
     fun publish(event: ApprovalEvent, carried: Map<String, String> = emptyMap()): CompletableFuture<Unit> =
-        producer.send(ProducerRecord(ApprovalTopic.NAME, event.requestId, framed(contentId, event)).carrying(carried)).thenApply { }
+        producer.send(
+            ProducerRecord(ApprovalTopic.NAME, event.requestId, framed(contentId, event)).carrying(carried),
+        ).thenApply { }
 
     override fun close() = producer.close()
 
@@ -118,11 +120,18 @@ class Apicurio(private val url: String, private val group: String = "default") {
             .put("content", resource(ApprovalTopic.SCHEMA)).put("contentType", "application/x-protobuf")
         val created = send("POST", "/groups/$group/artifacts?ifExists=FIND_OR_CREATE_VERSION", body.toString())
         // A version the compatibility rule turns away is a 400 naming each break, or a 409.
-        if (created.statusCode() == BAD_REQUEST || created.statusCode() == CONFLICT) throw SchemaRefused(artifact, created.body())
+        if (created.statusCode() == BAD_REQUEST || created.statusCode() == CONFLICT) {
+            throw SchemaRefused(
+                artifact,
+                created.body(),
+            )
+        }
         check(created.statusCode() in OK) { "registering $artifact: ${created.statusCode()} ${created.body()}" }
         val rule = nodes.objectNode().put("ruleType", "COMPATIBILITY").put("config", "FULL_TRANSITIVE")
         val set = send("POST", "/groups/$group/artifacts/$artifact/rules", rule.toString())
-        check(set.statusCode() in OK || set.statusCode() == CONFLICT) { "rule on $artifact: ${set.statusCode()} ${set.body()}" }
+        check(
+            set.statusCode() in OK || set.statusCode() == CONFLICT,
+        ) { "rule on $artifact: ${set.statusCode()} ${set.body()}" }
         return json.readTree(created.body()).path("version").path("contentId").asInt()
     }
 
@@ -132,8 +141,9 @@ class Apicurio(private val url: String, private val group: String = "default") {
         HttpResponse.BodyHandlers.ofString(),
     )
 
-    private fun resource(path: String): String =
-        requireNotNull(javaClass.classLoader.getResourceAsStream(path)) { "$path is not on the classpath" }.use { String(it.readAllBytes()) }
+    private fun resource(path: String): String = requireNotNull(
+        javaClass.classLoader.getResourceAsStream(path),
+    ) { "$path is not on the classpath" }.use { String(it.readAllBytes()) }
 
     private companion object {
         val OK = 200..299
@@ -145,7 +155,9 @@ class Apicurio(private val url: String, private val group: String = "default") {
 /** The topic, made with [ApprovalTopic.PARTITIONS] partitions if it is not there yet. */
 fun createTopic(settings: KafkaSettings) = Admin.create(settings.client).use { admin ->
     try {
-        admin.createTopics(listOf(NewTopic(ApprovalTopic.NAME, ApprovalTopic.PARTITIONS, settings.replication))).all().get()
+        admin.createTopics(
+            listOf(NewTopic(ApprovalTopic.NAME, ApprovalTopic.PARTITIONS, settings.replication)),
+        ).all().get()
     } catch (failed: ExecutionException) {
         if (failed.cause !is TopicExistsException) throw failed
     }
@@ -211,7 +223,10 @@ fun publishedRequests(
     .mapAsync(IN_FLIGHT) { followed ->
         val id = RequestId(followed.id.id)
         val event = followed.value.event
-        events.publish(event.toContract(heads.of(id, event), followed.sequence), tracedOnly(followed.metadata)).thenApply {
+        events.publish(
+            event.toContract(heads.of(id, event), followed.sequence),
+            tracedOnly(followed.metadata),
+        ).thenApply {
             counter("approvals.published").increment()
             followed
         }
@@ -220,7 +235,10 @@ fun publishedRequests(
     .runProjecting()
 
 /** Of what an event's append carried, only its trace: the rest is the writer's own, not the topic's readers'. */
-fun tracedOnly(metadata: Map<String, String>): Map<String, String> = metadata.filterKeys { it == "traceparent" || it == "tracestate" }
+fun tracedOnly(metadata: Map<String, String>): Map<String, String> = metadata.filterKeys {
+    it == "traceparent" ||
+        it == "tracestate"
+}
 
 /**
  * The owner asked again on Kafka: the request's `ApprovalGiven` or `AutoApproved` sent once more, under its own

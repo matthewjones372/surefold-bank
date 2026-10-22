@@ -29,16 +29,28 @@ class RoundTripTest {
     private val checks = Person("checks", "the check", setOf("services"))
     private val desk = Origin("session-1", "192.0.2.20", "Firefox")
     private val policy = Policy(
-        "checks.rule-version", setOf("risk", "ops"), 2, Duration.ofDays(7),
+        "checks.rule-version",
+        setOf("risk", "ops"),
+        2,
+        Duration.ofDays(7),
         listOf(Condition(mapOf("change" to "switch-off", "severity" to "low"))),
     )
     private val proposal = Proposal(
-        "checks.rule-version", "checks/rule/large-transfer", "v4", "amount is at least 1000", "amount is at least 500",
-        mapOf("severity" to "high", "change" to "tighten"), impact = """{"declined":7}""", link = null,
+        "checks.rule-version",
+        "checks/rule/large-transfer",
+        "v4",
+        "amount is at least 1000",
+        "amount is at least 500",
+        mapOf("severity" to "high", "change" to "tighten"),
+        impact = """{"declined":7}""",
+        link = null,
     )
 
     private val everyEvent: List<RequestEvent> = run {
-        val asked = decide(Request.Unasked, RequestCommand.Ask(RequestId("req-1"), proposal, rae, Policies("v1", mapOf(proposal.kind to policy)), t0))
+        val asked = decide(
+            Request.Unasked,
+            RequestCommand.Ask(RequestId("req-1"), proposal, rae, Policies("v1", mapOf(proposal.kind to policy)), t0),
+        )
             .getOrNull()!!
         val requested = asked.first() as RequestEvent.Requested
         asked + listOf(
@@ -79,7 +91,9 @@ class RoundTripTest {
     fun `an event's stored bytes are the same each time, whatever order its facts arrived in`() {
         val requested = everyEvent.first() as RequestEvent.Requested
         val reordered = requested.copy(
-            asked = requested.asked.copy(proposal = proposal.copy(facts = linkedMapOf("change" to "tighten", "severity" to "high"))),
+            asked = requested.asked.copy(
+                proposal = proposal.copy(facts = linkedMapOf("change" to "tighten", "severity" to "high")),
+            ),
         )
         requested.stored().contentEquals(reordered.stored()) shouldBe true
     }

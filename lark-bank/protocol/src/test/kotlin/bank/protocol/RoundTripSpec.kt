@@ -89,7 +89,13 @@ class RoundTripSpec {
         (bulk as BulkCreditSent).credit shouldBe BulkCredit(gbp(250), "payroll:p:acc-1")
 
         val requests = listOf(TransferRequest.Start(AccountId("a"), AccountId("b"), gbp(9)), TransferRequest.Status)
-        requests.map { (TransferMessages.roundTrip(TransferAsk(it, Ignored())) as TransferAsk).request } shouldBe requests
+        requests.map {
+            (
+                TransferMessages.roundTrip(
+                    TransferAsk(it, Ignored()),
+                ) as TransferAsk
+                ).request
+        } shouldBe requests
         TransferMessages.roundTrip(Nudge) shouldBe Nudge
     }
 
@@ -146,4 +152,9 @@ private class Kept : Refs {
     override fun <A : Any> reply(address: Address, answers: MessageCodec<A>) = replies.getValue(address) as Reply<A>
 }
 
-internal fun <M : Any> MessageCodec<M>.roundTrip(message: M): M = Kept().let { refs -> decode(encode(message, refs), refs) }
+internal fun <M : Any> MessageCodec<M>.roundTrip(message: M): M = Kept().let { refs ->
+    decode(
+        encode(message, refs),
+        refs,
+    )
+}

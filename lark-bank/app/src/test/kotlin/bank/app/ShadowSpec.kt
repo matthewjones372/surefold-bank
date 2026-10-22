@@ -24,14 +24,22 @@ object TestAccess {
     const val KEY = "bank-key-test"
     private val server by lazy {
         GenericContainer("openfga/openfga:v1.21.0").withCommand("run")
-            .withEnv(mapOf("OPENFGA_AUTHN_METHOD" to "preshared", "OPENFGA_AUTHN_PRESHARED_KEYS" to KEY, "OPENFGA_PLAYGROUND_ENABLED" to "false"))
+            .withEnv(
+                mapOf(
+                    "OPENFGA_AUTHN_METHOD" to "preshared",
+                    "OPENFGA_AUTHN_PRESHARED_KEYS" to KEY,
+                    "OPENFGA_PLAYGROUND_ENABLED" to "false",
+                ),
+            )
             .withExposedPorts(8080).waitingFor(Wait.forHttp("/healthz").forPort(8080)).apply { start() }
     }
     val url: String get() = "http://${server.host}:${server.getMappedPort(8080)}"
 
     /** A store of its own, named [store], with the model bank-access-client was built against. */
     fun store(store: String): Fga {
-        val model = requireNotNull(javaClass.classLoader.getResourceAsStream("bank-access/model.json")) { "no model in bank-access-client" }
+        val model = requireNotNull(
+            javaClass.classLoader.getResourceAsStream("bank-access/model.json"),
+        ) { "no model in bank-access-client" }
             .use { String(it.readAllBytes()) }
         Fga.create(url, KEY, store, model)
         return Fga(url, KEY, store)
@@ -55,10 +63,12 @@ class ShadowSpec {
      * A counter on [base]'s /metrics, summed over the lines whose labels contain each of [labels]. A count made in a
      * sampled trace ends in an exemplar (`# {trace_id=...} 1.0 <time>`); the value is the number before it.
      */
-    private fun counted(base: String, name: String, vararg labels: String): Double =
-        http.send(HttpRequest.newBuilder(URI.create("$base/metrics")).build(), HttpResponse.BodyHandlers.ofString()).body()
-            .lines().filter { it.startsWith(name) && labels.all(it::contains) }
-            .sumOf { it.substringBefore(" # ").substringAfterLast(' ').toDouble() }
+    private fun counted(base: String, name: String, vararg labels: String): Double = http.send(
+        HttpRequest.newBuilder(URI.create("$base/metrics")).build(),
+        HttpResponse.BodyHandlers.ofString(),
+    ).body()
+        .lines().filter { it.startsWith(name) && labels.all(it::contains) }
+        .sumOf { it.substringBefore(" # ").substringAfterLast(' ').toDouble() }
 
     /** Every question the shadow has finished with: agreed, unanswered, or disagreed after asking again. */
     private fun judged(base: String): Double =

@@ -13,6 +13,7 @@ import io.opentelemetry.api.trace.Tracer
  * wrapped: at thousands a second a span each is the tracer's load, not the bank's.
  */
 class TracedBank(private val bank: Bank, private val tracer: Tracer) : Bank by bank {
-    override fun transfer(id: TransferId, from: AccountId, to: AccountId, amount: Money) =
-        logAnnotated("transfer_id" to id.value) { tracer.tracedSpan("transfer") { bank.transfer(id, from, to, amount) } }
+    override fun transfer(id: TransferId, from: AccountId, to: AccountId, amount: Money) = logAnnotated(
+        "transfer_id" to id.value,
+    ) { tracer.tracedSpan("transfer") { bank.transfer(id, from, to, amount) } }
 }

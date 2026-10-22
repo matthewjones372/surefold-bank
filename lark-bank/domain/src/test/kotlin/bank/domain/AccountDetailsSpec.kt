@@ -100,7 +100,13 @@ class AccountDetailsSpec {
     @Test
     fun `a transfer's view names it, both accounts and why it stopped`() {
         val moving = Transfer.Moving(
-            AccountId("a"), AccountId("b"), gbp(5), TransferStatus.Rejected, "no funds", requestedAt = 1, settledAt = 2,
+            AccountId("a"),
+            AccountId("b"),
+            gbp(5),
+            TransferStatus.Rejected,
+            "no funds",
+            requestedAt = 1,
+            settledAt = 2,
         )
         val view = moving.view(t)
         view.id shouldBe "t-1"

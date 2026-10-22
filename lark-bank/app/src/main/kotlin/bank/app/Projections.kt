@@ -4,20 +4,20 @@ import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.TransferEvent
 import bank.domain.TransferId
-import bank.protocol.toContract
 import bank.protocol.AccountEvents
 import bank.protocol.Kinds
 import bank.protocol.Nudge
 import bank.protocol.TransferEvents
 import bank.protocol.TransferMessage
+import bank.protocol.toContract
 import io.github.matthewjones372.lark.Schedule
 import io.github.matthewjones372.lark.actor.ActorRef
 import io.github.matthewjones372.lark.actor.EventCodec
 import io.github.matthewjones372.lark.actor.Journal
-import io.github.matthewjones372.lark.actor.PersistenceId
-import io.github.matthewjones372.lark.actor.SlicedFeed
 import io.github.matthewjones372.lark.actor.OffsetStore
+import io.github.matthewjones372.lark.actor.PersistenceId
 import io.github.matthewjones372.lark.actor.ShardedJournal
+import io.github.matthewjones372.lark.actor.SlicedFeed
 import io.github.matthewjones372.lark.actor.projection.Followed
 import io.github.matthewjones372.lark.actor.projection.Projection
 import io.github.matthewjones372.lark.actor.projection.runProjecting
@@ -52,10 +52,22 @@ private val again = Schedule.spaced<Throwable>(1.seconds)
 /** One partition of one journal database's feed (spec 0014): what a read model follows, and saves its offset as. */
 class Share(val feed: SlicedFeed, val database: String, val partition: Int, val partitions: Int) {
     /** The events of [kind] in this share, with the offset of read model [name] saved under its partition. */
-    fun <E : Any> follow(offsets: OffsetStore, kind: String, codec: EventCodec<E>, name: String, settings: ReadModelSettings) =
-        Projection.partitioned(
-            feed, kind, codec, offsets, ShardedJournal.progress(name, database), partition, partitions, batch = settings.batch,
-        )
+    fun <E : Any> follow(
+        offsets: OffsetStore,
+        kind: String,
+        codec: EventCodec<E>,
+        name: String,
+        settings: ReadModelSettings,
+    ) = Projection.partitioned(
+        feed,
+        kind,
+        codec,
+        offsets,
+        ShardedJournal.progress(name, database),
+        partition,
+        partitions,
+        batch = settings.batch,
+    )
 
     /** What read model [name]'s offset for this share is saved under. */
     fun progress(name: String) = ShardedJournal.progress(name, database, partition)
@@ -111,19 +123,31 @@ fun publishedAccounts(share: Share, offsets: OffsetStore, publisher: Publisher, 
         .runProjecting()
 
 /** Every transfer event published to [EventStream.TRANSFERS], as [publishedAccounts], with its two accounts on it. */
-fun publishedTransfers(share: Share, offsets: OffsetStore, publisher: Publisher, parties: TransferParties, settings: ReadModelSettings) =
-    share.follow(offsets, Kinds.TRANSFER, TransferEvents, ReadModelNames.PUBLISHED_TRANSFERS, settings)
-        .mapAsync(IN_FLIGHT) { followed ->
-            val transfer = TransferId(followed.id.id)
-            val (from, to) = parties.of(transfer, followed.value)
-            val event = followed.value.toContract(transfer, followed.sequence, from, to)
-            publisher.publish(Outbound(EventStream.TRANSFERS.topic, transfer.value, event, tracedOnly(followed.metadata)))
-                .thenApply { followed }
-        }
-        .groupedWithin(settings.batch, settings.within)
-        .map { batch: List<Followed<TransferEvent>> -> saved(share.progress(ReadModelNames.PUBLISHED_TRANSFERS), batch) }
-        .restartOnDefect(again)
-        .runProjecting()
+fun publishedTransfers(
+    share: Share,
+    offsets: OffsetStore,
+    publisher: Publisher,
+    parties: TransferParties,
+    settings: ReadModelSettings,
+) = share.follow(offsets, Kinds.TRANSFER, TransferEvents, ReadModelNames.PUBLISHED_TRANSFERS, settings)
+    .mapAsync(IN_FLIGHT) { followed ->
+        val transfer = TransferId(followed.id.id)
+        val (from, to) = parties.of(transfer, followed.value)
+        val event = followed.value.toContract(transfer, followed.sequence, from, to)
+        publisher.publish(
+            Outbound(EventStream.TRANSFERS.topic, transfer.value, event, tracedOnly(followed.metadata)),
+        )
+            .thenApply { followed }
+    }
+    .groupedWithin(settings.batch, settings.within)
+    .map { batch: List<Followed<TransferEvent>> ->
+        saved(
+            share.progress(ReadModelNames.PUBLISHED_TRANSFERS),
+            batch,
+        )
+    }
+    .restartOnDefect(again)
+    .runProjecting()
 
 /** Events waiting on the transport at once, so it can batch them. */
 private const val IN_FLIGHT = 256
@@ -134,7 +158,8 @@ private const val IN_FLIGHT = 256
  */
 class TransferParties(private val journal: Journal, private val remembered: Int = 50_000) {
     private val known = object : LinkedHashMap<String, Pair<AccountId, AccountId>>(1_024, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Pair<AccountId, AccountId>>) = size > remembered
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Pair<AccountId, AccountId>>) =
+            size > remembered
     }
 
     fun of(transfer: TransferId, event: TransferEvent): Pair<AccountId, AccountId> = synchronized(known) {
@@ -202,7 +227,15 @@ fun startReadModels(
 ): ReadModelRuns = ReadModelRuns(
     listOfNotNull(
         batched(share, offsets, Kinds.ACCOUNT, AccountEvents, ReadModelNames.STATEMENTS, settings, reads::project),
-        batched(share, offsets, Kinds.TRANSFER, TransferEvents, ReadModelNames.TRANSFERS, settings, reads::projectTransfers),
+        batched(
+            share,
+            offsets,
+            Kinds.TRANSFER,
+            TransferEvents,
+            ReadModelNames.TRANSFERS,
+            settings,
+            reads::projectTransfers,
+        ),
         publisher?.let { publishedAccounts(share, offsets, it, settings) },
         publisher?.let { publishedTransfers(share, offsets, it, parties, settings) },
     ).map { it.start(backend) },

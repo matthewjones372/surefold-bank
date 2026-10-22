@@ -41,17 +41,37 @@ class TransferSpec {
 
     @Test
     fun `with screening on, a transfer screens before any money moves, and debits once approved`() {
-        requested.next(id, screening = true) shouldBe Step.Screen(AccountId("a"), AccountId("b"), gbp(500), requestedAt = 1)
+        requested.next(
+            id,
+            screening = true,
+        ) shouldBe Step.Screen(AccountId("a"), AccountId("b"), gbp(500), requestedAt = 1)
         val approved = requested.evolve(
-            TransferEvent.Screened(ScreeningOutcome.Approved, null, null, "no rule held", answered = true, atMillis = 2),
+            TransferEvent.Screened(
+                ScreeningOutcome.Approved,
+                null,
+                null,
+                "no rule held",
+                answered = true,
+                atMillis = 2,
+            ),
         )
-        approved.next(id, screening = true) shouldBe Step.DebitSource(AccountId("a"), AccountCommand.Debit(id, gbp(500)))
+        approved.next(
+            id,
+            screening = true,
+        ) shouldBe Step.DebitSource(AccountId("a"), AccountCommand.Debit(id, gbp(500)))
     }
 
     @Test
     fun `a declined transfer is rejected with the rule that declined it, and nothing moves`() {
         val declined = requested.evolve(
-            TransferEvent.Screened(ScreeningOutcome.Declined, "large-transfer", 3, "amount >= 1000.00", answered = true, atMillis = 2),
+            TransferEvent.Screened(
+                ScreeningOutcome.Declined,
+                "large-transfer",
+                3,
+                "amount >= 1000.00",
+                answered = true,
+                atMillis = 2,
+            ),
         ) as Transfer.Moving
         declined.status shouldBe TransferStatus.Rejected
         declined.reason shouldBe "Declined by large-transfer, version 3"

@@ -36,7 +36,13 @@ class TestIssuer(
     private val browserUrl: String? = null,
 ) : AutoCloseable {
 
-    private class Pending(val challenge: String, val nonce: String?, val clientId: String, val redirectUri: String, val who: Who)
+    private class Pending(
+        val challenge: String,
+        val nonce: String?,
+        val clientId: String,
+        val redirectUri: String,
+        val who: Who,
+    )
 
     private class Who(val subject: String, val name: String, val groups: List<String>)
 
@@ -89,9 +95,12 @@ class TestIssuer(
     /** A form: who you are, and your groups. Whatever is typed is believed; that is the point of it, and the danger. */
     private fun HttpExchange.authorize() {
         val q = form(requestURI.rawQuery)
-        val carried = q.entries.joinToString("") { (k, v) -> """<input type="hidden" name="${escape(k)}" value="${escape(v)}">""" }
+        val carried = q.entries.joinToString(
+            "",
+        ) { (k, v) -> """<input type="hidden" name="${escape(k)}" value="${escape(v)}">""" }
         answer(
-            200, "text/html; charset=utf-8",
+            200,
+            "text/html; charset=utf-8",
             """<!doctype html><meta charset="utf-8"><title>Test issuer</title>
             <h1>Sign in to the test issuer</h1>
             <form method="post" action="approve">$carried
@@ -106,12 +115,23 @@ class TestIssuer(
     private fun HttpExchange.approve() {
         val f = form(requestBody.readAllBytes().decodeToString())
         val subject = f["subject"].orEmpty().ifBlank { "ada" }
-        val who = Who(subject, f["name"].orEmpty().ifBlank { subject }, f["groups"].orEmpty().split(',').map(String::trim).filter(String::isNotEmpty))
+        val who = Who(
+            subject,
+            f["name"].orEmpty().ifBlank { subject },
+            f["groups"].orEmpty().split(',').map(String::trim).filter(String::isNotEmpty),
+        )
         val code = UUID.randomUUID().toString()
         pending[code] = Pending(
-            f.getValue("code_challenge"), f["nonce"], f.getValue("client_id"), f.getValue("redirect_uri"), who,
+            f.getValue("code_challenge"),
+            f["nonce"],
+            f.getValue("client_id"),
+            f.getValue("redirect_uri"),
+            who,
         )
-        responseHeaders.add("Location", "${f["redirect_uri"]}?code=$code&state=${URLEncoder.encode(f["state"].orEmpty(), Charsets.UTF_8)}")
+        responseHeaders.add(
+            "Location",
+            "${f["redirect_uri"]}?code=$code&state=${URLEncoder.encode(f["state"].orEmpty(), Charsets.UTF_8)}",
+        )
         sendResponseHeaders(302, -1)
         close()
     }
@@ -128,23 +148,38 @@ class TestIssuer(
                 if (waiting == null || proof != waiting.challenge || f["redirect_uri"] != waiting.redirectUri) {
                     return answer(400, JSON, """{"error":"invalid_grant"}""")
                 }
-                val idToken = token(waiting.who.subject, waiting.who.groups, waiting.clientId, waiting.who.name, nonce = waiting.nonce)
+                val idToken = token(
+                    waiting.who.subject,
+                    waiting.who.groups,
+                    waiting.clientId,
+                    waiting.who.name,
+                    nonce = waiting.nonce,
+                )
                 answer(200, JSON, """{"id_token":"$idToken","token_type":"Bearer"}""")
             }
+
             TEST_GRANT -> {
                 val subject = f["subject"] ?: return answer(400, JSON, """{"error":"invalid_request"}""")
                 val groups = f["groups"].orEmpty().split(',').map(String::trim).filter(String::isNotEmpty)
-                answer(200, JSON, """{"access_token":"${token(subject, groups, f["audience"] ?: "lark-bank")}","token_type":"Bearer"}""")
+                answer(
+                    200,
+                    JSON,
+                    """{"access_token":"${token(
+                        subject,
+                        groups,
+                        f["audience"] ?: "lark-bank",
+                    )}","token_type":"Bearer"}""",
+                )
             }
+
             else -> answer(400, JSON, """{"error":"unsupported_grant_type"}""")
         }
     }
 
-    private fun form(text: String?): Map<String, String> =
-        text.orEmpty().split('&').filter { '=' in it }.associate {
-            val (k, v) = it.split('=', limit = 2)
-            URLDecoder.decode(k, Charsets.UTF_8) to URLDecoder.decode(v, Charsets.UTF_8)
-        }
+    private fun form(text: String?): Map<String, String> = text.orEmpty().split('&').filter { '=' in it }.associate {
+        val (k, v) = it.split('=', limit = 2)
+        URLDecoder.decode(k, Charsets.UTF_8) to URLDecoder.decode(v, Charsets.UTF_8)
+    }
 
     private fun escape(text: String) =
         text.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")

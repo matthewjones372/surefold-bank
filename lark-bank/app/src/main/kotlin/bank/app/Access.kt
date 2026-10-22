@@ -89,8 +89,10 @@ data class Ask(val person: String, val access: Access, val lasting: Duration) {
             val access = when (facts["access"]) {
                 "view" -> facts["account"]?.takeIf(String::isNotBlank)?.let(Access::View)
                     ?: return "a grant to view names the account it is for".left()
+
                 "act-as" -> facts["customer"]?.takeIf(String::isNotBlank)?.let(Access::ActAs)
                     ?: return "a grant to act as someone names the customer".left()
+
                 else -> return "a grant is to view an account or to act as a customer".left()
             }
             return when {
@@ -128,22 +130,33 @@ class JdbcGrants(private val data: DataSource) : Grants {
     }
 
     override fun grantUsed(who: Caller, account: String?): String? = when (val actor = who.actor) {
-        null -> if ("support" in who.groups && account != null) grant(who.subject, "view", "account_id", account) else null
+        null -> if ("support" in who.groups && account != null) {
+            grant(
+                who.subject,
+                "view",
+                "account_id",
+                account,
+            )
+        } else {
+            null
+        }
+
         else -> grant(actor, "act-as", "subject", who.subject)
     }
 
     /** The live grant of [kind] [person] holds whose [column] is [value], the one lasting longest. */
-    private fun grant(person: String, kind: String, column: String, value: String): String? = data.connection.use { connection ->
-        connection.prepareStatement(
-            "select approval_id from access_grant where person = ? and kind = ? and $column = ? and expires_at > now() " +
-                "order by expires_at desc limit 1",
-        ).use { query ->
-            query.setString(1, person)
-            query.setString(2, kind)
-            query.setString(3, value)
-            query.executeQuery().use { row -> if (row.next()) row.getString(1) else null }
+    private fun grant(person: String, kind: String, column: String, value: String): String? =
+        data.connection.use { connection ->
+            connection.prepareStatement(
+                "select approval_id from access_grant where person = ? and kind = ? and $column = ? and expires_at > now() " +
+                    "order by expires_at desc limit 1",
+            ).use { query ->
+                query.setString(1, person)
+                query.setString(2, kind)
+                query.setString(3, value)
+                query.executeQuery().use { row -> if (row.next()) row.getString(1) else null }
+            }
         }
-    }
 
     /** [request] as the bank read it: the grant it asks for, or why it will not be given. Heard twice, kept once. */
     fun ask(request: String, hash: String, ask: Either<String, Ask>) = data.connection.use { connection ->
@@ -176,10 +189,14 @@ class JdbcGrants(private val data: DataSource) : Grants {
             query.executeQuery().use { row ->
                 if (!row.next()) return@use null
                 val refused = row.getString("refused")
-                val ask = if (refused != null) refused.left()
-                else {
-                    val access = if (row.getString("kind") == "act-as") Access.ActAs(row.getString("subject"))
-                    else Access.View(row.getString("account_id"))
+                val ask = if (refused != null) {
+                    refused.left()
+                } else {
+                    val access = if (row.getString("kind") == "act-as") {
+                        Access.ActAs(row.getString("subject"))
+                    } else {
+                        Access.View(row.getString("account_id"))
+                    }
                     Ask(row.getString("person"), access, Duration.ofMillis(row.getLong("lasts_millis"))).right()
                 }
                 row.getString("content_hash") to ask
@@ -208,10 +225,22 @@ class JdbcGrants(private val data: DataSource) : Grants {
 
     /** Who holds a grant for [account] that has not expired. */
     fun held(account: String): List<String> = data.connection.use { connection ->
-        connection.prepareStatement("select person from access_grant where account_id = ? and expires_at > now() order by person")
+        connection.prepareStatement(
+            "select person from access_grant where account_id = ? and expires_at > now() order by person",
+        )
             .use { query ->
                 query.setString(1, account)
-                query.executeQuery().use { row -> generateSequence { if (row.next()) row.getString(1) else null }.toList() }
+                query.executeQuery().use { row ->
+                    generateSequence {
+                        if (row.next()) {
+                            row.getString(
+                                1,
+                            )
+                        } else {
+                            null
+                        }
+                    }.toList()
+                }
             }
     }
 }
@@ -275,7 +304,11 @@ class ApprovalsOwner(
                 .POST(HttpRequest.BodyPublishers.ofString(form)).build(),
             HttpResponse.BodyHandlers.ofString(),
         )
-        if (answer.statusCode() !in OK) throw IOException("no token for Approvals: ${answer.statusCode()} ${answer.body()}")
+        if (answer.statusCode() !in OK) {
+            throw IOException(
+                "no token for Approvals: ${answer.statusCode()} ${answer.body()}",
+            )
+        }
         val read = json.readTree(answer.body())
         val lasts = read.path("expires_in").asLong(DEFAULT_LIFETIME) - MARGIN
         return read.path("access_token").asText().also { token = it to Instant.now().plusSeconds(maxOf(lasts, 0)) }
@@ -296,8 +329,11 @@ class GrantKeeper(private val grants: JdbcGrants, private val owner: Owner) {
         if (event.kind != GRANT_KIND) return
         when (event.eventCase) {
             EventCase.REQUESTED -> grants.ask(event.requestId, event.requested.contentHash, Ask.of(event.requested))
+
             EventCase.APPROVAL_GIVEN -> approved(event, event.approvalGiven.contentHash)
+
             EventCase.AUTO_APPROVED -> approved(event, event.autoApproved.contentHash)
+
             // The rest change nothing here: a request never approved is never given. A case added after this was
             // built arrives unset, and is skipped.
             else -> Unit
@@ -352,7 +388,11 @@ fun grantsHeard(kafka: KafkaSettings, keeper: GrantKeeper, backend: StreamBacken
             record.within {
                 // A record nobody can read is skipped, not read again forever; one that fails to apply is retried.
                 Either.catch { unframed(record.value()) }.fold(
-                    { unreadable -> logWarn("skipping ${ApprovalTopic.NAME} offset ${record.offset()}: ${unreadable.message}") },
+                    { unreadable ->
+                        logWarn(
+                            "skipping ${ApprovalTopic.NAME} offset ${record.offset()}: ${unreadable.message}",
+                        )
+                    },
                     keeper::heard,
                 )
             }

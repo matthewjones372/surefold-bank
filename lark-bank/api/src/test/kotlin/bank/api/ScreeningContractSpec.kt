@@ -25,11 +25,10 @@ class ScreeningContractSpec {
     // Pelican declares its own refusal envelope as every operation's default response. The check is not a Pelican
     // service and declares its failures one by one, and the bank's client reads none of them: any answer but a
     // decision is no decision, and the policy decides.
-    private fun breaks(served: JsonObj) =
-        apiChanges(published = screeningSpec().openApi(), proposed = served)
-            .filter { it.compatibility == Compatibility.BREAKING }
-            .filterNot { it.what.startsWith("the default response") }
-            .map { it.toString() }
+    private fun breaks(served: JsonObj) = apiChanges(published = screeningSpec().openApi(), proposed = served)
+        .filter { it.compatibility == Compatibility.BREAKING }
+        .filterNot { it.what.startsWith("the default response") }
+        .map { it.toString() }
 
     @Test
     fun `the check serves everything the bank's client sends and reads`() {
@@ -47,10 +46,14 @@ class ScreeningContractSpec {
     private fun dropped(value: JsonValue, property: String): JsonValue = when (value) {
         is JsonObj -> JsonObj(
             value.fields.filterKeys { it != property }.mapValues { (key, child) ->
-                if (key == "required" && child is JsonArr) JsonArr(child.items.filter { it != JsonStr(property) })
-                else dropped(child, property)
+                if (key == "required" && child is JsonArr) {
+                    JsonArr(child.items.filter { it != JsonStr(property) })
+                } else {
+                    dropped(child, property)
+                }
             },
         )
+
         else -> value
     }
 }

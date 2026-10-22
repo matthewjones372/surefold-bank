@@ -50,7 +50,10 @@ class PolicyFileTest {
     @Test
     fun `a kind listed twice is refused, since which one wins would be an accident`() {
         shouldThrow<IllegalArgumentException> {
-            parsePolicies("- kind: k\n  approvers: [ a ]\n  needed: 1\n- kind: k\n  approvers: [ b ]\n  needed: 1\n", "v")
+            parsePolicies(
+                "- kind: k\n  approvers: [ a ]\n  needed: 1\n- kind: k\n  approvers: [ b ]\n  needed: 1\n",
+                "v",
+            )
         }.message shouldContain "[k]"
     }
 }

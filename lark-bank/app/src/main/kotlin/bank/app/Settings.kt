@@ -3,7 +3,6 @@ package bank.app
 import bank.domain.Currencies
 import bank.domain.Currency
 import bank.domain.Listed
-import bank.domain.Money
 import bank.domain.WhenUnanswered
 import com.typesafe.config.Config
 import io.github.matthewjones372.lark.app.Module
@@ -71,7 +70,9 @@ data class KafkaSettings(
 ) {
     /** Every client's connection: the brokers, and how to sign in to them. */
     val client: Map<String, Any>
-        get() = mapOf<String, Any>("bootstrap.servers" to bootstrap) + (username?.let { user -> scram(user, password.orEmpty()) } ?: emptyMap())
+        get() = mapOf<String, Any>(
+            "bootstrap.servers" to bootstrap,
+        ) + (username?.let { user -> scram(user, password.orEmpty()) } ?: emptyMap())
 }
 
 /** SCRAM-SHA-512 over the brokers' client listener, as [user]. */
@@ -86,7 +87,12 @@ fun scram(user: String, password: String): Map<String, Any> = mapOf(
  * Screening (bank spec 0018): off, a transfer debits as soon as it is requested; on, it asks the check at [url] first,
  * waits [timeout] for it, and does as [whenUnanswered] says if the check has not answered by then.
  */
-data class ScreeningSettings(val enabled: Boolean, val url: String, val timeout: Duration, val whenUnanswered: WhenUnanswered)
+data class ScreeningSettings(
+    val enabled: Boolean,
+    val url: String,
+    val timeout: Duration,
+    val whenUnanswered: WhenUnanswered,
+)
 
 /**
  * Who is calling (bank spec 0021): tokens from [issuer] for [audience], and people signing in to the pages as the client
@@ -144,8 +150,14 @@ private fun Config.currencies(): CurrencySettings {
     val entries = root().keys.sorted().map { code ->
         val entry = getConfig(code)
         val currency = Currency(code, entry.getInt("exponent"))
-        val kind = if (entry.hasPath("kind")) Currency.Kind.valueOf(entry.getString("kind").replaceFirstChar(Char::uppercase))
-        else Currency.Kind.Fiat
+        val kind = if (entry.hasPath(
+                "kind",
+            )
+        ) {
+            Currency.Kind.valueOf(entry.getString("kind").replaceFirstChar(Char::uppercase))
+        } else {
+            Currency.Kind.Fiat
+        }
         Listed(currency, entry.getString("symbol"), kind)
     }
     return CurrencySettings(Currencies(entries))
@@ -157,12 +169,23 @@ val settings: Module =
         config<NodeSettings>("bank.cluster.node") { NodeSettings(string("name"), string("host"), int("port")) } +
         config<EntitySettings>("bank.entities") {
             EntitySettings(
-                int("shards"), duration("passivateAfter"), int("snapshotEvery"),
-                duration("askTimeout"), duration("transferWait"), duration("legTimeout"), int("batch"),
+                int("shards"),
+                duration("passivateAfter"),
+                int("snapshotEvery"),
+                duration("askTimeout"),
+                duration("transferWait"),
+                duration("legTimeout"),
+                int("batch"),
             )
         } +
         config<ReadModelSettings>("bank.readModels") {
-            ReadModelSettings(int("batch"), duration("within"), duration("sweepEvery"), duration("stuckAfter"), int("partitions"))
+            ReadModelSettings(
+                int("batch"),
+                duration("within"),
+                duration("sweepEvery"),
+                duration("stuckAfter"),
+                int("partitions"),
+            )
         } +
         config<DatabaseSettings>("bank.database") {
             DatabaseSettings(string("url"), string("user"), secret("password").reveal(), int("poolSize"))
@@ -172,33 +195,54 @@ val settings: Module =
         } +
         config<KafkaSettings>("bank.kafka") {
             KafkaSettings(
-                boolean("enabled"), string("bootstrap"), string("registry"), int("replication").toShort(),
-                string("username").ifEmpty { null }, secret("password").reveal().ifEmpty { null },
+                boolean("enabled"),
+                string("bootstrap"),
+                string("registry"),
+                int("replication").toShort(),
+                string("username").ifEmpty { null },
+                secret("password").reveal().ifEmpty { null },
             )
         } +
         config<ScreeningSettings>("bank.screening") {
             ScreeningSettings(
-                boolean("enabled"), string("url"), duration("timeout"),
+                boolean("enabled"),
+                string("url"),
+                duration("timeout"),
                 WhenUnanswered.valueOf(string("whenUnanswered").replaceFirstChar(Char::uppercase)),
             )
         } +
         config<IdentitySettings>("bank.identity") {
             IdentitySettings(
-                string("issuer"), string("audience"), string("clientId"), secret("clientSecret").reveal().ifEmpty { null },
-                string("callbackUrl"), secret("sessionKey").reveal(),
+                string("issuer"),
+                string("audience"),
+                string("clientId"),
+                secret("clientSecret").reveal().ifEmpty { null },
+                string("callbackUrl"),
+                secret("sessionKey").reveal(),
             )
         } +
         config<AccessSettings>("bank.access") {
             AccessSettings(
-                boolean("enabled"), string("approvalsUrl"), string("tokenUrl"), string("tokenForm"),
+                boolean("enabled"),
+                string("approvalsUrl"),
+                string("tokenUrl"),
+                string("tokenForm"),
                 secret("clientSecret").reveal().ifEmpty { null },
             )
         } +
         config<AccessShadowSettings>("bank.accessShadow") {
-            AccessShadowSettings(boolean("enabled"), string("url"), string("token"), string("store"), duration("recheckAfter"))
+            AccessShadowSettings(
+                boolean("enabled"),
+                string("url"),
+                string("token"),
+                string("store"),
+                duration("recheckAfter"),
+            )
         } +
         config<TelemetrySettings>("bank.telemetry") {
             TelemetrySettings(boolean("enabled"), string("otlp"), of(0.0) { getDouble("sampled") })
         } +
-        config<CurrencySettings>("bank") { of(CurrencySettings(Currencies(emptyList()))) { getConfig("currencies").currencies() } } +
+        config<CurrencySettings>(
+            "bank",
+        ) { of(CurrencySettings(Currencies(emptyList()))) { getConfig("currencies").currencies() } } +
         single { settings: CurrencySettings -> settings.currencies }

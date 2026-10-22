@@ -26,7 +26,10 @@ class ConservationSpec {
 
     private fun across(nodes: List<TestNode>) {
         withClue("every node sees three members up") {
-            eventually { nodes.all { node -> node.cluster.view.members.count { it.status.name == "Up" } == 3 } } shouldBe true
+            eventually {
+                nodes.all { node -> node.cluster.view.members.count { it.status.name == "Up" } == 3 }
+            } shouldBe
+                true
         }
         accounts.forEachIndexed { i, id ->
             nodes[i % nodes.size].bank.open(id, "owner-$i", opening, "open:$id").shouldBeRight()

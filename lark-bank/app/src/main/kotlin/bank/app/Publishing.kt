@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.google.protobuf.Message
 import io.github.matthewjones372.lark.kafka.Kafka
 import io.github.matthewjones372.lark.kafka.Producer
+import io.github.matthewjones372.lark.kafka.carrying
 import io.github.matthewjones372.lark.kafka.producer
 import org.apache.kafka.clients.admin.Admin
 import org.apache.kafka.clients.admin.NewTopic
@@ -22,7 +23,6 @@ import java.net.http.HttpResponse
 import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
-import io.github.matthewjones372.lark.kafka.carrying
 
 /*
  * Every event published (bank spec 0015): each topic's schema registered in Apicurio, and each event written in the
@@ -33,10 +33,18 @@ import io.github.matthewjones372.lark.kafka.carrying
  * Where the bank's events go: a stream, a key within it that orders them, and the event; with [carried], the trace the
  * event was written in (bank spec 0024), sent on as headers so a consumer continues it.
  */
-data class Outbound(val stream: String, val key: String, val value: Message, val carried: Map<String, String> = emptyMap())
+data class Outbound(
+    val stream: String,
+    val key: String,
+    val value: Message,
+    val carried: Map<String, String> = emptyMap(),
+)
 
 /** What of an event's metadata other services are sent: its trace, and not the bank's own log annotations. */
-fun tracedOnly(metadata: Map<String, String>): Map<String, String> = metadata.filterKeys { it == "traceparent" || it == "tracestate" }
+fun tracedOnly(metadata: Map<String, String>): Map<String, String> = metadata.filterKeys {
+    it == "traceparent" ||
+        it == "tracestate"
+}
 
 interface Publisher : AutoCloseable {
     /** Sends [record]; the future completes once the transport has it for good (for Kafka, acks=all). */
@@ -66,7 +74,8 @@ enum class EventStream(val topic: String, val schema: String) {
  * [Publisher] over Kafka: each record's value is a zero byte, the schema's content id in the registry (4 bytes), the
  * message's index in its file (one zero byte: each topic's message is first), then the message.
  */
-class KafkaPublisher(private val producer: Producer<String, ByteArray>, private val schemas: Map<String, Int>) : Publisher {
+class KafkaPublisher(private val producer: Producer<String, ByteArray>, private val schemas: Map<String, Int>) :
+    Publisher {
     override fun publish(record: Outbound): CompletableFuture<Unit> {
         val schema = requireNotNull(schemas[record.stream]) { "no schema registered for ${record.stream}" }
         val sent = ProducerRecord(record.stream, record.key, framed(schema, record.value)).carrying(record.carried)
@@ -122,7 +131,12 @@ class Apicurio(private val url: String, private val group: String = "default") {
             .putArray("references").addAll(references)
         val created = send("POST", "/groups/$group/artifacts?ifExists=FIND_OR_CREATE_VERSION", body.toString())
         // A version the compatibility rule turns away is a 400 naming each break, or a 409.
-        if (created.statusCode() == BAD_REQUEST || created.statusCode() == CONFLICT) throw SchemaRefused(artifact, created.body())
+        if (created.statusCode() == BAD_REQUEST || created.statusCode() == CONFLICT) {
+            throw SchemaRefused(
+                artifact,
+                created.body(),
+            )
+        }
         check(created.statusCode() in OK) { "registering $artifact: ${created.statusCode()} ${created.body()}" }
         val version = json.readTree(created.body()).path("version")
         compatibility(artifact)
@@ -133,7 +147,9 @@ class Apicurio(private val url: String, private val group: String = "default") {
     private fun compatibility(artifact: String) {
         val rule = nodes.objectNode().put("ruleType", "COMPATIBILITY").put("config", "FULL_TRANSITIVE")
         val set = send("POST", "/groups/$group/artifacts/$artifact/rules", rule.toString())
-        check(set.statusCode() in OK || set.statusCode() == CONFLICT) { "rule on $artifact: ${set.statusCode()} ${set.body()}" }
+        check(
+            set.statusCode() in OK || set.statusCode() == CONFLICT,
+        ) { "rule on $artifact: ${set.statusCode()} ${set.body()}" }
     }
 
     private fun send(method: String, path: String, body: String): HttpResponse<String> = http.send(
@@ -142,8 +158,9 @@ class Apicurio(private val url: String, private val group: String = "default") {
         HttpResponse.BodyHandlers.ofString(),
     )
 
-    private fun resource(path: String): String =
-        requireNotNull(javaClass.classLoader.getResourceAsStream(path)) { "$path is not on the classpath" }.use { String(it.readAllBytes()) }
+    private fun resource(path: String): String = requireNotNull(
+        javaClass.classLoader.getResourceAsStream(path),
+    ) { "$path is not on the classpath" }.use { String(it.readAllBytes()) }
 
     private companion object {
         val OK = 200..299

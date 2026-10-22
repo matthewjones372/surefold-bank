@@ -8,14 +8,14 @@ import bank.protocol.wire.GetBalance
 import bank.protocol.wire.NodeSnapshot
 import io.github.matthewjones372.lark.actor.EventCodec
 import io.github.matthewjones372.lark.actor.StateCodec
-import io.github.matthewjones372.lark.actor.versioned
-import io.github.matthewjones372.lark.actor.versionedState
 import io.github.matthewjones372.lark.actor.remote.MessageCodec
 import io.github.matthewjones372.lark.actor.remote.WireException
 import io.github.matthewjones372.lark.actor.remote.WireIn
 import io.github.matthewjones372.lark.actor.remote.WireOut
 import io.github.matthewjones372.lark.actor.remote.delivery
 import io.github.matthewjones372.lark.actor.remote.kotlinx.Kotlinx
+import io.github.matthewjones372.lark.actor.versioned
+import io.github.matthewjones372.lark.actor.versionedState
 import kotlinx.serialization.SerializationException
 import bank.protocol.wire.Account as WireAccount
 import bank.protocol.wire.AccountCommand as WireAccountCommand
@@ -187,6 +187,7 @@ object AccountMessages : MessageCodec<AccountMessage> {
             out.reply(message.reply, AccountAnswers)
             out.bytes(accountRequests.write(message.command?.toWire() ?: GetBalance))
         }
+
         is BulkCreditSent -> {
             out.int(2)
             out.bytes(bulkCredits.write(message.credit.toWire()))
@@ -200,7 +201,9 @@ object AccountMessages : MessageCodec<AccountMessage> {
             val request = wired { accountRequests.read(input.bytes()) }
             AccountAsk((request as? WireAccountCommand)?.toDomain(), reply)
         }
+
         2 -> BulkCreditSent(wired { bulkCredits.read(input.bytes()) }.toDomain(), input.delivery())
+
         else -> throw WireException("no account message has the tag $tag")
     }
 }
@@ -213,8 +216,12 @@ object TransferMessages : MessageCodec<TransferMessage> {
             out.reply(message.reply, TransferAnswers)
             out.bytes(transferRequests.write(message.request.toWire()))
         }
+
         Nudge -> out.int(2)
-        is LegAnswered, is LegTimedOut, is ScreeningAnswered, ScreeningUnanswered -> error("$message is the saga's message to itself and never crosses a node")
+
+        is LegAnswered, is LegTimedOut, is ScreeningAnswered, ScreeningUnanswered -> error(
+            "$message is the saga's message to itself and never crosses a node",
+        )
     }
 
     override fun read(input: WireIn): TransferMessage = when (val tag = input.int()) {
@@ -222,7 +229,9 @@ object TransferMessages : MessageCodec<TransferMessage> {
             val reply = input.reply(TransferAnswers)
             TransferAsk(wired { transferRequests.read(input.bytes()) }.toDomain(), reply)
         }
+
         2 -> Nudge
+
         else -> throw WireException("no transfer message has the tag $tag")
     }
 }

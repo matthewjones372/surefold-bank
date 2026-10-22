@@ -248,4 +248,3 @@ sealed interface TransferError {
     @SerialName("TransferUnavailable")
     data class Unavailable(val message: String) : TransferError
 }
-

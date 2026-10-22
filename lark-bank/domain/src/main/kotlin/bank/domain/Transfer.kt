@@ -69,15 +69,26 @@ sealed interface Transfer {
 fun Transfer.evolve(event: TransferEvent): Transfer = when (event) {
     is TransferEvent.Requested ->
         Transfer.Moving(event.from, event.to, event.amount, TransferStatus.Pending, null, event.atMillis, null)
+
     is TransferEvent.Screened -> when (event.outcome) {
         ScreeningOutcome.Approved -> moving().copy(screened = true)
+
         ScreeningOutcome.Declined ->
             moving().copy(status = TransferStatus.Rejected, reason = event.declined(), settledAt = event.atMillis)
     }
+
     is TransferEvent.SourceDebited -> moving().copy(status = TransferStatus.Debited)
-    is TransferEvent.Rejected -> moving().copy(status = TransferStatus.Rejected, reason = event.reason, settledAt = event.atMillis)
+
+    is TransferEvent.Rejected -> moving().copy(
+        status = TransferStatus.Rejected,
+        reason = event.reason,
+        settledAt = event.atMillis,
+    )
+
     is TransferEvent.DestinationCredited -> moving().copy(status = TransferStatus.Completed, settledAt = event.atMillis)
+
     is TransferEvent.CreditRefused -> moving().copy(status = TransferStatus.Refunding, reason = event.reason)
+
     is TransferEvent.SourceRefunded -> moving().copy(status = TransferStatus.Refunded, settledAt = event.atMillis)
 }
 
@@ -108,11 +119,24 @@ sealed interface Step {
  */
 fun Transfer.next(id: TransferId, screening: Boolean = false): Step = when (this) {
     Transfer.Unrequested -> Step.Done
+
     is Transfer.Moving -> when (status) {
         TransferStatus.Pending ->
-            if (screening && !screened) Step.Screen(from, to, amount, requestedAt) else Step.DebitSource(from, AccountCommand.Debit(id, amount))
+            if (screening && !screened) {
+                Step.Screen(
+                    from,
+                    to,
+                    amount,
+                    requestedAt,
+                )
+            } else {
+                Step.DebitSource(from, AccountCommand.Debit(id, amount))
+            }
+
         TransferStatus.Debited -> Step.CreditDestination(to, AccountCommand.Credit(id, amount))
+
         TransferStatus.Refunding -> Step.RefundSource(from, AccountCommand.Refund(id, amount))
+
         TransferStatus.Completed, TransferStatus.Rejected, TransferStatus.Refunded -> Step.Done
     }
 }
@@ -121,10 +145,19 @@ fun Transfer.next(id: TransferId, screening: Boolean = false): Step = when (this
 fun Transfer.Moving.after(step: Step, refusal: AccountError?, now: Long): TransferEvent? = when (step) {
     is Step.DebitSource ->
         if (refusal == null) TransferEvent.SourceDebited(now) else TransferEvent.Rejected(refusal.message, now)
+
     is Step.CreditDestination ->
-        if (refusal == null) TransferEvent.DestinationCredited(now) else TransferEvent.CreditRefused(refusal.message, now)
+        if (refusal == null) {
+            TransferEvent.DestinationCredited(
+                now,
+            )
+        } else {
+            TransferEvent.CreditRefused(refusal.message, now)
+        }
+
     // A refund cannot be refused by an open account; if it is, the saga stays Refunding and tries again.
     is Step.RefundSource -> if (refusal == null) TransferEvent.SourceRefunded(now) else null
+
     is Step.Screen, Step.Done -> null
 }
 
@@ -136,8 +169,23 @@ fun ScreeningDecision.screened(now: Long): TransferEvent.Screened =
 
 /** The bank's own decision, for a transfer screening did not answer for in time. */
 fun unanswered(policy: WhenUnanswered, now: Long): TransferEvent.Screened = when (policy) {
-    WhenUnanswered.Approve -> TransferEvent.Screened(ScreeningOutcome.Approved, null, null, "", answered = false, atMillis = now)
-    WhenUnanswered.Decline -> TransferEvent.Screened(ScreeningOutcome.Declined, null, null, "", answered = false, atMillis = now)
+    WhenUnanswered.Approve -> TransferEvent.Screened(
+        ScreeningOutcome.Approved,
+        null,
+        null,
+        "",
+        answered = false,
+        atMillis = now,
+    )
+
+    WhenUnanswered.Decline -> TransferEvent.Screened(
+        ScreeningOutcome.Declined,
+        null,
+        null,
+        "",
+        answered = false,
+        atMillis = now,
+    )
 }
 
 sealed interface TransferError {

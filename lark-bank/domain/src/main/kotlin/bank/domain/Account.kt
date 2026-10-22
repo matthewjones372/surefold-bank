@@ -121,7 +121,9 @@ sealed interface AccountError {
 }
 
 /** The bank could not answer in time: a node moving, a journal slow. Worth trying again with the same reference. */
-data class Unavailable(override val message: String) : AccountError, TransferError
+data class Unavailable(override val message: String) :
+    AccountError,
+    TransferError
 
 /**
  * An account's state. [recent] holds the last [RECENT] references applied, oldest first, so a caller's retried
@@ -170,30 +172,52 @@ private fun Account.deciding(
     id: AccountId,
     command: AccountCommand,
     now: Long,
-): Either<AccountError, List<AccountEvent>> =
-    when (this) {
-        Account.Unopened, is Account.Refusing -> when (command) {
-            is AccountCommand.Open -> opening(id, command, now)
-            is AccountCommand.Deposit, is AccountCommand.Withdraw, is AccountCommand.Debit, is AccountCommand.Credit,
-            is AccountCommand.Refund, is AccountCommand.Close,
-            -> AccountError.NoSuchAccount(id.value).left()
-        }
-        is Account.Open -> when (command) {
-            // Opening an open account again for the same owner is a retry; for anyone else it is a clash.
-            is AccountCommand.Open ->
-                if (command.owner == owner) emptyList<AccountEvent>().right() else AccountError.AlreadyOpen(id.value).left()
-            is AccountCommand.Deposit -> once(command) { moving(id, command.amount) { AccountEvent.Deposited(it, command.reference, now) } }
-            is AccountCommand.Credit -> once(command) { moving(id, command.amount) { AccountEvent.Credited(command.transfer, it, now) } }
-            is AccountCommand.Refund -> once(command) { moving(id, command.amount) { AccountEvent.Refunded(command.transfer, it, now) } }
-            is AccountCommand.Withdraw ->
-                once(command) { taking(id, command.amount, now) { AccountEvent.Withdrawn(it, command.reference, now) } }
-            is AccountCommand.Debit ->
-                once(command) { taking(id, command.amount, now) { AccountEvent.Debited(command.transfer, it, now) } }
-            is AccountCommand.Close ->
-                if (!holdsLegsOf(command.transfer)) emptyList<AccountEvent>().right()
-                else listOf(AccountEvent.LegsClosed(command.transfer, now)).right()
-        }
+): Either<AccountError, List<AccountEvent>> = when (this) {
+    Account.Unopened, is Account.Refusing -> when (command) {
+        is AccountCommand.Open -> opening(id, command, now)
+
+        is AccountCommand.Deposit, is AccountCommand.Withdraw, is AccountCommand.Debit, is AccountCommand.Credit,
+        is AccountCommand.Refund, is AccountCommand.Close,
+        -> AccountError.NoSuchAccount(id.value).left()
     }
+
+    is Account.Open -> when (command) {
+        // Opening an open account again for the same owner is a retry; for anyone else it is a clash.
+        is AccountCommand.Open ->
+            if (command.owner == owner) {
+                emptyList<AccountEvent>().right()
+            } else {
+                AccountError.AlreadyOpen(
+                    id.value,
+                ).left()
+            }
+
+        is AccountCommand.Deposit -> once(
+            command,
+        ) { moving(id, command.amount) { AccountEvent.Deposited(it, command.reference, now) } }
+
+        is AccountCommand.Credit -> once(
+            command,
+        ) { moving(id, command.amount) { AccountEvent.Credited(command.transfer, it, now) } }
+
+        is AccountCommand.Refund -> once(
+            command,
+        ) { moving(id, command.amount) { AccountEvent.Refunded(command.transfer, it, now) } }
+
+        is AccountCommand.Withdraw ->
+            once(command) { taking(id, command.amount, now) { AccountEvent.Withdrawn(it, command.reference, now) } }
+
+        is AccountCommand.Debit ->
+            once(command) { taking(id, command.amount, now) { AccountEvent.Debited(command.transfer, it, now) } }
+
+        is AccountCommand.Close ->
+            if (!holdsLegsOf(command.transfer)) {
+                emptyList<AccountEvent>().right()
+            } else {
+                listOf(AccountEvent.LegsClosed(command.transfer, now)).right()
+            }
+    }
+}
 
 /** Nothing, if [command]'s reference was applied recently: the same command twice moves the money once. */
 private inline fun Account.Open.once(
@@ -207,8 +231,14 @@ private fun Account.Open.moving(
     amount: Money,
     event: (Money) -> AccountEvent,
 ): Either<AccountError, List<AccountEvent>> = when {
-    amount.currency != balance.currency -> AccountError.CurrencyMismatch(id.value, balance.currency.code, amount.currency.code).left()
+    amount.currency != balance.currency -> AccountError.CurrencyMismatch(
+        id.value,
+        balance.currency.code,
+        amount.currency.code,
+    ).left()
+
     !amount.isPositive -> AccountError.InvalidAmount(amount).left()
+
     else -> listOf(event(amount)).right()
 }
 
@@ -218,10 +248,18 @@ private fun Account.Open.taking(
     now: Long,
     event: (Money) -> AccountEvent,
 ): Either<AccountError, List<AccountEvent>> = when {
-    amount.currency != balance.currency -> AccountError.CurrencyMismatch(id.value, balance.currency.code, amount.currency.code).left()
+    amount.currency != balance.currency -> AccountError.CurrencyMismatch(
+        id.value,
+        balance.currency.code,
+        amount.currency.code,
+    ).left()
+
     !amount.isPositive -> AccountError.InvalidAmount(amount).left()
+
     amount > balance -> AccountError.InsufficientFunds(id.value, balance, amount).left()
+
     amount > leftOn(now) -> AccountError.DailyLimitExceeded(id.value, limit, leftOn(now), amount).left()
+
     else -> listOf(event(amount)).right()
 }
 
@@ -235,14 +273,21 @@ fun Account.evolve(event: AccountEvent): Account = when (event) {
             dailyLimit = event.dailyLimit,
             refused = refusals,
         )
+
     is AccountEvent.Deposited -> open().moved(event.amount, event.reference)
+
     is AccountEvent.Credited -> open().moved(event.amount, event.reference).leg(event.reference)
+
     is AccountEvent.Refunded -> open().moved(event.amount, event.reference).leg(event.reference)
         .givenBack(event.transfer, event.amount, event.atMillis)
+
     is AccountEvent.Withdrawn -> open().moved(-event.amount, event.reference).paid(event.amount, event.atMillis)
+
     is AccountEvent.Debited -> open().moved(-event.amount, event.reference).leg(event.reference)
         .paid(event.amount, event.atMillis, event.transfer)
+
     is AccountEvent.LegRefused -> refused(event.reference, event.reason)
+
     is AccountEvent.LegsClosed -> closed(event.transfer)
 }
 
@@ -250,6 +295,7 @@ private fun Account.Open.leg(reference: String): Account.Open = copy(legs = legs
 
 private fun Account.open(): Account.Open = when (this) {
     is Account.Open -> this
+
     // A journal whose first event is not Opened is a corrupt journal, not a case to handle.
     Account.Unopened, is Account.Refusing -> error("an event for an account that was never opened")
 }

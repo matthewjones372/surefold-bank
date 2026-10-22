@@ -1,50 +1,48 @@
 package bank.app
 
-import java.util.concurrent.ConcurrentHashMap
-import bank.api.Signing
-import io.github.matthewjones372.lark.actor.stay
-import io.github.matthewjones372.lark.actor.behaviour
-import io.github.matthewjones372.lark.cluster.topic
-import bank.protocol.wire.NodeSnapshot
-import bank.protocol.NodeSnapshots
 import arrow.core.Either
 import bank.api.Busy
 import bank.api.Healthy
 import bank.api.PayrollAccepted
 import bank.api.Payrolls
-import bank.api.bankApi
 import bank.api.Rules
-import io.github.matthewjones372.pelican.Api
+import bank.api.Signing
+import bank.api.bankApi
 import bank.domain.AccountId
-import bank.domain.Currencies
 import bank.domain.Bank
+import bank.domain.Currencies
+import bank.domain.Money
 import bank.domain.TransferId
 import bank.protocol.AccountMessage
 import bank.protocol.AccountMessages
 import bank.protocol.AccountStates
-import bank.domain.Money
 import bank.protocol.BulkCredit
 import bank.protocol.BulkCreditSent
 import bank.protocol.Kinds
+import bank.protocol.NodeSnapshots
 import bank.protocol.TransferMessage
 import bank.protocol.TransferMessages
+import bank.protocol.wire.NodeSnapshot
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.github.matthewjones372.lark.actor.ActorRef
 import io.github.matthewjones372.lark.actor.Producer
 import io.github.matthewjones372.lark.actor.Prune
-import io.github.matthewjones372.lark.actor.every
 import io.github.matthewjones372.lark.actor.ShardedJournal
 import io.github.matthewjones372.lark.actor.ShardedSnapshots
+import io.github.matthewjones372.lark.actor.behaviour
+import io.github.matthewjones372.lark.actor.every
 import io.github.matthewjones372.lark.actor.journal
 import io.github.matthewjones372.lark.actor.journal.jdbc.GroupCommit
 import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcJournal
 import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcOffsets
 import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcSliceTable
 import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcSnapshots
+import io.github.matthewjones372.lark.actor.projection.Projection
 import io.github.matthewjones372.lark.actor.remote.node
 import io.github.matthewjones372.lark.actor.snapshots
 import io.github.matthewjones372.lark.actor.spawn
+import io.github.matthewjones372.lark.actor.stay
 import io.github.matthewjones372.lark.app.Health
 import io.github.matthewjones372.lark.app.HealthRegistry
 import io.github.matthewjones372.lark.app.LarkApp
@@ -52,29 +50,28 @@ import io.github.matthewjones372.lark.app.Module
 import io.github.matthewjones372.lark.app.actor.Actors
 import io.github.matthewjones372.lark.app.actor.actors
 import io.github.matthewjones372.lark.app.actor.spawn
-import io.github.matthewjones372.lark.app.cluster.cluster
 import io.github.matthewjones372.lark.app.boundTo
 import io.github.matthewjones372.lark.app.closingOf
+import io.github.matthewjones372.lark.app.cluster.cluster
 import io.github.matthewjones372.lark.app.liquibase.Migrated
 import io.github.matthewjones372.lark.app.liquibase.migrations
-import io.github.matthewjones372.lark.app.probe
 import io.github.matthewjones372.lark.app.single
 import io.github.matthewjones372.lark.app.singleOf
 import io.github.matthewjones372.lark.cluster.Cluster
-import io.github.matthewjones372.lark.cluster.spread
-import io.github.matthewjones372.lark.actor.projection.Projection
 import io.github.matthewjones372.lark.cluster.Sharded
 import io.github.matthewjones372.lark.cluster.sharding
 import io.github.matthewjones372.lark.cluster.singleton
+import io.github.matthewjones372.lark.cluster.spread
+import io.github.matthewjones372.lark.cluster.topic
 import io.github.matthewjones372.lark.logInfo
-import io.github.matthewjones372.lark.stream.StreamBackend
 import io.github.matthewjones372.lark.stream.Running
-import io.github.matthewjones372.lark.stream.start
-import io.github.matthewjones372.pelican.openapi.docs
+import io.github.matthewjones372.lark.stream.StreamBackend
+import io.github.matthewjones372.pelican.Api
 import io.github.matthewjones372.pelican.client.jetty.JettyHttpTransport
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.jetty.docs.startWithDocs
-import io.micrometer.core.instrument.Metrics as MicrometerRegistries
+import io.github.matthewjones372.pelican.openapi.docs
+import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.Meter
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
@@ -84,25 +81,22 @@ import io.micrometer.core.instrument.config.MeterFilter
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
-import io.micrometer.core.instrument.Clock
-import io.prometheus.metrics.model.registry.PrometheusRegistry
-import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
+import io.opentelemetry.context.Context
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter
+import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
-import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.trace.ReadWriteSpan
 import io.opentelemetry.sdk.trace.ReadableSpan
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import org.slf4j.bridge.SLF4JBridgeHandler
-import javax.sql.DataSource
+import io.prometheus.metrics.model.registry.PrometheusRegistry
 import liquibase.Contexts
 import liquibase.LabelExpression
 import liquibase.Liquibase
@@ -111,8 +105,11 @@ import liquibase.database.DatabaseFactory
 import liquibase.database.jvm.JdbcConnection
 import liquibase.resource.ClassLoaderResourceAccessor
 import liquibase.ui.LoggerUIService
-import kotlin.time.Duration.Companion.seconds
+import org.slf4j.bridge.SLF4JBridgeHandler
+import java.util.concurrent.ConcurrentHashMap
+import javax.sql.DataSource
 import io.github.matthewjones372.lark.stream.Actors as StreamActors
+import io.micrometer.core.instrument.Metrics as MicrometerRegistries
 
 // ---- storage ----
 
@@ -147,12 +144,11 @@ class JournalDatabases(val others: List<Pair<String, HikariDataSource>>) {
     fun close() = others.forEach { (_, pool) -> pool.close() }
 }
 
-private fun journalDatabases(settings: DatabaseSettings, journal: JournalSettings): JournalDatabases =
-    JournalDatabases(
-        journal.others.map { (name, url) ->
-            name to pool(settings, url, "journal-$name").also { pool -> migrate(pool, "db/journal.xml") }
-        },
-    )
+private fun journalDatabases(settings: DatabaseSettings, journal: JournalSettings): JournalDatabases = JournalDatabases(
+    journal.others.map { (name, url) ->
+        name to pool(settings, url, "journal-$name").also { pool -> migrate(pool, "db/journal.xml") }
+    },
+)
 
 private fun migrate(data: DataSource, changelog: String) = data.connection.use { connection ->
     val database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(JdbcConnection(connection))
@@ -170,10 +166,12 @@ val storage: Module =
         } +
         // A currency the accounts hold that the registry no longer lists, or lists with other places, would misread every
         // amount in it: the node refuses to start instead (bank spec 0011).
-        single { data: DataSource, _: Migrated, currencies: Currencies -> JdbcReadModels(data).also {
-            it.heldIn(currencies)
-            it.canReadAsCaller()
-        } } +
+        single { data: DataSource, _: Migrated, currencies: Currencies ->
+            JdbcReadModels(data).also {
+                it.heldIn(currencies)
+                it.canReadAsCaller()
+            }
+        } +
         single { data: DataSource, _: Migrated -> JdbcGrants(data) } +
         single { data: DataSource, _: Migrated -> JdbcAccessLog(data) }
 
@@ -183,8 +181,12 @@ val storage: Module =
  * Prometheus, with the JVM's own meters, and histograms for the latencies a dashboard takes a p99 of, each bucket
  * keeping the trace of a sampled request that fell in it (bank spec 0024).
  */
-private fun prometheus(): PrometheusMeterRegistry =
-    PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry(), Clock.SYSTEM, CurrentSpan).also { registry ->
+private fun prometheus(): PrometheusMeterRegistry = PrometheusMeterRegistry(
+    PrometheusConfig.DEFAULT,
+    PrometheusRegistry(),
+    Clock.SYSTEM,
+    CurrentSpan,
+).also { registry ->
     registry.config().meterFilter(
         object : MeterFilter {
             override fun configure(id: Meter.Id, config: DistributionStatisticConfig): DistributionStatisticConfig =
@@ -240,7 +242,9 @@ private fun openTelemetry(settings: TelemetrySettings, node: NodeSettings): Open
         .setSampler(Sampler.parentBased(Sampler.traceIdRatioBased(settings.sampled)))
         .apply {
             if (settings.enabled) {
-                val exporter = OtlpHttpSpanExporter.builder().setEndpoint(settings.otlp.trimEnd('/') + "/v1/traces").build()
+                val exporter = OtlpHttpSpanExporter.builder().setEndpoint(
+                    settings.otlp.trimEnd('/') + "/v1/traces",
+                ).build()
                 addSpanProcessor(BatchSpanProcessor.builder(exporter).build())
             } else {
                 addSpanProcessor(Unexported)
@@ -287,18 +291,50 @@ private val clustered: Module =
         // Joined as bank.cluster says, through whichever backend `join` names (lark spec 0096); ready once fully in.
         cluster("bank.cluster") +
         closingOf { -> JettyHttpTransport() } +
-        single { settings: ScreeningSettings, sdk: OpenTelemetrySdk, transport: JettyHttpTransport -> screening(settings, sdk, transport) } +
-        single { actors: Actors, cluster: Cluster, settings: EntitySettings, persistence: Persistence, kafka: KafkaSettings,
-            reading: ReadModelSettings, screening: Screening, tracer: Tracer ->
+        single { settings: ScreeningSettings, sdk: OpenTelemetrySdk, transport: JettyHttpTransport ->
+            screening(
+                settings,
+                sdk,
+                transport,
+            )
+        } +
+        single {
+                actors: Actors,
+                cluster: Cluster,
+                settings: EntitySettings,
+                persistence: Persistence,
+                kafka: KafkaSettings,
+                reading: ReadModelSettings,
+                screening: Screening,
+                tracer: Tracer,
+            ->
             // Old events go only once every read model that reads accounts has read them, in the id's own partition.
-            val readers = listOfNotNull(ReadModelNames.STATEMENTS, ReadModelNames.PUBLISHED_ACCOUNTS.takeIf { kafka.enabled })
-            val prune = Prune.after(persistence.offsets, persistence.journal, reading.partitions, *readers.toTypedArray())
+            val readers = listOfNotNull(
+                ReadModelNames.STATEMENTS,
+                ReadModelNames.PUBLISHED_ACCOUNTS.takeIf { kafka.enabled },
+            )
+            val prune = Prune.after(
+                persistence.offsets,
+                persistence.journal,
+                reading.partitions,
+                *readers.toTypedArray(),
+            )
             val snapshots = every(settings.snapshotEvery, AccountStates, prune)
             actors.within {
-                val accounts = cluster.sharding(Kinds.ACCOUNT, AccountMessages, settings.passivateAfter, settings.shards) { id ->
+                val accounts = cluster.sharding(
+                    Kinds.ACCOUNT,
+                    AccountMessages,
+                    settings.passivateAfter,
+                    settings.shards,
+                ) { id ->
                     account(AccountId(id), snapshots, settings.batch, tracer)
                 }
-                val transfers = cluster.sharding(Kinds.TRANSFER, TransferMessages, settings.passivateAfter, settings.shards) { id ->
+                val transfers = cluster.sharding(
+                    Kinds.TRANSFER,
+                    TransferMessages,
+                    settings.passivateAfter,
+                    settings.shards,
+                ) { id ->
                     transfer(TransferId(id), AccountsById(accounts::entity), settings.legTimeout, screening, tracer)
                 }
                 Entities(accounts, transfers)
@@ -325,7 +361,12 @@ class ReliablePayrolls(private val producer: Producer<AccountMessage>) : Payroll
 }
 
 /** What the read models run on, and where they publish. */
-class ReadSide(val backend: StreamBackend, val publishing: Publishing, val kafka: KafkaSettings, val settings: ReadModelSettings)
+class ReadSide(
+    val backend: StreamBackend,
+    val publishing: Publishing,
+    val kafka: KafkaSettings,
+    val settings: ReadModelSettings,
+)
 
 /** What `GET /cluster` answers, asked afresh each time. */
 fun interface ClusterViews {
@@ -334,15 +375,27 @@ fun interface ClusterViews {
 
 private val theBank: Module =
     single { entities: Entities, settings: EntitySettings, tracer: Tracer ->
-        TracedBank(ShardedBank(entities::account, entities::transfer, settings.askTimeout, settings.transferWait), tracer)
+        TracedBank(
+            ShardedBank(entities::account, entities::transfer, settings.askTimeout, settings.transferWait),
+            tracer,
+        )
     }.boundTo<Bank>() +
         singleOf(::ReliablePayrolls).boundTo<Payrolls>() +
         single { kafka: KafkaSettings ->
-            install({ Publishing(if (kafka.enabled) kafkaPublisher(kafka) else null) }) { publishing, _ -> publishing.publisher?.close() }
+            install(
+                { Publishing(if (kafka.enabled) kafkaPublisher(kafka) else null) },
+            ) { publishing, _ -> publishing.publisher?.close() }
         } +
         singleOf(::ReadSide) +
-        single { actors: Actors, cluster: Cluster, node: NodeSettings, persistence: Persistence, reads: JdbcReadModels,
-            entities: Entities, side: ReadSide ->
+        single {
+                actors: Actors,
+                cluster: Cluster,
+                node: NodeSettings,
+                persistence: Persistence,
+                reads: JdbcReadModels,
+                entities: Entities,
+                side: ReadSide,
+            ->
             actors.within {
                 // Each journal database's read models in partitions by slice, spread over the nodes (spec 0014): a
                 // worker per database and partition, moved with its offsets when its node goes.
@@ -351,9 +404,17 @@ private val theBank: Module =
                 cluster.spread("read-models", persistence.journal.feeds.size * partitions) { worker ->
                     Projection.worker {
                         val share = share(persistence.journal, partitions, worker)
-                        logInfo("read models of ${share.database} partition ${share.partition} starting on ${node.name}")
+                        logInfo(
+                            "read models of ${share.database} partition ${share.partition} starting on ${node.name}",
+                        )
                         startReadModels(
-                            share, persistence.offsets, reads, side.settings, side.publishing.publisher, parties, side.backend,
+                            share,
+                            persistence.offsets,
+                            reads,
+                            side.settings,
+                            side.publishing.publisher,
+                            parties,
+                            side.backend,
                         )
                     }
                 }
@@ -376,12 +437,23 @@ private val access: Module =
     single { settings: AccessSettings, kafka: KafkaSettings, grants: JdbcGrants, backend: StreamBackend ->
         install({
             GrantsHeard(
-                if (!settings.enabled) null
-                else grantsHeard(
-                    kafka,
-                    GrantKeeper(grants, ApprovalsOwner(settings.approvalsUrl, settings.tokenUrl, settings.tokenForm, settings.clientSecret)),
-                    backend,
-                ),
+                if (!settings.enabled) {
+                    null
+                } else {
+                    grantsHeard(
+                        kafka,
+                        GrantKeeper(
+                            grants,
+                            ApprovalsOwner(
+                                settings.approvalsUrl,
+                                settings.tokenUrl,
+                                settings.tokenForm,
+                                settings.clientSecret,
+                            ),
+                        ),
+                        backend,
+                    )
+                },
             )
         }) { heard, _ -> heard.running?.close() }
     } +
@@ -390,7 +462,9 @@ private val access: Module =
         single { grants: JdbcGrants, _: GrantsHeard, shadow: bank.api.Shadow -> Rules(grants, shadow) } +
         // Every node publishes what the access log holds and no node has published yet, when Kafka is on.
         single { log: JdbcAccessLog, side: ReadSide ->
-            install({ AccessPublishing(side.publishing.publisher?.let { accessPublisher(log, it, side.backend) }) }) { publishing, _ ->
+            install(
+                { AccessPublishing(side.publishing.publisher?.let { accessPublisher(log, it, side.backend) }) },
+            ) { publishing, _ ->
                 publishing.running?.close()
             }
         }
@@ -398,7 +472,13 @@ private val access: Module =
 // ---- the web ----
 
 /** Who is calling, what they may do, and where their looks are recorded. */
-class Callers(val signIn: Signing, val rules: Rules, val looks: JdbcAccessLog, val grants: JdbcGrants, val audit: bank.api.Audit)
+class Callers(
+    val signIn: Signing,
+    val rules: Rules,
+    val looks: JdbcAccessLog,
+    val grants: JdbcGrants,
+    val audit: bank.api.Audit,
+)
 
 /** The access log's outbox to Kafka on this node; nothing when Kafka is off. */
 class AccessPublishing(val running: Running<Nothing, Long>?)
@@ -406,44 +486,95 @@ class AccessPublishing(val running: Running<Nothing, Long>?)
 private val web: Module =
     // Everything that runs in the background is started before the port opens.
     single { cluster: Cluster, readModels: ActorRef<WhereAreReadModels> ->
-            ClusterViews { clusterView(cluster, readModels) }
-        } +
+        ClusterViews { clusterView(cluster, readModels) }
+    } +
         // Every node publishes itself to the `ops` topic, and hears every other (bank spec 0007).
         // After the Prometheus registry, so every gauge set here reaches it.
-        single { actors: Actors, cluster: Cluster, node: NodeSettings, _: PrometheusMeterRegistry, side: ReadSide,
-            views: ClusterViews, reads: JdbcReadModels, persistence: Persistence, currencies: Currencies ->
+        single {
+                actors: Actors,
+                cluster: Cluster,
+                node: NodeSettings,
+                _: PrometheusMeterRegistry,
+                side: ReadSide,
+                views: ClusterViews,
+                reads: JdbcReadModels,
+                persistence: Persistence,
+                currencies: Currencies,
+            ->
             install({
                 val latest = ConcurrentHashMap<String, NodeSnapshot>()
                 val topic = cluster.topic("ops", NodeSnapshots)
                 actors.within {
                     topic.subscribe(
-                        spawn("ops-collector", behaviour<NodeSnapshot, Unit>(Unit) { _, _, said -> stay().also { latest[said.node] = said } }),
+                        spawn(
+                            "ops-collector",
+                            behaviour<NodeSnapshot, Unit>(
+                                Unit,
+                            ) { _, _, said -> stay().also { latest[said.node] = said } },
+                        ),
                     )
                 }
                 val readers = listOfNotNull(
-                    ReadModelNames.STATEMENTS, ReadModelNames.TRANSFERS,
-                    ReadModelNames.PUBLISHED_ACCOUNTS.takeIf { side.kafka.enabled }, ReadModelNames.PUBLISHED_TRANSFERS.takeIf { side.kafka.enabled },
+                    ReadModelNames.STATEMENTS,
+                    ReadModelNames.TRANSFERS,
+                    ReadModelNames.PUBLISHED_ACCOUNTS.takeIf { side.kafka.enabled },
+                    ReadModelNames.PUBLISHED_TRANSFERS.takeIf { side.kafka.enabled },
                 )
                 val behind = Behind(persistence.offsets, side.settings.partitions)
                 val gauges = bookGauges(currencies, reads, persistence.heads, behind, readers, side.backend)
                 val publishing = opsPublisher(NodeMeter(node.name, cluster), topic, side.backend)
-                LiveOps(node.name, latest, views, reads, persistence.heads, behind, readers, listOf(gauges, publishing), side.backend)
+                LiveOps(
+                    node.name, latest, views, reads, persistence.heads, behind, readers,
+                    listOf(
+                        gauges,
+                        publishing,
+                    ),
+                    side.backend,
+                )
             }) { ops, _ -> ops.close() }
         } +
-        single { settings: IdentitySettings, rules: Rules, looks: JdbcAccessLog, grants: JdbcGrants, _: AccessPublishing,
-            shadow: AccessShadowSettings, reads: JdbcReadModels ->
+        single {
+                settings: IdentitySettings,
+                rules: Rules,
+                looks: JdbcAccessLog,
+                grants: JdbcGrants,
+                _: AccessPublishing,
+                shadow: AccessShadowSettings,
+                reads: JdbcReadModels,
+            ->
             Callers(signing(settings), rules, looks, grants, FgaAudit.of(shadow, grants, reads))
         } +
-        single { bank: Bank, currencies: Currencies, reads: JdbcReadModels, payrolls: Payrolls, views: ClusterViews,
-            health: HealthRegistry, watched: Watched, ops: LiveOps, callers: Callers ->
+        single {
+                bank: Bank,
+                currencies: Currencies,
+                reads: JdbcReadModels,
+                payrolls: Payrolls,
+                views: ClusterViews,
+                health: HealthRegistry,
+                watched: Watched,
+                ops: LiveOps,
+                callers: Callers,
+            ->
             bankApi(
-                bank, currencies, reads, payrolls, views::current, { asked(health) }, { watched.registry.scrape(OPENMETRICS) }, watched.registry,
+                bank, currencies, reads, payrolls, views::current, {
+                    asked(
+                        health,
+                    )
+                }, { watched.registry.scrape(OPENMETRICS) }, watched.registry,
                 ops::watch, callers.signIn, rules = callers.rules, looks = callers.looks, grants = callers.grants,
                 audit = callers.audit, telemetry = watched.sdk,
             )
         } +
         single { api: Api, settings: WebSettings ->
-            install({ api.startWithDocs(port = settings.port, host = settings.host, docs = docs { docsPath = "/api-docs" }) }) { server, _ ->
+            install(
+                {
+                    api.startWithDocs(
+                        port = settings.port,
+                        host = settings.host,
+                        docs = docs { docsPath = "/api-docs" },
+                    )
+                },
+            ) { server, _ ->
                 server.stop()
             }.also { server ->
                 onStarted { logInfo("Lark Bank on ${server.baseUrl}, docs at ${server.baseUrl}/api-docs") }

@@ -10,7 +10,6 @@ import bank.approvals.domain.decide
 import bank.approvals.domain.evolve
 import bank.approvals.protocol.AskOwnerAgain
 import bank.approvals.protocol.ChainedEvent
-import bank.approvals.protocol.chained
 import bank.approvals.protocol.ExpiryDue
 import bank.approvals.protocol.Kinds
 import bank.approvals.protocol.Release
@@ -20,6 +19,7 @@ import bank.approvals.protocol.RequestEvents
 import bank.approvals.protocol.RequestMessage
 import bank.approvals.protocol.SubjectMessage
 import bank.approvals.protocol.Wake
+import bank.approvals.protocol.chained
 import bank.approvals.protocol.command
 import io.github.matthewjones372.lark.actor.ActorRef
 import io.github.matthewjones372.lark.actor.Behaviour
@@ -76,15 +76,16 @@ fun request(
     owners: Owners,
     applyEvery: Duration,
 ): Behaviour<RequestMessage, Remembered<Tracked>, JournalConflict> {
-
     /** Arms what the state needs next; [asking] is the apply timer firing, the one time the owner is asked again. */
     fun Ctx<RequestMessage>.drive(tracked: Tracked, asking: Boolean = false) {
         when (val request = tracked.request) {
             Request.Unasked -> Unit
+
             is Request.Waiting -> {
                 val left = request.asked.expiresAt.toEpochMilli() - now().toEpochMilli()
                 timers.after(EXPIRE, left.coerceAtLeast(0).milliseconds, ExpiryDue)
             }
+
             is Request.Agreed -> {
                 timers.cancel(EXPIRE)
                 timers.after(APPLY, applyEvery, AskOwnerAgain)
@@ -98,6 +99,7 @@ fun request(
                     }
                 }
             }
+
             is Request.Ended -> {
                 timers.cancel(EXPIRE)
                 timers.cancel(APPLY)
@@ -117,17 +119,26 @@ fun request(
                     // A read: the history as it stands, or that nothing was ever asked under this id.
                     null -> none().then { after ->
                         val answer: RequestAnswer =
-                            if (after.request == Request.Unasked) Either.Left(Refusal.NotAsked)
-                            else Either.Right(after.history)
+                            if (after.request == Request.Unasked) {
+                                Either.Left(Refusal.NotAsked)
+                            } else {
+                                Either.Right(after.history)
+                            }
                         message.reply(answer)
                     }
+
                     else -> decide(state.request, command).fold(
                         { refusal -> none().then { _ -> message.reply(Either.Left(refusal)) } },
                         { events ->
                             if (events.isEmpty()) {
                                 none().then { after -> message.reply(Either.Right(after.history)) }
                             } else {
-                                events.forEach { counter("approvals.events", "event" to it::class.simpleName.orEmpty()).increment() }
+                                events.forEach {
+                                    counter(
+                                        "approvals.events",
+                                        "event" to it::class.simpleName.orEmpty(),
+                                    ).increment()
+                                }
                                 persist(*chained(state.head, events).toTypedArray()).then { after ->
                                     message.reply(Either.Right(after.history))
                                     ctx.drive(after)
@@ -136,14 +147,20 @@ fun request(
                         },
                     )
                 }
+
                 Wake -> none().then { after -> ctx.drive(after) }
+
                 AskOwnerAgain -> none().then { after -> ctx.drive(after, asking = true) }
+
                 // Due, if it is still waiting; a timer that outlived its reason finds nothing to do.
                 ExpiryDue -> decide(state.request, RequestCommand.Expire(now())).fold(
                     { none().then { after -> ctx.drive(after) } },
                     { events ->
-                        if (events.isEmpty()) none()
-                        else persist(*chained(state.head, events).toTypedArray()).then { after -> ctx.drive(after) }
+                        if (events.isEmpty()) {
+                            none()
+                        } else {
+                            persist(*chained(state.head, events).toTypedArray()).then { after -> ctx.drive(after) }
+                        }
                     },
                 )
             }

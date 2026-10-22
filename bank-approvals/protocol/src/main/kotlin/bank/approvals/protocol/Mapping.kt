@@ -9,12 +9,12 @@ import bank.approvals.domain.Proposal
 import bank.approvals.domain.RefusedBecause
 import bank.approvals.domain.RequestEvent
 import bank.approvals.domain.RequestId
+import bank.approvals.protocol.wire.NOBODY
 import java.time.Duration
 import java.time.Instant
 import bank.approvals.protocol.wire.Asked as WireAsked
 import bank.approvals.protocol.wire.Condition as WireCondition
 import bank.approvals.protocol.wire.Fact as WireFact
-import bank.approvals.protocol.wire.NOBODY
 import bank.approvals.protocol.wire.Origin as WireOrigin
 import bank.approvals.protocol.wire.Person as WirePerson
 import bank.approvals.protocol.wire.Policy as WirePolicy
@@ -52,7 +52,11 @@ internal fun Asked.toWire() =
     WireAsked(id.value, proposal.toWire(), requester.toWire(), policy.toWire(), policyVersion, expiresAt.toEpochMilli())
 
 internal fun WireAsked.toDomain() = Asked(
-    RequestId(id), proposal.toDomain(), requester.toDomain(), policy.toDomain(), policyVersion,
+    RequestId(id),
+    proposal.toDomain(),
+    requester.toDomain(),
+    policy.toDomain(),
+    policyVersion,
     Instant.ofEpochMilli(expiresAtMillis),
 )
 
@@ -87,17 +91,35 @@ internal fun RequestEvent.toWire(): WireEvent = when (this) {
 
 internal fun WireEvent.toDomain(): RequestEvent = when (this) {
     is WireEvent.Requested -> RequestEvent.Requested(asked.toDomain(), instant(atMillis), origin.toDomain())
+
     is WireEvent.AutoApproved -> RequestEvent.AutoApproved(condition.toDomain(), instant(atMillis))
+
     is WireEvent.AwaitingApproval -> RequestEvent.AwaitingApproval(needed, approvers.toSet(), instant(atMillis))
-    is WireEvent.Approved -> RequestEvent.Approved(by.toDomain(), hash, comment.ifEmpty { null }, instant(atMillis), origin.toDomain())
+
+    is WireEvent.Approved -> RequestEvent.Approved(
+        by.toDomain(),
+        hash,
+        comment.ifEmpty { null },
+        instant(atMillis),
+        origin.toDomain(),
+    )
+
     is WireEvent.ApprovalGiven -> RequestEvent.ApprovalGiven(approvers, instant(atMillis))
+
     is WireEvent.Rejected -> RequestEvent.Rejected(by.toDomain(), comment, instant(atMillis), origin.toDomain())
+
     is WireEvent.Commented -> RequestEvent.Commented(by.toDomain(), text, instant(atMillis), origin.toDomain())
+
     is WireEvent.VoteRefused ->
         RequestEvent.VoteRefused(by.toDomain(), RefusedBecause.valueOf(because), instant(atMillis), origin.toDomain())
+
     is WireEvent.Withdrawn -> RequestEvent.Withdrawn(by.toDomain(), instant(atMillis), origin.toDomain())
+
     is WireEvent.Superseded -> RequestEvent.Superseded(RequestId(by), instant(atMillis))
+
     is WireEvent.Expired -> RequestEvent.Expired(instant(atMillis))
+
     is WireEvent.Applied -> RequestEvent.Applied(instant(atMillis), by.orNobody(), hash, origin.toDomain())
+
     is WireEvent.ApplyFailed -> RequestEvent.ApplyFailed(reason, instant(atMillis), by.orNobody(), origin.toDomain())
 }

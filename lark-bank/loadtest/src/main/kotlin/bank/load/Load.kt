@@ -1,6 +1,5 @@
 package bank.load
 
-import java.io.IOException
 import bank.api.Amount
 import bank.api.InsufficientFunds
 import bank.api.Movement
@@ -15,17 +14,13 @@ import bank.api.payroll
 import bank.api.transfer
 import bank.api.transferCounts
 import bank.api.withdraw
+import bank.issuer.TestIssuer
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.apiClient
 import io.github.matthewjones372.pelican.test.signedInAs
-import bank.issuer.TestIssuer
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.Scenario
 import io.github.matthewjones372.proofload.StepScope
@@ -36,7 +31,12 @@ import io.github.matthewjones372.proofload.report.writeHtmlReport
 import io.github.matthewjones372.proofload.scenario
 import io.github.matthewjones372.proofload.step
 import io.github.matthewjones372.proofload.warmingUp
+import java.io.IOException
 import java.math.BigDecimal
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
@@ -95,8 +95,10 @@ private val bitcoin = Held("BTC", 8, "10", 200_000)
 private fun heldBy(account: String) = if (account.substringAfterLast('-').toInt() % 2 == 0) pounds else bitcoin
 
 /** A random amount of [held]'s currency, from its smallest unit up to [Held.most] of them. */
-private fun amountOf(held: Held, most: Long = held.most) =
-    Amount(BigDecimal.valueOf(ThreadLocalRandom.current().nextLong(1, most + 1), held.exponent).toPlainString(), held.code)
+private fun amountOf(held: Held, most: Long = held.most) = Amount(
+    BigDecimal.valueOf(ThreadLocalRandom.current().nextLong(1, most + 1), held.exponent).toPlainString(),
+    held.code,
+)
 
 /** Another account in [account]'s currency, or null where the draw gave the same one. */
 private fun partnerOf(plan: Plan, account: String): String? {
@@ -111,27 +113,38 @@ fun scenarioFor(plan: Plan, client: ApiClient): Scenario = when (plan.scenario) 
             val random = ThreadLocalRandom.current()
             val account = account(plan)
             val body = Movement(amountOf(heldBy(account)), UUID.randomUUID().toString())
-            val outcome = if (random.nextBoolean()) client.outcome(deposit, In2(account, body))
-            else client.outcome(withdraw, In2(account, body))
+            val outcome = if (random.nextBoolean()) {
+                client.outcome(deposit, In2(account, body))
+            } else {
+                client.outcome(withdraw, In2(account, body))
+            }
             step.expect(outcome) { it is InsufficientFunds }
         }
     }
+
     // Everything at a handful of accounts: each is one actor, so this is the single-writer ceiling.
     "hot" -> scenario("hot") {
         exec(pay) { step ->
             val merchant = "merchant-${ThreadLocalRandom.current().nextInt(plan.hotAccounts)}"
-            step.expect(client.outcome(deposit, In2(merchant, Movement(Amount("0.01", "GBP"), UUID.randomUUID().toString())))) { false }
+            step.expect(
+                client.outcome(deposit, In2(merchant, Movement(Amount("0.01", "GBP"), UUID.randomUUID().toString()))),
+            ) { false }
         }
     }
+
     // Sagas between accounts on different nodes; "chaos" is the same load while pods are deleted under it.
     "transfers", "chaos" -> scenario(plan.scenario) {
         exec(send) { step ->
             val from = account(plan)
             val to = partnerOf(plan, from) ?: return@exec
-            val outcome = client.outcome(transfer, In2(UUID.randomUUID().toString(), TransferRequest(from, to, amountOf(heldBy(from)))))
+            val outcome = client.outcome(
+                transfer,
+                In2(UUID.randomUUID().toString(), TransferRequest(from, to, amountOf(heldBy(from)))),
+            )
             step.expect(outcome) { false }
         }
     }
+
     // Credits sent in bulk through a reliable producer: many writes per request, confirmed rather than answered.
     "payroll" -> scenario("payroll") {
         exec(bulk) { step ->
@@ -139,6 +152,7 @@ fun scenarioFor(plan: Plan, client: ApiClient): Scenario = when (plan.scenario) 
             step.expect(client.outcome(payroll, In2(UUID.randomUUID().toString(), Payroll(credits)))) { false }
         }
     }
+
     else -> error("no scenario called ${plan.scenario}: spread, hot, transfers, chaos or payroll")
 }
 
@@ -169,8 +183,14 @@ fun settles(client: ApiClient, within: Duration = 180.seconds): Boolean {
         try {
             val counts = client.call(transferCounts, Unit)
             val books = client.call(ledger, Unit)
-            println("pending ${counts.pending}, completed ${counts.completed}, conserved ${books.conserved}, events ${books.eventsProjected}")
-            books.currencies.forEach { println("  ${it.currency}: ${it.accounts} accounts, balances ${it.balances}, in flight ${it.inFlight}, conserved ${it.conserved}") }
+            println(
+                "pending ${counts.pending}, completed ${counts.completed}, conserved ${books.conserved}, events ${books.eventsProjected}",
+            )
+            books.currencies.forEach {
+                println(
+                    "  ${it.currency}: ${it.accounts} accounts, balances ${it.balances}, in flight ${it.inFlight}, conserved ${it.conserved}",
+                )
+            }
             if (counts.pending == 0L && books.conserved) return true
         } catch (unreachable: IOException) {
             // The node asked may be restarting after chaos; the books are checked again, not given up on.
@@ -197,7 +217,9 @@ fun summary(result: RunResult): String = buildString {
     appendLine("requests ${result.count}, ok ${result.ok}, failed ${result.failed}")
     result.steps.values.forEach { stats ->
         val time = stats.responseTime
-        appendLine("  ${stats.name}: ${stats.count} — p50 ${time.p50}, p95 ${time.p95}, p99 ${time.p99}, max ${time.max}")
+        appendLine(
+            "  ${stats.name}: ${stats.count} — p50 ${time.p50}, p95 ${time.p95}, p99 ${time.p99}, max ${time.max}",
+        )
     }
 }
 
@@ -221,4 +243,3 @@ fun main() {
     System.getenv("HOLD_SECONDS")?.toLong()?.let { Thread.sleep(it * 1_000) }
     exitProcess(if (passed) 0 else 1)
 }
-

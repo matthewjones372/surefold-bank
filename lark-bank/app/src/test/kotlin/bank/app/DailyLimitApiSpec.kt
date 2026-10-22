@@ -33,7 +33,10 @@ class DailyLimitApiSpec {
                 paid.balance shouldBe pounds("440.00")
                 val refused = ada.outcome(withdraw, In2("ada", Movement(pounds("50.00"), "w-2")))
                 (refused as Outcome.Err).error shouldBe DailyLimitExceeded(
-                    "ada", pounds("100.00"), pounds("40.00"), pounds("50.00"),
+                    "ada",
+                    pounds("100.00"),
+                    pounds("40.00"),
+                    pounds("50.00"),
                     "Account ada may pay out 100.00 GBP a day and has 40.00 GBP of that left today, not 50.00 GBP",
                 )
 

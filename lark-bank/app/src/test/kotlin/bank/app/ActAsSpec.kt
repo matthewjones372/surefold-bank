@@ -4,13 +4,13 @@ import bank.api.Caller
 import bank.api.getAccount
 import bank.api.myAccounts
 import bank.domain.AccountId
+import com.microsoft.playwright.assertions.LocatorAssertions
+import com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.test.apiClient
 import io.github.matthewjones372.pelican.test.signedInAs
-import io.kotest.matchers.collections.shouldBeEmpty
-import com.microsoft.playwright.assertions.LocatorAssertions
-import com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.Instant

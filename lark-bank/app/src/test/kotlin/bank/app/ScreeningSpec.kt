@@ -51,8 +51,13 @@ private class StubCheck(
             Thread.sleep(delayMillis)
             val amount = BigDecimal(proposed["amount"]["value"].asText())
             val decision = decided.computeIfAbsent(transfer) {
-                if (amount >= declineFrom) """{"outcome":"declined","rule":"large-transfer","version":3,"evidence":"amount >= $declineFrom"}"""
-                else """{"outcome":"approved","evidence":"no rule held"}"""
+                if (amount >=
+                    declineFrom
+                ) {
+                    """{"outcome":"declined","rule":"large-transfer","version":3,"evidence":"amount >= $declineFrom"}"""
+                } else {
+                    """{"outcome":"approved","evidence":"no rule held"}"""
+                }
             }
             val body = decision.toByteArray()
             exchange.responseHeaders.add("Content-Type", "application/json")
@@ -85,8 +90,11 @@ class ScreeningSpec {
         bank.open(to, "Bob", gbp(0), "open:$to").shouldBeRight()
     }
 
-    private fun TestNode.settled(transfer: TransferId) =
-        eventually { bank.transferStatus(transfer).getOrNull()?.status in setOf(TransferStatus.Completed, TransferStatus.Rejected) }
+    private fun TestNode.settled(transfer: TransferId) = eventually {
+        bank.transferStatus(
+            transfer,
+        ).getOrNull()?.status in setOf(TransferStatus.Completed, TransferStatus.Rejected)
+    }
 
     @Test
     fun `two hundred transfers screened at once each get the check's answer, not the policy's`() {
@@ -171,13 +179,17 @@ class ScreeningSpec {
                 val trace = UUID.randomUUID().toString().replace("-", "")
                 val transfer = "scr-traced-$run"
                 val status = java.net.http.HttpClient.newHttpClient().send(
-                    java.net.http.HttpRequest.newBuilder(java.net.URI.create("${node.server.baseUrl}/transfers/$transfer"))
+                    java.net.http.HttpRequest.newBuilder(
+                        java.net.URI.create("${node.server.baseUrl}/transfers/$transfer"),
+                    )
                         .header("Authorization", "Bearer ${TestIdentity.token("Ada")}")
                         .header("Content-Type", "application/json")
                         .header("traceparent", "00-$trace-00f067aa0ba902b7-01")
-                        .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(
-                            """{"from":"${from.value}","to":"${to.value}","amount":{"value":"1.00","currency":"GBP"}}""",
-                        ))
+                        .PUT(
+                            java.net.http.HttpRequest.BodyPublishers.ofString(
+                                """{"from":"${from.value}","to":"${to.value}","amount":{"value":"1.00","currency":"GBP"}}""",
+                            ),
+                        )
                         .build(),
                     java.net.http.HttpResponse.BodyHandlers.discarding(),
                 ).statusCode()

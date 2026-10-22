@@ -30,7 +30,9 @@ data class AccountAsk(val command: AccountCommand?, val reply: Reply<AccountAnsw
 data class BulkCredit(val amount: Money, val reference: String)
 
 /** A credit sent in bulk and confirmed rather than answered, so a resend after a move is dropped, not applied twice. */
-data class BulkCreditSent(val credit: BulkCredit, override val delivery: Delivery) : AccountMessage, Delivered
+data class BulkCreditSent(val credit: BulkCredit, override val delivery: Delivery) :
+    AccountMessage,
+    Delivered
 
 /** What a transfer saga is asked. */
 sealed interface TransferRequest {

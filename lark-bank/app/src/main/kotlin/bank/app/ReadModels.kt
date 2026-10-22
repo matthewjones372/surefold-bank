@@ -1,8 +1,8 @@
 package bank.app
 
 import bank.api.AccountView
-import bank.api.Caller
 import bank.api.Books
+import bank.api.Caller
 import bank.api.Ledger
 import bank.api.ReadModels
 import bank.api.StatementLine
@@ -153,7 +153,17 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
         ).use { query ->
             query.setLong(1, before)
             query.setInt(2, limit)
-            query.executeQuery().use { rows -> generateSequence { if (rows.next()) rows.getString(1) else null }.toList() }
+            query.executeQuery().use { rows ->
+                generateSequence {
+                    if (rows.next()) {
+                        rows.getString(
+                            1,
+                        )
+                    } else {
+                        null
+                    }
+                }.toList()
+            }
         }
     }
 
@@ -164,17 +174,23 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
             query.setString(1, who.actingAs)
             query.executeQuery().use { rows ->
                 generateSequence {
-                    if (!rows.next()) null
-                    else AccountView(
-                        rows.getString(1), rows.getString(2),
-                        Money(rows.getBigDecimal(5), Currency(rows.getString(3), rows.getInt(4))).toAmount(),
-                    )
+                    if (!rows.next()) {
+                        null
+                    } else {
+                        AccountView(
+                            rows.getString(1),
+                            rows.getString(2),
+                            Money(rows.getBigDecimal(5), Currency(rows.getString(3), rows.getInt(4))).toAmount(),
+                        )
+                    }
                 }.toList()
             }
         }
     }
 
-    override fun statement(who: Caller, account: String, limit: Int, before: Long?): List<StatementLine> = seenBy(who) { connection ->
+    override fun statement(who: Caller, account: String, limit: Int, before: Long?): List<StatementLine> = seenBy(
+        who,
+    ) { connection ->
         connection.prepareStatement(
             "select seq_nr, kind, currency, exponent, amount, balance, reference, at_millis from statement_line where account_id = ? " +
                 "and seq_nr < ? order by seq_nr desc limit ?",
@@ -185,12 +201,17 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
             query.setInt(3, limit)
             query.executeQuery().use { rows ->
                 generateSequence {
-                    if (!rows.next()) null
-                    else {
+                    if (!rows.next()) {
+                        null
+                    } else {
                         val currency = Currency(rows.getString(3), rows.getInt(4))
                         StatementLine(
-                            rows.getLong(1), rows.getString(2), Money(rows.getBigDecimal(5), currency).toAmount(),
-                            Money(rows.getBigDecimal(6), currency).toAmount(), rows.getString(7), rows.getLong(8),
+                            rows.getLong(1),
+                            rows.getString(2),
+                            Money(rows.getBigDecimal(5), currency).toAmount(),
+                            Money(rows.getBigDecimal(6), currency).toAmount(),
+                            rows.getString(7),
+                            rows.getLong(8),
                         )
                     }
                 }.toList()
@@ -209,26 +230,45 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
         }
         val unlisted = held.filter { currencies.listed(it) == null }
         check(unlisted.isEmpty()) {
-            "accounts hold ${unlisted.joinToString { "${it.code} at ${it.exponent} places" }}, which bank.currencies does not list so"
+            "accounts hold ${unlisted.joinToString {
+                "${it.code} at ${it.exponent} places"
+            }}, which bank.currencies does not list so"
         }
     }
 
     /** Each currency's books: what the ledger shows and the gauges watch. */
     fun books(): List<CurrencyBooks> = data.connection.use { connection ->
         val held = connection.createStatement().use { query ->
-            query.executeQuery("select currency, count(*), coalesce(sum(balance), 0) from account_balance group by currency").use { rows ->
-                generateSequence { if (rows.next()) rows.getString(1) to (rows.getLong(2) to rows.getBigDecimal(3)) else null }.toMap()
+            query.executeQuery(
+                "select currency, count(*), coalesce(sum(balance), 0) from account_balance group by currency",
+            ).use { rows ->
+                generateSequence {
+                    if (rows.next()) {
+                        rows.getString(
+                            1,
+                        ) to (rows.getLong(2) to rows.getBigDecimal(3))
+                    } else {
+                        null
+                    }
+                }.toMap()
             }
         }
         connection.createStatement().use { query ->
-            query.executeQuery("select currency, exponent, paid_in, paid_out, in_flight, events from ledger_totals order by currency").use { rows ->
+            query.executeQuery(
+                "select currency, exponent, paid_in, paid_out, in_flight, events from ledger_totals order by currency",
+            ).use { rows ->
                 generateSequence {
-                    if (!rows.next()) null
-                    else {
+                    if (!rows.next()) {
+                        null
+                    } else {
                         val (accounts, balances) = held[rows.getString(1)] ?: (0L to BigDecimal.ZERO)
                         CurrencyBooks(
-                            Currency(rows.getString(1), rows.getInt(2)), accounts, balances,
-                            inFlight = rows.getBigDecimal(5), paidIn = rows.getBigDecimal(3), paidOut = rows.getBigDecimal(4),
+                            Currency(rows.getString(1), rows.getInt(2)),
+                            accounts,
+                            balances,
+                            inFlight = rows.getBigDecimal(5),
+                            paidIn = rows.getBigDecimal(3),
+                            paidOut = rows.getBigDecimal(4),
                             events = rows.getLong(6),
                         )
                     }
@@ -250,7 +290,15 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
     override fun transfers(): TransferCounts = data.connection.use { connection ->
         connection.createStatement().use { query ->
             query.executeQuery("select status, count(*) from transfer_status group by status").use { rows ->
-                val counts = generateSequence { if (rows.next()) rows.getString(1) to rows.getLong(2) else null }.toMap()
+                val counts = generateSequence {
+                    if (rows.next()) {
+                        rows.getString(
+                            1,
+                        ) to rows.getLong(2)
+                    } else {
+                        null
+                    }
+                }.toMap()
                 fun count(vararg of: TransferStatus) = of.sumOf { counts[it.name] ?: 0 }
                 TransferCounts(
                     pending = count(TransferStatus.Pending, TransferStatus.Debited, TransferStatus.Refunding),
@@ -264,7 +312,9 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
 
     /** The sequence number and time of the event that opened [account], once the statements have it; read as the owner. */
     fun opened(account: String): Pair<Long, Long>? = data.connection.use { connection ->
-        connection.prepareStatement("select seq_nr, at_millis from statement_line where account_id = ? and kind = 'opened'").use { query ->
+        connection.prepareStatement(
+            "select seq_nr, at_millis from statement_line where account_id = ? and kind = 'opened'",
+        ).use { query ->
             query.setString(1, account)
             query.executeQuery().use { row -> if (row.next()) row.getLong(1) to row.getLong(2) else null }
         }
@@ -329,8 +379,13 @@ class CurrencyBooks(
     val conserved: Boolean get() = gap.signum() == 0
 
     fun shown() = Books(
-        currency.code, accounts, Money(balances, currency).toAmount().value, Money(inFlight, currency).toAmount().value,
-        Money(paidIn, currency).toAmount().value, Money(paidOut, currency).toAmount().value, conserved,
+        currency.code,
+        accounts,
+        Money(balances, currency).toAmount().value,
+        Money(inFlight, currency).toAmount().value,
+        Money(paidIn, currency).toAmount().value,
+        Money(paidOut, currency).toAmount().value,
+        conserved,
     )
 
     override fun toString(): String =
@@ -346,39 +401,54 @@ private fun java.sql.PreparedStatement.setCurrency(index: Int, currency: Currenc
     setInt(index + 1, currency.exponent)
 }
 
-private fun Connection.balances(ids: List<String>): Map<String, Row> =
-    prepareStatement("select account_id, owner, currency, exponent, balance, last_seq from account_balance where account_id = any(?)")
-        .use { query ->
-            query.setArray(1, createArrayOf("text", ids.toTypedArray()))
-            query.executeQuery().use { rows ->
-                generateSequence {
-                    if (!rows.next()) null
-                    else rows.getString(1) to Row(rows.getString(2), Money(rows.getBigDecimal(5), Currency(rows.getString(3), rows.getInt(4))), rows.getLong(6))
-                }.toMap()
-            }
-        }
-
-/** Each known transfer's state, rebuilt from its row, and the sequence the row reached. */
-private fun Connection.transfers(ids: List<String>): Map<String, Pair<Transfer, Long>> =
-    prepareStatement(
-        "select transfer_id, from_account, to_account, currency, exponent, amount, status, last_seq, updated_millis from transfer_status " +
-            "where transfer_id = any(?)",
-    ).use { query ->
+private fun Connection.balances(ids: List<String>): Map<String, Row> = prepareStatement(
+    "select account_id, owner, currency, exponent, balance, last_seq from account_balance where account_id = any(?)",
+)
+    .use { query ->
         query.setArray(1, createArrayOf("text", ids.toTypedArray()))
         query.executeQuery().use { rows ->
             generateSequence {
-                if (!rows.next()) null
-                else {
-                    val status = TransferStatus.valueOf(rows.getString(7))
-                    val moving = Transfer.Moving(
-                        AccountId(rows.getString(2)), AccountId(rows.getString(3)),
-                        Money(rows.getBigDecimal(6), Currency(rows.getString(4), rows.getInt(5))), status, null, rows.getLong(9), null,
+                if (!rows.next()) {
+                    null
+                } else {
+                    rows.getString(
+                        1,
+                    ) to Row(
+                        rows.getString(2),
+                        Money(rows.getBigDecimal(5), Currency(rows.getString(3), rows.getInt(4))),
+                        rows.getLong(6),
                     )
-                    rows.getString(1) to (moving as Transfer to rows.getLong(8))
                 }
             }.toMap()
         }
     }
+
+/** Each known transfer's state, rebuilt from its row, and the sequence the row reached. */
+private fun Connection.transfers(ids: List<String>): Map<String, Pair<Transfer, Long>> = prepareStatement(
+    "select transfer_id, from_account, to_account, currency, exponent, amount, status, last_seq, updated_millis from transfer_status " +
+        "where transfer_id = any(?)",
+).use { query ->
+    query.setArray(1, createArrayOf("text", ids.toTypedArray()))
+    query.executeQuery().use { rows ->
+        generateSequence {
+            if (!rows.next()) {
+                null
+            } else {
+                val status = TransferStatus.valueOf(rows.getString(7))
+                val moving = Transfer.Moving(
+                    AccountId(rows.getString(2)),
+                    AccountId(rows.getString(3)),
+                    Money(rows.getBigDecimal(6), Currency(rows.getString(4), rows.getInt(5))),
+                    status,
+                    null,
+                    rows.getLong(9),
+                    null,
+                )
+                rows.getString(1) to (moving as Transfer to rows.getLong(8))
+            }
+        }.toMap()
+    }
+}
 
 /** Money from outside, money leaving, and money between two accounts, as one event moves them. */
 private data class Totals(

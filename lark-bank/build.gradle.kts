@@ -25,10 +25,14 @@ subprojects {
     // Gauntlet reads detekt's SARIF and ratchets on it; existing findings don't fail the build.
     extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
         buildUponDefaultConfig.set(true)
+        config.setFrom(rootProject.file("config/detekt/detekt.yml"))
         ignoreFailures.set(true)
         // `-Pdetekt.autoCorrect=true` lets the ktlint rules rewrite the layout they report.
         autoCorrect.set(providers.gradleProperty("detekt.autoCorrect").map(String::toBoolean).orElse(false))
     }
+
+    // Screening's client is generated from its description, so its layout is the generator's (ScreeningClientSpec).
+    tasks.withType<dev.detekt.gradle.Detekt>().configureEach { exclude("**/bank/api/screening/ScreeningClient.kt") }
 
     // Mutation testing for the money rules, in domain only: app's money code is tested through clusters of nodes
     // on Postgres, and Pitest reruns a module's whole suite before it mutates anything, so mutating app cost minutes

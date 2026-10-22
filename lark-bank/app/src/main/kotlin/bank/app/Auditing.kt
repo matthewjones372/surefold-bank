@@ -25,10 +25,13 @@ class FgaAudit(
         fga.read(obj = "account:$account").filter { it.lives(at) }.flatMap { tuple ->
             when (tuple.relation) {
                 "owner" -> listOf(owner(tuple.user.id, account))
+
                 "supporter" -> listOf(supporter(tuple.user.id, account, tuple.expires))
+
                 "bank" -> auditing(tuple.user).flatMap { group ->
                     members(group).map { auditor(it, account, group) }
                 }
+
                 else -> emptyList()
             }
         }.sortedWith(compareBy({ ORDER.indexOf(it.relation) }, Because::person))
@@ -51,14 +54,20 @@ class FgaAudit(
     private fun owner(person: String, account: String): Because {
         val opened = reads.opened(account)
         return Because(
-            person, account, "owner", "owns it, having opened it",
+            person,
+            account,
+            "owner",
+            "owns it, having opened it",
             sinceMillis = opened?.second,
             event = opened?.let { (seq, _) -> "opened, event $seq of $account" },
         )
     }
 
     private fun supporter(person: String, account: String, expires: Instant?) = Because(
-        person, account, "supporter", "may see it in support, on a grant",
+        person,
+        account,
+        "supporter",
+        "may see it in support, on a grant",
         untilMillis = expires?.toEpochMilli(),
         approval = grants.approvalFor(person, account),
     )
@@ -67,8 +76,10 @@ class FgaAudit(
         Because(person, account, "auditor", "audits the bank, as one of ${group.id}")
 
     /** The groups whose members audit [bank]: `group:auditor#member` names `group:auditor`. */
-    private fun auditing(bank: String): List<String> =
-        fga.read(obj = bank, relation = "auditor").map { it.user.substringBefore('#') }.filter { it.startsWith("group:") }
+    private fun auditing(bank: String): List<String> = fga.read(
+        obj = bank,
+        relation = "auditor",
+    ).map { it.user.substringBefore('#') }.filter { it.startsWith("group:") }
 
     private fun members(group: String): List<String> =
         fga.read(obj = group, relation = "member").map { it.user }.filter { it.startsWith("person:") }.map { it.id }
@@ -90,7 +101,10 @@ class FgaAudit(
 
         /** Asked of the store the shadow asks; with no bank-access configured, nothing is answered. */
         fun of(settings: AccessShadowSettings, grants: JdbcGrants, reads: JdbcReadModels): Audit =
-            if (!settings.enabled) Audit.none
-            else FgaAudit(Fga(settings.url, settings.token, settings.store, carried = ::traceHeaders), grants, reads)
+            if (!settings.enabled) {
+                Audit.none
+            } else {
+                FgaAudit(Fga(settings.url, settings.token, settings.store, carried = ::traceHeaders), grants, reads)
+            }
     }
 }

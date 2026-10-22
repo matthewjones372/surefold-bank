@@ -15,10 +15,10 @@ import io.github.matthewjones372.pelican.ClientTransport
 import io.github.matthewjones372.pelican.Method
 import io.github.matthewjones372.pelican.client.jetty.JettyHttpTransport
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
+import io.github.matthewjones372.pelican.metrics.otel.traced
+import io.opentelemetry.api.OpenTelemetry
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
-import io.opentelemetry.api.OpenTelemetry
-import io.github.matthewjones372.pelican.metrics.otel.traced
 
 /** Why screening gave no decision: it failed, or answered something the bank cannot read. The policy decides then. */
 data class NoDecision(val why: String)
@@ -36,8 +36,15 @@ sealed interface Screening {
 }
 
 fun screening(settings: ScreeningSettings, telemetry: OpenTelemetry, transport: ClientTransport): Screening =
-    if (!settings.enabled) Screening.Off
-    else Screening.On(PelicanScreener(settings.url, settings.timeout, telemetry, transport), settings.timeout, settings.whenUnanswered)
+    if (!settings.enabled) {
+        Screening.Off
+    } else {
+        Screening.On(
+            PelicanScreener(settings.url, settings.timeout, telemetry, transport),
+            settings.timeout,
+            settings.whenUnanswered,
+        )
+    }
 
 /**
  * The check's `POST /screen`, through the client generated from its description, translated at this edge: nothing

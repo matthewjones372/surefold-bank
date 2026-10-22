@@ -16,17 +16,17 @@ import io.github.matthewjones372.pelican.ApiException
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.api
 import io.github.matthewjones372.pelican.arrow.toOutcome
-import io.github.matthewjones372.pelican.pages
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
-import io.github.matthewjones372.pelican.metrics.metrics
-import io.github.matthewjones372.pelican.metrics.otel.openTelemetry
-import io.github.matthewjones372.pelican.ok
 import io.github.matthewjones372.pelican.jetty.bytesNow
 import io.github.matthewjones372.pelican.jetty.handledNow
 import io.github.matthewjones372.pelican.jetty.handledOrFail
 import io.github.matthewjones372.pelican.jetty.streamedNow
-import io.opentelemetry.api.OpenTelemetry
+import io.github.matthewjones372.pelican.metrics.metrics
+import io.github.matthewjones372.pelican.metrics.otel.openTelemetry
+import io.github.matthewjones372.pelican.ok
+import io.github.matthewjones372.pelican.pages
 import io.micrometer.core.instrument.MeterRegistry
+import io.opentelemetry.api.OpenTelemetry
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -87,7 +87,14 @@ fun bankApi(
     endpoints = listOf(
         openAccount handledOrFail { (id, body) ->
             val who = this[caller]
-            if (!rules.canOpen(who)) return@handledOrFail forbidden(Forbidden("An account is opened by its owner, not by someone acting as them"))
+            if (!rules.canOpen(
+                    who,
+                )
+            ) {
+                return@handledOrFail forbidden(
+                    Forbidden("An account is opened by its owner, not by someone acting as them"),
+                )
+            }
             currencies.opening(body).fold({ invalidAmount(it) }) { (initial, dailyLimit) ->
                 bank.open(AccountId(id), who.actingAs, initial, reference = "open:$id", dailyLimit)
                     .onRight { owners.remember(it) }
@@ -98,7 +105,9 @@ fun bankApi(
             bank.balance(AccountId(id)).flatMap { visible(rules, this[caller], it) }.map(::view).toOutcome { refusal ->
                 when (refusal) {
                     is AccountError.NoSuchAccount -> accountMissing(refusal)
+
                     is Unavailable -> unavailable(refusal)
+
                     is AccountError.AlreadyOpen, is AccountError.InsufficientFunds, is AccountError.InvalidAmount,
                     is AccountError.CurrencyMismatch, is AccountError.DailyLimitExceeded, is AccountError.LegRefused,
                     -> error("a balance refused as $refusal")
@@ -109,13 +118,23 @@ fun bankApi(
             val who = this[caller]
             if (who.isImpersonating) return@handledOrFail forbidden(readOnly)
             currencies.amount(body.amount).fold({ invalidAmount(it) }) { amount ->
-                owners.check(who, id, rules::canMove).flatMap { bank.deposit(AccountId(id), amount, body.reference) }.map(::view)
+                owners.check(
+                    who,
+                    id,
+                    rules::canMove,
+                ).flatMap { bank.deposit(AccountId(id), amount, body.reference) }.map(::view)
                     .toOutcome { refusal ->
                         when (refusal) {
                             is AccountError.NoSuchAccount -> accountMissing(refusal)
+
                             is AccountError.InvalidAmount -> invalidAmount(InvalidAmount(refusal.message))
-                            is AccountError.CurrencyMismatch -> invalidAmount(InvalidAmount(refusal.message, refusal.account))
+
+                            is AccountError.CurrencyMismatch -> invalidAmount(
+                                InvalidAmount(refusal.message, refusal.account),
+                            )
+
                             is Unavailable -> unavailable(refusal)
+
                             is AccountError.AlreadyOpen, is AccountError.InsufficientFunds,
                             is AccountError.DailyLimitExceeded, is AccountError.LegRefused,
                             -> error("a deposit refused as $refusal")
@@ -127,15 +146,27 @@ fun bankApi(
             val who = this[caller]
             if (who.isImpersonating) return@handledOrFail forbidden(readOnly)
             currencies.amount(body.amount).fold({ invalidAmount(it) }) { amount ->
-                owners.check(who, id, rules::canMove).flatMap { bank.withdraw(AccountId(id), amount, body.reference) }.map(::view)
+                owners.check(
+                    who,
+                    id,
+                    rules::canMove,
+                ).flatMap { bank.withdraw(AccountId(id), amount, body.reference) }.map(::view)
                     .toOutcome { refusal ->
                         when (refusal) {
                             is AccountError.NoSuchAccount -> accountMissing(refusal)
+
                             is AccountError.InsufficientFunds -> insufficientFunds(short(refusal))
+
                             is AccountError.DailyLimitExceeded -> dailyLimitExceeded(capped(refusal))
+
                             is AccountError.InvalidAmount -> invalidAmount(InvalidAmount(refusal.message))
-                            is AccountError.CurrencyMismatch -> invalidAmount(InvalidAmount(refusal.message, refusal.account))
+
+                            is AccountError.CurrencyMismatch -> invalidAmount(
+                                InvalidAmount(refusal.message, refusal.account),
+                            )
+
                             is Unavailable -> unavailable(refusal)
+
                             is AccountError.AlreadyOpen, is LegRefused -> error("a withdrawal refused as $refusal")
                         }
                     }
@@ -150,13 +181,25 @@ fun bankApi(
                         is Unavailable -> unavailable(refusal)
                         else -> accountMissing(AccountError.NoSuchAccount(body.from))
                     }
+
                     is Either.Right ->
-                        bank.transfer(TransferId(id), AccountId(body.from), AccountId(body.to), amount).map(::view).toOutcome { refusal ->
+                        bank.transfer(
+                            TransferId(id),
+                            AccountId(body.from),
+                            AccountId(body.to),
+                            amount,
+                        ).map(::view).toOutcome { refusal ->
                             when (refusal) {
                                 is TransferError.TransferIdReused -> transferReused(refusal)
+
                                 is TransferError.SameAccount -> invalidTransfer(InvalidTransfer(refusal.message))
-                                is TransferError.InvalidTransferAmount -> invalidTransfer(InvalidTransfer(refusal.message))
+
+                                is TransferError.InvalidTransferAmount -> invalidTransfer(
+                                    InvalidTransfer(refusal.message),
+                                )
+
                                 is Unavailable -> unavailable(refusal)
+
                                 is TransferError.NoSuchTransfer -> error("starting a transfer refused as $refusal")
                             }
                         }
@@ -169,13 +212,24 @@ fun bankApi(
                 .flatMap { moving ->
                     val from = moving.from to owners.of(moving.from).getOrNull()
                     val to = moving.to to owners.of(moving.to).getOrNull()
-                    if (rules.canViewTransfer(who, from, to)) Either.Right(moving) else Either.Left(TransferError.NoSuchTransfer(id))
+                    if (rules.canViewTransfer(
+                            who,
+                            from,
+                            to,
+                        )
+                    ) {
+                        Either.Right(moving)
+                    } else {
+                        Either.Left(TransferError.NoSuchTransfer(id))
+                    }
                 }
                 .map(::view)
                 .toOutcome { refusal ->
                     when (refusal) {
                         is TransferError.NoSuchTransfer -> transferMissing(refusal)
+
                         is Unavailable -> unavailable(refusal)
+
                         is TransferError.TransferIdReused, is TransferError.SameAccount,
                         is TransferError.InvalidTransferAmount,
                         -> error("a transfer's status refused as $refusal")
@@ -183,29 +237,69 @@ fun bankApi(
                 }
         },
         payroll handledOrFail { (id, body) ->
-            if (!rules.canSendPayroll(this[caller])) return@handledOrFail forbidden(Forbidden("A payroll is run by ops"))
-            val credits = body.credits.map { credit -> currencies.amount(credit.amount).map { AccountId(credit.account) to it } }
+            if (!rules.canSendPayroll(
+                    this[caller],
+                )
+            ) {
+                return@handledOrFail forbidden(Forbidden("A payroll is run by ops"))
+            }
+            val credits = body.credits.map { credit ->
+                currencies.amount(
+                    credit.amount,
+                ).map { AccountId(credit.account) to it }
+            }
             val unreadable = credits.firstNotNullOfOrNull { it.leftOrNull() }
-            if (unreadable != null) invalidAmount(unreadable) else payrolls.send(id, credits.mapNotNull { it.getOrNull() }).toOutcome(busy)
+            if (unreadable != null) {
+                invalidAmount(
+                    unreadable,
+                )
+            } else {
+                payrolls.send(id, credits.mapNotNull { it.getOrNull() }).toOutcome(busy)
+            }
         },
         statement handledOrFail { (id, max, older) ->
             owners.check(this[caller], id, rules::canView).fold(
-                { refusal -> if (refusal is Unavailable) unavailable(refusal) else accountMissing(AccountError.NoSuchAccount(id)) },
+                { refusal ->
+                    if (refusal is Unavailable) {
+                        unavailable(
+                            refusal,
+                        )
+                    } else {
+                        accountMissing(AccountError.NoSuchAccount(id))
+                    }
+                },
                 { ok(reads.statement(this[caller], id, max, older)) },
             )
         },
         accountLooks handledOrFail { id ->
             val who = this[caller]
             owners.check(who, id, rules::canView).fold(
-                { refusal -> if (refusal is Unavailable) unavailable(refusal) else accountMissing(AccountError.NoSuchAccount(id)) },
+                { refusal ->
+                    if (refusal is Unavailable) {
+                        unavailable(
+                            refusal,
+                        )
+                    } else {
+                        accountMissing(AccountError.NoSuchAccount(id))
+                    }
+                },
                 {
                     val auditing = "auditor" in who.groups && !who.isImpersonating
                     ok(
                         looks.looksAt(id)
-                            .filter { (_, look) -> auditing || (look.status in 200..299 && (look.who.isImpersonating || look.who.subject != who.actingAs)) }
+                            .filter { (_, look) ->
+                                auditing ||
+                                    (
+                                        look.status in 200..299 &&
+                                            (look.who.isImpersonating || look.who.subject != who.actingAs)
+                                        )
+                            }
                             .map { (_, look) ->
                                 LookView(
-                                    look.at.toEpochMilli(), look.role(), look.what(), look.status,
+                                    look.at.toEpochMilli(),
+                                    look.role(),
+                                    look.what(),
+                                    look.status,
                                     who = look.who.actor.takeIf { auditing } ?: look.who.subject.takeIf { auditing },
                                     actingAs = look.who.subject.takeIf { auditing && look.who.isImpersonating },
                                     grant = look.grant.takeIf { auditing },
@@ -217,29 +311,59 @@ fun bankApi(
         },
         accountViewers handledOrFail { id -> audited(rules, this[caller]) { audit.viewers(id) } },
         personSees handledOrFail { subject -> audited(rules, this[caller]) { audit.sees(subject) } },
-        myAccounts handledNow { this[caller].let { who -> if (rules.mayActAs(who)) reads.accountsOf(who) else emptyList() } },
+        myAccounts handledNow {
+            this[caller].let { who ->
+                if (rules.mayActAs(
+                        who,
+                    )
+                ) {
+                    reads.accountsOf(who)
+                } else {
+                    emptyList()
+                }
+            }
+        },
         me handledNow {
-            this[caller].let { CallerView(it.subject, it.name, it.groups.sorted(), it.actor, it.actingUntil?.toEpochMilli()) }
+            this[caller].let {
+                CallerView(
+                    it.subject,
+                    it.name,
+                    it.groups.sorted(),
+                    it.actor,
+                    it.actingUntil?.toEpochMilli(),
+                )
+            }
         },
         actAs handledOrFail { (subject, held) ->
             val until = rules.actingUntil(this[caller], subject)
                 ?: return@handledOrFail forbidden(Forbidden("No grant to act as $subject: ask for one in Approvals"))
             val swapped = signIn.actAs(held, subject, until)
-                ?: return@handledOrFail forbidden(Forbidden("Acting as a customer is for a signed-in page, not a token"))
+                ?: return@handledOrFail forbidden(
+                    Forbidden("Acting as a customer is for a signed-in page, not a token"),
+                )
             setHeader(setCookie, swapped)
             ok(ActingView(subject, until.toEpochMilli()))
         },
         stopActing handledOrFail { held ->
             val who = this[caller]
             val ended = signIn.stopActing(held)
-                ?: return@handledOrFail forbidden(Forbidden("Acting as a customer is for a signed-in page, not a token"))
+                ?: return@handledOrFail forbidden(
+                    Forbidden("Acting as a customer is for a signed-in page, not a token"),
+                )
             setHeader(setCookie, ended)
             ok(ActingView(who.subject, System.currentTimeMillis()))
         },
         transferCounts handledOrFail { opsOnly(rules, this[caller]) { reads.transfers() } },
         ledger handledOrFail { opsOnly(rules, this[caller]) { reads.ledger() } },
         listCurrencies handledNow {
-            currencies.all.map { CurrencyView(it.currency.code, it.currency.exponent, it.symbol, it.kind.name.lowercase()) }
+            currencies.all.map {
+                CurrencyView(
+                    it.currency.code,
+                    it.currency.exponent,
+                    it.symbol,
+                    it.kind.name.lowercase(),
+                )
+            }
         },
         cluster handledOrFail { opsOnly(rules, this[caller]) { clusterView() } },
         health handledNow { healthy() },
@@ -278,8 +402,16 @@ fun Currencies.amount(amount: Amount): Either<InvalidAmount, Money> =
 fun Money.toAmount() = Amount(amount.toPlainString(), currency.code)
 
 /** The account if the caller may see it: someone else's is missing, exactly as one that does not exist. */
-private fun visible(rules: Rules, who: Caller, account: Balance): Either<AccountError, Balance> =
-    if (rules.canView(who, account.id, account.owner)) Either.Right(account) else Either.Left(AccountError.NoSuchAccount(account.id))
+private fun visible(rules: Rules, who: Caller, account: Balance): Either<AccountError, Balance> = if (rules.canView(
+        who,
+        account.id,
+        account.owner,
+    )
+) {
+    Either.Right(account)
+} else {
+    Either.Left(AccountError.NoSuchAccount(account.id))
+}
 
 /**
  * Who owns each account, asked of the account once and then remembered on this node: an owner is set when the account
@@ -303,22 +435,42 @@ class Owners(private val bank: Bank, private val most: Int = 200_000) {
     }
 
     /** Someone else's account is missing, exactly as one that does not exist. */
-    fun check(who: Caller, id: String, may: (Caller, String, String) -> Boolean): Either<AccountError, String> =
-        of(id).flatMap { owner -> if (may(who, id, owner)) Either.Right(owner) else Either.Left(AccountError.NoSuchAccount(id)) }
+    fun check(who: Caller, id: String, may: (Caller, String, String) -> Boolean): Either<AccountError, String> = of(
+        id,
+    ).flatMap { owner ->
+        if (may(
+                who,
+                id,
+                owner,
+            )
+        ) {
+            Either.Right(owner)
+        } else {
+            Either.Left(AccountError.NoSuchAccount(id))
+        }
+    }
 }
 
 private fun <T : Any> opsOnly(rules: Rules, who: Caller, answer: () -> T): Outcome<Forbidden, T> =
     if (rules.canSeeOps(who)) ok(answer()) else forbidden(Forbidden("This view is for ops"))
 
 /** An auditor's question, for those who may ask it; no answer from bank-access is a 503, never an empty list. */
-private fun audited(rules: Rules, who: Caller, answer: () -> List<Because>?) =
-    if (!rules.canAudit(who)) forbidden(Forbidden("Who can see what is for ops, admins and auditors"))
-    else answer()?.let { ok(it) } ?: unavailable(Unavailable("bank-access did not answer; ask again"))
+private fun audited(rules: Rules, who: Caller, answer: () -> List<Because>?) = if (!rules.canAudit(who)) {
+    forbidden(Forbidden("Who can see what is for ops, admins and auditors"))
+} else {
+    answer()?.let { ok(it) } ?: unavailable(Unavailable("bank-access did not answer; ask again"))
+}
 
 fun view(balance: Balance) = AccountView(balance.id, balance.owner, balance.balance.toAmount())
 
-private fun view(transfer: bank.domain.TransferView) =
-    TransferView(transfer.id, transfer.from, transfer.to, transfer.amount.toAmount(), transfer.status.name, transfer.reason)
+private fun view(transfer: bank.domain.TransferView) = TransferView(
+    transfer.id,
+    transfer.from,
+    transfer.to,
+    transfer.amount.toAmount(),
+    transfer.status.name,
+    transfer.reason,
+)
 
 private fun short(refused: AccountError.InsufficientFunds) =
     InsufficientFunds(refused.id, refused.balance.toAmount(), refused.requested.toAmount(), refused.message)

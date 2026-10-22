@@ -99,7 +99,13 @@ class Rules(private val grants: Grants = Grants.none, private val shadow: Shadow
      */
     fun mayActAs(who: Caller): Boolean = when (val actor = who.actor) {
         null -> true
-        else -> (grants.actingUntil(actor, who.subject) != null).also { shadow.compare(Asked.ActAs, who, who.subject, it) }
+
+        else -> (
+            grants.actingUntil(
+                actor,
+                who.subject,
+            ) != null
+            ).also { shadow.compare(Asked.ActAs, who, who.subject, it) }
     }
 
     /** When [who] may act as [customer] until: someone in support, as themselves, with a live grant; else null. */

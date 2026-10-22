@@ -1,5 +1,6 @@
 package bank.app
 
+import bank.domain.AccountId
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.joran.JoranConfigurator
 import com.fasterxml.jackson.databind.JsonNode
@@ -20,7 +21,6 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.UUID
-import bank.domain.AccountId
 
 /** Bank spec 0023's `log-json`: every line the bank writes is one JSON object, with the estate's field names. */
 class LogJsonSpec {
@@ -32,7 +32,11 @@ class LogJsonSpec {
         val context = LoggerFactory.getILoggerFactory() as LoggerContext
         fun configure(name: String) {
             context.reset()
-            JoranConfigurator().apply { setContext(context) }.doConfigure(requireNotNull(javaClass.classLoader.getResource(name)))
+            JoranConfigurator().apply {
+                setContext(
+                    context,
+                )
+            }.doConfigure(requireNotNull(javaClass.classLoader.getResource(name)))
         }
         val out = ByteArrayOutputStream()
         val before = System.out
@@ -55,7 +59,9 @@ class LogJsonSpec {
                 node.bank.open(AccountId(acc), "ada", gbp(5_000), "open:$acc").shouldBeRight()
                 val http = HttpClient.newHttpClient()
                 fun get(path: String, who: String) = http.send(
-                    HttpRequest.newBuilder(URI.create(node.server.baseUrl + path)).header("Authorization", "Bearer ${TestIdentity.token(who)}").build(),
+                    HttpRequest.newBuilder(
+                        URI.create(node.server.baseUrl + path),
+                    ).header("Authorization", "Bearer ${TestIdentity.token(who)}").build(),
                     HttpResponse.BodyHandlers.discarding(),
                 ).statusCode()
                 get("/accounts/$acc", "ada") shouldBe 200

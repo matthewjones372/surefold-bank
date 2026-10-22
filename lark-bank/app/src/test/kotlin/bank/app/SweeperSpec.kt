@@ -24,7 +24,11 @@ class SweeperSpec {
 
             // What a node leaves behind when it dies the moment after persisting the request.
             val requested = TransferEvent.Requested(AccountId("a"), AccountId("b"), gbp(300), now())
-            node.persistence.journal.append(PersistenceId(Kinds.TRANSFER, "t-stranded"), 0, listOf(TransferEvents.encode(requested)))
+            node.persistence.journal.append(
+                PersistenceId(Kinds.TRANSFER, "t-stranded"),
+                0,
+                listOf(TransferEvents.encode(requested)),
+            )
                 .shouldBeRight()
 
             withClue("the sweeper nudges it and it completes: ${node.reads.transfers()}") {

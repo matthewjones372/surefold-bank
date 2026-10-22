@@ -35,8 +35,14 @@ class DailyLimitWireSpec {
     @Test
     fun `an account's snapshot keeps its limit and what it has paid out today`() {
         val open = Account.Open(
-            "ada", gbp(42), listOf("a"), setOf("debit:t-1"),
-            dailyLimit = gbp(500), paidOutOn = 20_736, paidOut = gbp(300), debitedOn = setOf("t-1"),
+            "ada",
+            gbp(42),
+            listOf("a"),
+            setOf("debit:t-1"),
+            dailyLimit = gbp(500),
+            paidOutOn = 20_736,
+            paidOut = gbp(300),
+            debitedOn = setOf("t-1"),
         )
         AccountStates.decode(AccountStates.encode(open)) shouldBe open
     }

@@ -39,6 +39,7 @@ internal fun Account.closed(transfer: TransferId): Account {
     return when (this) {
         Account.Unopened, is Account.Refusing ->
             refusals.filterKeys { !of(it) }.let { if (it.isEmpty()) Account.Unopened else Account.Refusing(it) }
+
         is Account.Open -> copy(legs = legs.filterNot(of).toSet(), refused = refused.filterKeys { !of(it) })
     }
 }
@@ -50,7 +51,9 @@ internal fun Account.closed(transfer: TransferId): Account {
 fun Account.refusing(command: AccountCommand, refusal: AccountError, now: Long): List<AccountEvent> {
     val leg = when (command) {
         is AccountCommand.Debit -> Leg.Debit to command.transfer
+
         is AccountCommand.Credit -> Leg.Credit to command.transfer
+
         is AccountCommand.Open, is AccountCommand.Deposit, is AccountCommand.Withdraw, is AccountCommand.Refund,
         is AccountCommand.Close,
         -> null

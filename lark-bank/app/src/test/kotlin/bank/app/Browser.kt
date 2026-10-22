@@ -2,8 +2,8 @@ package bank.app
 
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Page
-import java.nio.file.Paths
 import com.microsoft.playwright.Playwright
+import java.nio.file.Paths
 
 /**
  * A page in headless Chromium, for the length of [block]. The browsers are the ones installed under

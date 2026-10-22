@@ -43,7 +43,11 @@ class OpeningSpec {
         val refused = AccountError.DailyLimitExceeded("ada", pounds(10_000), pounds(4_000), pounds(5_000))
 
         capped(refused) shouldBe DailyLimitExceeded(
-            "ada", Amount("100.00", "GBP"), Amount("40.00", "GBP"), Amount("50.00", "GBP"), refused.message,
+            "ada",
+            Amount("100.00", "GBP"),
+            Amount("40.00", "GBP"),
+            Amount("50.00", "GBP"),
+            refused.message,
         )
     }
 

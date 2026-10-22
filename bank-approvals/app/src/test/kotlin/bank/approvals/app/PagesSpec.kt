@@ -56,7 +56,9 @@ class PagesSpec {
             val view: RequestView = node.calling("rae", "engineers").outcome(
                 ask,
                 NewRequest(
-                    "test.change", "test/large-transfer-$run", "large-transfer, version 4",
+                    "test.change",
+                    "test/large-transfer-$run",
+                    "large-transfer, version 4",
                     before = "when amount is at least 1000\nthen decline",
                     after = "when amount is at least 500\nthen decline",
                     facts = mapOf("change" to "tighten"),
@@ -107,7 +109,14 @@ class PagesSpec {
                 assertThat(rae.locator("#after")).containsText("when amount is at least 500")
                 assertThat(rae.locator("#about")).containsText("31 would have been")
                 rae.locator("#timeline li").all().map { it.getAttribute("data-what") } shouldContainExactly listOf(
-                    "requested", "awaiting-approval", "commented", "commented", "approved", "approved", "approval-given", "applied",
+                    "requested",
+                    "awaiting-approval",
+                    "commented",
+                    "commented",
+                    "approved",
+                    "approved",
+                    "approval-given",
+                    "applied",
                 )
                 assertThat(rae.locator("#timeline")).containsText("Fair enough")
                 assertThat(rae.locator("#timeline")).containsText("500 is where the fraud team's cases start")

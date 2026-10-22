@@ -1,8 +1,10 @@
 package bank.app
 
+import bank.domain.AccountId
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import bank.domain.AccountId
+import com.microsoft.playwright.assertions.LocatorAssertions
+import com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat
 import io.github.matthewjones372.lark.app.use
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.withClue
@@ -13,8 +15,6 @@ import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldEndWith
-import com.microsoft.playwright.assertions.LocatorAssertions
-import com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat
 import org.junit.jupiter.api.Test
 import java.net.URI
 import java.net.http.HttpClient
@@ -70,16 +70,25 @@ class OpsSpec {
 
                 // Asks made on n0 show on n0's card as a rate and a p99.
                 val asking = Thread.ofVirtual().start {
-                    repeat(200) { one.bank.balance(AccountId("nobody-$it")); Thread.sleep(20) }
+                    repeat(200) {
+                        one.bank.balance(AccountId("nobody-$it"))
+                        Thread.sleep(20)
+                    }
                 }
-                val asked = watch(base, 30) { snapshot -> (snapshot.node("n0")?.get("asksPerSecond")?.asDouble() ?: 0.0) > 0 }
+                val asked = watch(
+                    base,
+                    30,
+                ) { snapshot -> (snapshot.node("n0")?.get("asksPerSecond")?.asDouble() ?: 0.0) > 0 }
                 asking.join()
                 withClue("n0's asks show on its card") { asked.shouldNotBeNull() }
                 asked!!.node("n0")!!["askP99Millis"].asDouble() shouldBeGreaterThan 0.0
 
                 third.stop()
                 // Once n2 is gone its last snapshot ages, while n0's and n1's stay fresh.
-                val aged = watch(base, 30) { snapshot -> (snapshot.node("n2")?.get("ageMillis")?.asLong() ?: 0) > 3_000 }
+                val aged = watch(
+                    base,
+                    30,
+                ) { snapshot -> (snapshot.node("n2")?.get("ageMillis")?.asLong() ?: 0) > 3_000 }
                 withClue("n2's snapshot stops once n2 has stopped") { aged.shouldNotBeNull() }
                 aged!!.node("n0")!!["ageMillis"].asLong() shouldBeLessThan 3_000
                 aged.node("n2")!!["ageMillis"].asLong() shouldBeGreaterThan 3_000L
@@ -97,13 +106,19 @@ class OpsSpec {
                 inBrowser { page ->
                     page.signIn(one.server.baseUrl, "olga", groups = "ops", then = "/ops")
                     page.url() shouldEndWith "/ops"
-                    assertThat(page.locator(".node")).hasCount(3, LocatorAssertions.HasCountOptions().setTimeout(15_000.0))
+                    assertThat(
+                        page.locator(".node"),
+                    ).hasCount(3, LocatorAssertions.HasCountOptions().setTimeout(15_000.0))
                     assertThat(page.locator("#ledger-state")).hasText("Balanced")
                     assertThat(page.locator(".node[data-node=n0] h3")).containsText("serving this page")
 
                     third.stop()
                     assertThat(page.locator(".node[data-node=n2]"))
-                        .hasAttribute("data-stale", "true", LocatorAssertions.HasAttributeOptions().setTimeout(20_000.0))
+                        .hasAttribute(
+                            "data-stale",
+                            "true",
+                            LocatorAssertions.HasAttributeOptions().setTimeout(20_000.0),
+                        )
                     assertThat(page.locator(".node[data-node=n0]")).hasAttribute("data-stale", "false")
                 }
             }.shouldBeRight()
@@ -125,7 +140,11 @@ class OpsSpec {
                 HttpRequest.newBuilder(URI.create("${node.server.baseUrl}/metrics")).GET().build(),
                 HttpResponse.BodyHandlers.ofString(),
             ).body()
-            fun value(series: String) = metrics.lines().first { it.startsWith(series) }.substringAfterLast(' ').toDouble()
+            fun value(series: String) = metrics.lines().first {
+                it.startsWith(
+                    series,
+                )
+            }.substringAfterLast(' ').toDouble()
             // A gap per currency: pounds, which the account holds, and bitcoin, which nobody does yet.
             value("bank_ledger_gap{currency=\"GBP\"") shouldBe 0.0
             value("bank_ledger_gap{currency=\"BTC\"") shouldBe 0.0

@@ -46,10 +46,23 @@ class CallerTableSpec {
     )
 
     private fun statuses(
-        nobody: Int, owner: Int, stranger: Int, support: Int, granted: Int, auditor: Int, ops: Int, acting: Int,
+        nobody: Int,
+        owner: Int,
+        stranger: Int,
+        support: Int,
+        granted: Int,
+        auditor: Int,
+        ops: Int,
+        acting: Int,
     ) = mapOf(
-        Who.Nobody to nobody, Who.Owner to owner, Who.Stranger to stranger, Who.Support to support, Who.SupportWithGrant to granted,
-        Who.Auditor to auditor, Who.Ops to ops, Who.ActingAsOwner to acting,
+        Who.Nobody to nobody,
+        Who.Owner to owner,
+        Who.Stranger to stranger,
+        Who.Support to support,
+        Who.SupportWithGrant to granted,
+        Who.Auditor to auditor,
+        Who.Ops to ops,
+        Who.ActingAsOwner to acting,
     )
 
     private fun unique() = UUID.randomUUID().toString()
@@ -57,29 +70,83 @@ class CallerTableSpec {
     private val gbp = """"amount":{"value":"0.01","currency":"GBP"}"""
 
     private val table = listOf(
-        Row("PUT", "/accounts/{accountId}", { "/accounts/new-${unique()}" }, { """{"currency":"GBP","initial":"0"}""" },
-            statuses(401, 201, 201, 201, 201, 201, 201, 403)),
+        Row(
+            "PUT",
+            "/accounts/{accountId}",
+            { "/accounts/new-${unique()}" },
+            { """{"currency":"GBP","initial":"0"}""" },
+            statuses(401, 201, 201, 201, 201, 201, 201, 403),
+        ),
         Row("GET", "/accounts/{accountId}", { "/accounts/a1" }, null, statuses(401, 200, 404, 404, 200, 200, 404, 200)),
-        Row("POST", "/accounts/{accountId}/deposits", { "/accounts/a1/deposits" }, { """{$gbp,"reference":"${unique()}"}""" },
-            statuses(401, 200, 404, 404, 404, 404, 404, 403)),
-        Row("POST", "/accounts/{accountId}/withdrawals", { "/accounts/a1/withdrawals" }, { """{$gbp,"reference":"${unique()}"}""" },
-            statuses(401, 200, 404, 404, 404, 404, 404, 403)),
-        Row("GET", "/accounts/{accountId}/statement", { "/accounts/a1/statement" }, null, statuses(401, 200, 404, 404, 200, 200, 404, 200)),
-        Row("GET", "/accounts/{accountId}/looks", { "/accounts/a1/looks" }, null, statuses(401, 200, 404, 404, 200, 200, 404, 200)),
-        Row("PUT", "/transfers/{transferId}", { "/transfers/${unique()}" }, { """{"from":"a1","to":"b1",$gbp}""" },
-            statuses(401, 200, 404, 404, 404, 404, 404, 403)),
-        Row("GET", "/transfers/{transferId}", { "/transfers/t1" }, null, statuses(401, 200, 404, 404, 200, 200, 200, 200)),
+        Row(
+            "POST",
+            "/accounts/{accountId}/deposits",
+            { "/accounts/a1/deposits" },
+            { """{$gbp,"reference":"${unique()}"}""" },
+            statuses(401, 200, 404, 404, 404, 404, 404, 403),
+        ),
+        Row(
+            "POST",
+            "/accounts/{accountId}/withdrawals",
+            { "/accounts/a1/withdrawals" },
+            { """{$gbp,"reference":"${unique()}"}""" },
+            statuses(401, 200, 404, 404, 404, 404, 404, 403),
+        ),
+        Row(
+            "GET",
+            "/accounts/{accountId}/statement",
+            { "/accounts/a1/statement" },
+            null,
+            statuses(401, 200, 404, 404, 200, 200, 404, 200),
+        ),
+        Row(
+            "GET",
+            "/accounts/{accountId}/looks",
+            { "/accounts/a1/looks" },
+            null,
+            statuses(401, 200, 404, 404, 200, 200, 404, 200),
+        ),
+        Row(
+            "PUT",
+            "/transfers/{transferId}",
+            { "/transfers/${unique()}" },
+            { """{"from":"a1","to":"b1",$gbp}""" },
+            statuses(401, 200, 404, 404, 404, 404, 404, 403),
+        ),
+        Row(
+            "GET",
+            "/transfers/{transferId}",
+            { "/transfers/t1" },
+            null,
+            statuses(401, 200, 404, 404, 200, 200, 200, 200),
+        ),
         Row("GET", "/transfers", { "/transfers" }, null, statuses(401, 403, 403, 403, 403, 200, 200, 403)),
-        Row("POST", "/payrolls/{payrollId}", { "/payrolls/${unique()}" }, { """{"credits":[{"account":"b1",$gbp}]}""" },
-            statuses(401, 403, 403, 403, 403, 403, 202, 403)),
+        Row(
+            "POST",
+            "/payrolls/{payrollId}",
+            { "/payrolls/${unique()}" },
+            { """{"credits":[{"account":"b1",$gbp}]}""" },
+            statuses(401, 403, 403, 403, 403, 403, 202, 403),
+        ),
         Row("GET", "/currencies", { "/currencies" }, null, statuses(401, 200, 200, 200, 200, 200, 200, 200)),
         Row("GET", "/ledger", { "/ledger" }, null, statuses(401, 403, 403, 403, 403, 200, 200, 403)),
         Row("GET", "/cluster", { "/cluster" }, null, statuses(401, 403, 403, 403, 403, 200, 200, 403)),
         Row("GET", "/ops/stream", { "/ops/stream" }, null, statuses(401, 403, 403, 403, 403, 200, 200, 403)),
         // Allowed for an auditor and ops, and unanswered here: this cluster has no bank-access to ask (bank spec 0022).
-        Row("GET", "/access/accounts/{accountId}/viewers", { "/access/accounts/a1/viewers" }, null,
-            statuses(401, 403, 403, 403, 403, 503, 503, 403)),
-        Row("GET", "/access/people/{person}", { "/access/people/ada" }, null, statuses(401, 403, 403, 403, 403, 503, 503, 403)),
+        Row(
+            "GET",
+            "/access/accounts/{accountId}/viewers",
+            { "/access/accounts/a1/viewers" },
+            null,
+            statuses(401, 403, 403, 403, 403, 503, 503, 403),
+        ),
+        Row(
+            "GET",
+            "/access/people/{person}",
+            { "/access/people/ada" },
+            null,
+            statuses(401, 403, 403, 403, 403, 503, 503, 403),
+        ),
         Row("GET", "/accounts", { "/accounts" }, null, statuses(401, 200, 200, 200, 200, 200, 200, 200)),
         Row("GET", "/me", { "/me" }, null, statuses(401, 200, 200, 200, 200, 200, 200, 200)),
         // Acting is a signed-in page's: a token, whoever it names, has no session to swap.
@@ -97,7 +164,10 @@ class CallerTableSpec {
     /** The status alone: an event stream is closed as soon as its status has arrived. */
     private fun status(base: String, row: Row, who: Who): Int {
         val request = HttpRequest.newBuilder(URI.create(base + row.path(who)))
-            .method(row.method, row.body?.let { HttpRequest.BodyPublishers.ofString(it(who)) } ?: HttpRequest.BodyPublishers.noBody())
+            .method(
+                row.method,
+                row.body?.let { HttpRequest.BodyPublishers.ofString(it(who)) } ?: HttpRequest.BodyPublishers.noBody(),
+            )
             .header("Content-Type", "application/json")
         who.token()?.let { request.header("Authorization", "Bearer $it") }
         val response = http.send(request.build(), HttpResponse.BodyHandlers.ofInputStream())
@@ -112,7 +182,9 @@ class CallerTableSpec {
             apiClient(base, JacksonCodecs).use { anyone ->
                 anyone.calling("ada").outcome(openAccount, In2("a1", OpenAccount("GBP", "100.00"))).shouldBeOk()
                 anyone.calling("bob").outcome(openAccount, In2("b1", OpenAccount("GBP"))).shouldBeOk()
-                anyone.calling("ada").outcome(transfer, In2("t1", TransferRequest("a1", "b1", pounds("1.00")))).shouldBeOk()
+                anyone.calling(
+                    "ada",
+                ).outcome(transfer, In2("t1", TransferRequest("a1", "b1", pounds("1.00")))).shouldBeOk()
             }
             // As Approvals would have it given: gil in support may see a1, and nothing else, for the next hour.
             node.grants.give("table-grant", "gil", Access.View("a1"), java.time.Instant.now().plusSeconds(3600))

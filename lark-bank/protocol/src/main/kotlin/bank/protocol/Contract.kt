@@ -11,27 +11,27 @@ import bank.domain.Money
 import bank.domain.ScreeningOutcome
 import bank.domain.TransferEvent
 import bank.domain.TransferId
-import bank.events.v1.AccountEvent as AccountRecord
-import bank.events.v1.AccountEvent.EventCase as AccountCase
-import bank.events.v1.Credited
 import bank.events.v1.CreditRefused
+import bank.events.v1.Credited
 import bank.events.v1.Debited
 import bank.events.v1.Deposited
 import bank.events.v1.DestinationCredited
 import bank.events.v1.LegRefused
 import bank.events.v1.LegsClosed
-import bank.events.v1.Money as MoneyRecord
 import bank.events.v1.Opened
 import bank.events.v1.Refunded
 import bank.events.v1.Rejected
 import bank.events.v1.Requested
 import bank.events.v1.Screened
-import bank.events.v1.ScreeningOutcome as ScreeningOutcomeRecord
 import bank.events.v1.SourceDebited
 import bank.events.v1.SourceRefunded
+import bank.events.v1.Withdrawn
+import bank.events.v1.AccountEvent as AccountRecord
+import bank.events.v1.AccountEvent.EventCase as AccountCase
+import bank.events.v1.Money as MoneyRecord
+import bank.events.v1.ScreeningOutcome as ScreeningOutcomeRecord
 import bank.events.v1.TransferEvent as TransferRecord
 import bank.events.v1.TransferEvent.EventCase as TransferCase
-import bank.events.v1.Withdrawn
 
 /*
  * The bank's events as the contract other services read (bank spec 0015, lark-bank-events): each domain event to its
@@ -43,13 +43,32 @@ fun AccountEvent.toContract(account: AccountId, sequence: Long): AccountRecord {
     val record = AccountRecord.newBuilder().setAccountId(account.value).setSequence(sequence).setAtMillis(atMillis)
     when (this) {
         is AccountEvent.Opened ->
-            record.setOpened(Opened.newBuilder().setOwner(owner).setInitial(initial.toContract()).setReference(reference))
-        is AccountEvent.Deposited -> record.setDeposited(Deposited.newBuilder().setAmount(amount.toContract()).setReference(reference))
-        is AccountEvent.Withdrawn -> record.setWithdrawn(Withdrawn.newBuilder().setAmount(amount.toContract()).setReference(reference))
-        is AccountEvent.Debited -> record.setDebited(Debited.newBuilder().setTransferId(transfer.value).setAmount(amount.toContract()))
-        is AccountEvent.Credited -> record.setCredited(Credited.newBuilder().setTransferId(transfer.value).setAmount(amount.toContract()))
-        is AccountEvent.Refunded -> record.setRefunded(Refunded.newBuilder().setTransferId(transfer.value).setAmount(amount.toContract()))
+            record.setOpened(
+                Opened.newBuilder().setOwner(owner).setInitial(initial.toContract()).setReference(reference),
+            )
+
+        is AccountEvent.Deposited -> record.setDeposited(
+            Deposited.newBuilder().setAmount(amount.toContract()).setReference(reference),
+        )
+
+        is AccountEvent.Withdrawn -> record.setWithdrawn(
+            Withdrawn.newBuilder().setAmount(amount.toContract()).setReference(reference),
+        )
+
+        is AccountEvent.Debited -> record.setDebited(
+            Debited.newBuilder().setTransferId(transfer.value).setAmount(amount.toContract()),
+        )
+
+        is AccountEvent.Credited -> record.setCredited(
+            Credited.newBuilder().setTransferId(transfer.value).setAmount(amount.toContract()),
+        )
+
+        is AccountEvent.Refunded -> record.setRefunded(
+            Refunded.newBuilder().setTransferId(transfer.value).setAmount(amount.toContract()),
+        )
+
         is AccountEvent.LegsClosed -> record.setLegsClosed(LegsClosed.newBuilder().setTransferId(transfer.value))
+
         is AccountEvent.LegRefused -> record.setLegRefused(
             LegRefused.newBuilder().setTransferId(transfer.value).setLeg(leg.name.lowercase()).setReason(reason),
         )
@@ -89,7 +108,9 @@ private fun TransferEvent.Screened.toContract(): Screened {
 }
 
 /** Plain, at the currency's scale, which a [Money] always holds: "10.50", never "1.05E+1". */
-fun Money.toContract(): MoneyRecord = MoneyRecord.newBuilder().setCurrency(currency.code).setAmount(amount.toPlainString()).build()
+fun Money.toContract(): MoneyRecord = MoneyRecord.newBuilder().setCurrency(
+    currency.code,
+).setAmount(amount.toPlainString()).build()
 
 /** A published event read back: its id, its place in that id, and the event. */
 data class FromContract<out E>(val id: String, val sequence: Long, val event: E)
@@ -108,15 +129,48 @@ sealed interface ContractError {
 
 fun AccountRecord.fromContract(currencies: Currencies): Either<ContractError, FromContract<AccountEvent>> = either {
     val event = when (eventCase) {
-        AccountCase.OPENED -> AccountEvent.Opened(opened.owner, money(opened.initial, currencies), opened.reference, atMillis)
-        AccountCase.DEPOSITED -> AccountEvent.Deposited(money(deposited.amount, currencies), deposited.reference, atMillis)
-        AccountCase.WITHDRAWN -> AccountEvent.Withdrawn(money(withdrawn.amount, currencies), withdrawn.reference, atMillis)
-        AccountCase.DEBITED -> AccountEvent.Debited(TransferId(debited.transferId), money(debited.amount, currencies), atMillis)
-        AccountCase.CREDITED -> AccountEvent.Credited(TransferId(credited.transferId), money(credited.amount, currencies), atMillis)
-        AccountCase.REFUNDED -> AccountEvent.Refunded(TransferId(refunded.transferId), money(refunded.amount, currencies), atMillis)
+        AccountCase.OPENED -> AccountEvent.Opened(
+            opened.owner,
+            money(opened.initial, currencies),
+            opened.reference,
+            atMillis,
+        )
+
+        AccountCase.DEPOSITED -> AccountEvent.Deposited(
+            money(deposited.amount, currencies),
+            deposited.reference,
+            atMillis,
+        )
+
+        AccountCase.WITHDRAWN -> AccountEvent.Withdrawn(
+            money(withdrawn.amount, currencies),
+            withdrawn.reference,
+            atMillis,
+        )
+
+        AccountCase.DEBITED -> AccountEvent.Debited(
+            TransferId(debited.transferId),
+            money(debited.amount, currencies),
+            atMillis,
+        )
+
+        AccountCase.CREDITED -> AccountEvent.Credited(
+            TransferId(credited.transferId),
+            money(credited.amount, currencies),
+            atMillis,
+        )
+
+        AccountCase.REFUNDED -> AccountEvent.Refunded(
+            TransferId(refunded.transferId),
+            money(refunded.amount, currencies),
+            atMillis,
+        )
+
         AccountCase.LEGS_CLOSED -> AccountEvent.LegsClosed(TransferId(legsClosed.transferId), atMillis)
+
         AccountCase.LEG_REFUSED -> Leg.entries.firstOrNull { it.prefix == legRefused.leg }
             ?.let { AccountEvent.LegRefused(TransferId(legRefused.transferId), it, legRefused.reason, atMillis) }
+
         AccountCase.EVENT_NOT_SET, null -> null
     }
     FromContract(accountId, sequence, ensureNotNull(event) { ContractError.Unknown(accountId, sequence) })
@@ -125,13 +179,25 @@ fun AccountRecord.fromContract(currencies: Currencies): Either<ContractError, Fr
 fun TransferRecord.fromContract(currencies: Currencies): Either<ContractError, FromContract<TransferEvent>> = either {
     val event = when (eventCase) {
         TransferCase.REQUESTED ->
-            TransferEvent.Requested(AccountId(fromAccount), AccountId(toAccount), money(requested.amount, currencies), atMillis)
+            TransferEvent.Requested(
+                AccountId(fromAccount),
+                AccountId(toAccount),
+                money(requested.amount, currencies),
+                atMillis,
+            )
+
         TransferCase.SOURCE_DEBITED -> TransferEvent.SourceDebited(atMillis)
+
         TransferCase.REJECTED -> TransferEvent.Rejected(rejected.reason, atMillis)
+
         TransferCase.DESTINATION_CREDITED -> TransferEvent.DestinationCredited(atMillis)
+
         TransferCase.CREDIT_REFUSED -> TransferEvent.CreditRefused(creditRefused.reason, atMillis)
+
         TransferCase.SOURCE_REFUNDED -> TransferEvent.SourceRefunded(atMillis)
+
         TransferCase.SCREENED -> screened(screened, atMillis)
+
         TransferCase.EVENT_NOT_SET, null -> null
     }
     FromContract(transferId, sequence, ensureNotNull(event) { ContractError.Unknown(transferId, sequence) })
@@ -140,7 +206,9 @@ fun TransferRecord.fromContract(currencies: Currencies): Either<ContractError, F
 private fun arrow.core.raise.Raise<ContractError>.screened(record: Screened, atMillis: Long): TransferEvent.Screened {
     val outcome = when (record.outcome) {
         ScreeningOutcomeRecord.SCREENING_OUTCOME_APPROVED -> ScreeningOutcome.Approved
+
         ScreeningOutcomeRecord.SCREENING_OUTCOME_DECLINED -> ScreeningOutcome.Declined
+
         ScreeningOutcomeRecord.SCREENING_OUTCOME_UNSPECIFIED, ScreeningOutcomeRecord.UNRECOGNIZED, null ->
             raise(ContractError.Unreadable("a screening decision with no outcome it can read"))
     }

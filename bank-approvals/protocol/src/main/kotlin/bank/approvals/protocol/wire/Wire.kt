@@ -67,20 +67,28 @@ sealed interface RequestEvent {
     data class AwaitingApproval(val needed: Int, val approvers: List<String>, val atMillis: Long) : RequestEvent
 
     @Serializable
-    data class Approved(val by: Person, val hash: String, val comment: String, val atMillis: Long, val origin: Origin = Origin()) :
-        RequestEvent
+    data class Approved(
+        val by: Person,
+        val hash: String,
+        val comment: String,
+        val atMillis: Long,
+        val origin: Origin = Origin(),
+    ) : RequestEvent
 
     @Serializable
     data class ApprovalGiven(val approvers: List<String>, val atMillis: Long) : RequestEvent
 
     @Serializable
-    data class Rejected(val by: Person, val comment: String, val atMillis: Long, val origin: Origin = Origin()) : RequestEvent
+    data class Rejected(val by: Person, val comment: String, val atMillis: Long, val origin: Origin = Origin()) :
+        RequestEvent
 
     @Serializable
-    data class Commented(val by: Person, val text: String, val atMillis: Long, val origin: Origin = Origin()) : RequestEvent
+    data class Commented(val by: Person, val text: String, val atMillis: Long, val origin: Origin = Origin()) :
+        RequestEvent
 
     @Serializable
-    data class VoteRefused(val by: Person, val because: String, val atMillis: Long, val origin: Origin = Origin()) : RequestEvent
+    data class VoteRefused(val by: Person, val because: String, val atMillis: Long, val origin: Origin = Origin()) :
+        RequestEvent
 
     @Serializable
     data class Withdrawn(val by: Person, val atMillis: Long, val origin: Origin = Origin()) : RequestEvent
@@ -92,18 +100,33 @@ sealed interface RequestEvent {
     data class Expired(val atMillis: Long) : RequestEvent
 
     @Serializable
-    data class Applied(val atMillis: Long, val by: Person = NOBODY, val hash: String = "", val origin: Origin = Origin()) : RequestEvent
+    data class Applied(
+        val atMillis: Long,
+        val by: Person = NOBODY,
+        val hash: String = "",
+        val origin: Origin = Origin(),
+    ) : RequestEvent
 
     @Serializable
-    data class ApplyFailed(val reason: String, val atMillis: Long, val by: Person = NOBODY, val origin: Origin = Origin()) : RequestEvent
+    data class ApplyFailed(
+        val reason: String,
+        val atMillis: Long,
+        val by: Person = NOBODY,
+        val origin: Origin = Origin(),
+    ) : RequestEvent
 }
 
 /** What a request is asked to do, without a time: the entity stamps it with its own clock. */
 sealed interface Act {
     @Serializable
     @SerialName("AskAct")
-    data class Ask(val proposal: Proposal, val requester: Person, val policy: Policy, val policyVersion: String, val origin: Origin = Origin()) :
-        Act
+    data class Ask(
+        val proposal: Proposal,
+        val requester: Person,
+        val policy: Policy,
+        val policyVersion: String,
+        val origin: Origin = Origin(),
+    ) : Act
 
     @Serializable
     @SerialName("ApproveAct")

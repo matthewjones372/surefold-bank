@@ -27,9 +27,12 @@ internal fun opening(id: AccountId, command: AccountCommand.Open, now: Long): Ei
     val limit = command.dailyLimit ?: defaultDailyLimit(initial.currency)
     return when {
         initial.isNegative -> AccountError.InvalidAmount(initial).left()
+
         limit.currency != initial.currency ->
             AccountError.CurrencyMismatch(id.value, initial.currency.code, limit.currency.code).left()
+
         limit.isNegative -> AccountError.InvalidAmount(limit).left()
+
         else -> listOf(AccountEvent.Opened(command.owner, initial, command.reference, now, limit)).right()
     }
 }
@@ -45,8 +48,11 @@ internal fun Account.Open.paid(amount: Money, atMillis: Long, transfer: Transfer
 
 /** A refund takes its debit back off the day's total, if that debit is in it: the money came back. */
 internal fun Account.Open.givenBack(transfer: TransferId, amount: Money, atMillis: Long): Account.Open =
-    if (utcDay(atMillis) != paidOutOn || transfer.value !in debitedOn || paidOut == null) this
-    else copy(paidOut = maxOf(paidOut - amount, Money.zero(amount.currency)), debitedOn = debitedOn - transfer.value)
+    if (utcDay(atMillis) != paidOutOn || transfer.value !in debitedOn || paidOut == null) {
+        this
+    } else {
+        copy(paidOut = maxOf(paidOut - amount, Money.zero(amount.currency)), debitedOn = debitedOn - transfer.value)
+    }
 
 /** The UTC day [millis] falls on, counted from the epoch. */
 internal fun utcDay(millis: Long): Long = Math.floorDiv(millis, DAY_MILLIS)

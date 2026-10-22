@@ -36,7 +36,14 @@ class LeavingSpec {
     private fun run(staying: List<TestNode>, leaving: TestNode, leave: () -> Unit) {
         val all = staying + leaving
         eventually { all.all { node -> node.cluster.view.members.count { it.status.name == "Up" } == 3 } } shouldBe true
-        accounts.forEachIndexed { i, id -> all[i % all.size].bank.open(id, "owner-$i", opening, "open:$id").shouldBeRight() }
+        accounts.forEachIndexed { i, id ->
+            all[i % all.size].bank.open(
+                id,
+                "owner-$i",
+                opening,
+                "open:$id",
+            ).shouldBeRight()
+        }
 
         val random = Random(7)
         val sent = AtomicInteger()
@@ -47,7 +54,15 @@ class LeavingSpec {
 
         // The first half of the load through every node, then the third leaves while the rest runs through the two.
         parMap(batches.take(4)) { batch ->
-            batch.forEachIndexed { i, (id, from, to) -> all[i % all.size].bank.transfer(id, from, to, gbp(100)); sent.incrementAndGet() }
+            batch.forEachIndexed { i, (id, from, to) ->
+                all[i % all.size].bank.transfer(
+                    id,
+                    from,
+                    to,
+                    gbp(100),
+                )
+                sent.incrementAndGet()
+            }
         }
         val leaver = Thread.ofPlatform().start(leave)
         parMap(batches.drop(4)) { batch ->

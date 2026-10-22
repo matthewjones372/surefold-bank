@@ -3,8 +3,8 @@ package bank.approvals.app
 import bank.approvals.api.Audit
 import bank.approvals.api.AuditEntry
 import bank.approvals.api.AuditFilter
-import bank.approvals.api.Histories
 import bank.approvals.api.Broken
+import bank.approvals.api.Histories
 import bank.approvals.api.Verification
 import bank.approvals.api.auditEntry
 import bank.approvals.domain.Chain
@@ -46,7 +46,9 @@ data class Head(val request: String, val sequence: Long, val link: String)
 /** A day's digest: the SHA-256 of every head of every chain changed that day. */
 data class Digest(val day: LocalDate, val digest: String, val heads: List<Head>)
 
-class JournalAudit(private val feed: JournalFeed, private val data: DataSource) : Audit, Histories {
+class JournalAudit(private val feed: JournalFeed, private val data: DataSource) :
+    Audit,
+    Histories {
 
     /** Every request's events as they read now; one that no longer reads is left out, and `verify` names it. */
     override fun all(): Map<RequestId, List<RequestEvent>> = stored().mapNotNull { (id, events) ->
@@ -80,7 +82,12 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
             val stored = runCatching { StoredLinks.decode(event.bytes) }.getOrNull()
                 ?: return Walked(links, Broken(id, event.sequence, "does not read as an event"))
             val link = Chain.link(previous, stored.event.toHexString())
-            if (link != stored.link) return Walked(links, Broken(id, event.sequence, "its bytes, or the chain before it, do not match its link"))
+            if (link != stored.link) {
+                return Walked(
+                    links,
+                    Broken(id, event.sequence, "its bytes, or the chain before it, do not match its link"),
+                )
+            }
             links += link
             previous = link
         }
@@ -95,12 +102,18 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
         val digests = digests()
         digests.forEach { digest ->
             if (digestOf(digest.heads) != digest.digest) {
-                broken.putIfAbsent("digest ${digest.day}", Broken("digest ${digest.day}", 0, "the digest does not match the heads recorded with it"))
+                broken.putIfAbsent(
+                    "digest ${digest.day}",
+                    Broken("digest ${digest.day}", 0, "the digest does not match the heads recorded with it"),
+                )
             }
             digest.heads.forEach { head ->
                 // A chain rewritten whole, every link recomputed, still walks; its head on that day no longer matches.
                 if (walked[head.request]?.links?.getOrNull((head.sequence - 1).toInt()) != head.link) {
-                    broken.putIfAbsent(head.request, Broken(head.request, head.sequence, "does not match the digest of ${digest.day}"))
+                    broken.putIfAbsent(
+                        head.request,
+                        Broken(head.request, head.sequence, "does not match the digest of ${digest.day}"),
+                    )
                 }
             }
         }
@@ -108,9 +121,14 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
     }
 
     /** The heads of every chain changed on [day], from the journal as it is now. */
-    private fun heads(day: LocalDate, requests: Map<String, List<FeedEvent>>): List<Head> = requests.mapNotNull { (id, events) ->
-        events.lastOrNull { event -> dayOf(event) == day }?.let { last -> Head(id, last.sequence, StoredLinks.decode(last.bytes).link) }
-    }
+    private fun heads(day: LocalDate, requests: Map<String, List<FeedEvent>>): List<Head> =
+        requests.mapNotNull { (id, events) ->
+            events.lastOrNull { event ->
+                dayOf(
+                    event,
+                ) == day
+            }?.let { last -> Head(id, last.sequence, StoredLinks.decode(last.bytes).link) }
+        }
 
     private fun dayOf(event: FeedEvent): LocalDate? =
         runCatching { RequestEvents.decode(event.bytes).event.at.atZone(ZoneOffset.UTC).toLocalDate() }.getOrNull()
@@ -131,7 +149,9 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
                 it.executeUpdate()
             }
             if (made == 1) {
-                connection.prepareStatement("insert into approval_digest_head (day, request_id, sequence, link) values (?, ?, ?, ?)").use {
+                connection.prepareStatement(
+                    "insert into approval_digest_head (day, request_id, sequence, link) values (?, ?, ?, ?)",
+                ).use {
                     heads.forEach { head ->
                         it.setDate(1, Date.valueOf(day))
                         it.setString(2, head.request)
@@ -157,16 +177,32 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
     }
 
     fun digests(): List<Digest> = data.connection.use { connection ->
-        val heads = connection.prepareStatement("select day, request_id, sequence, link from approval_digest_head").use {
+        val heads = connection.prepareStatement(
+            "select day, request_id, sequence, link from approval_digest_head",
+        ).use {
             it.executeQuery().use { rows ->
-                generateSequence { if (rows.next()) rows.getDate(1).toLocalDate() to Head(rows.getString(2), rows.getLong(3), rows.getString(4)) else null }
+                generateSequence {
+                    if (rows.next()) {
+                        rows.getDate(
+                            1,
+                        ).toLocalDate() to Head(rows.getString(2), rows.getLong(3), rows.getString(4))
+                    } else {
+                        null
+                    }
+                }
                     .toList()
             }
         }.groupBy({ it.first }, { it.second })
         connection.prepareStatement("select day, digest from approval_digest order by day").use {
             it.executeQuery().use { rows ->
                 generateSequence {
-                    if (rows.next()) rows.getDate(1).toLocalDate().let { day -> Digest(day, rows.getString(2), heads[day].orEmpty()) } else null
+                    if (rows.next()) {
+                        rows.getDate(
+                            1,
+                        ).toLocalDate().let { day -> Digest(day, rows.getString(2), heads[day].orEmpty()) }
+                    } else {
+                        null
+                    }
                 }.toList()
             }
         }
@@ -174,12 +210,26 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
 
     override fun entries(filter: AuditFilter): List<AuditEntry> = stored().flatMap { (id, events) ->
         if (filter.request != null && filter.request != id) return@flatMap emptyList()
-        val decoded = events.mapNotNull { event -> runCatching { event.sequence to RequestEvents.decode(event.bytes).event }.getOrNull() }
+        val decoded = events.mapNotNull { event ->
+            runCatching {
+                event.sequence to RequestEvents.decode(
+                    event.bytes,
+                ).event
+            }.getOrNull()
+        }
         val asked = (decoded.firstOrNull()?.second as? RequestEvent.Requested)?.asked ?: return@flatMap emptyList()
         if (filter.subject != null && filter.subject != asked.proposal.subject) return@flatMap emptyList()
         decoded
             .filter { (_, event) -> within(event.at, filter) }
-            .map { (sequence, event) -> event.at to auditEntry(id, sequence, asked.proposal.kind, asked.proposal.subject, event) }
+            .map { (sequence, event) ->
+                event.at to auditEntry(
+                    id,
+                    sequence,
+                    asked.proposal.kind,
+                    asked.proposal.subject,
+                    event,
+                )
+            }
             .filter { (_, entry) -> filter.person == null || entry.who?.subject == filter.person }
     }.sortedWith(compareBy({ it.first }, { it.second.request }, { it.second.sequence })).map { it.second }
 
@@ -212,7 +262,10 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
     fun exportsBy(subject: String): Int = data.connection.use { connection ->
         connection.prepareStatement("select count(*) from audit_export where subject = ?").use {
             it.setString(1, subject)
-            it.executeQuery().use { rows -> rows.next(); rows.getInt(1) }
+            it.executeQuery().use { rows ->
+                rows.next()
+                rows.getInt(1)
+            }
         }
     }
 
@@ -220,10 +273,13 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
         private const val PAGE = 1_000
 
         /** The SHA-256 of each head as "request sequence link", sorted by request and joined by newlines, as hex. */
-        fun digestOf(heads: List<Head>): String =
-            MessageDigest.getInstance("SHA-256")
-                .digest(heads.sortedBy { it.request }.joinToString("\n") { "${it.request} ${it.sequence} ${it.link}" }.toByteArray())
-                .toHexString()
+        fun digestOf(heads: List<Head>): String = MessageDigest.getInstance("SHA-256")
+            .digest(
+                heads.sortedBy { it.request }.joinToString(
+                    "\n",
+                ) { "${it.request} ${it.sequence} ${it.link}" }.toByteArray(),
+            )
+            .toHexString()
     }
 }
 
@@ -231,8 +287,7 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
 private val again = Schedule.spaced<Throwable>(1.seconds)
 
 /** Every [every], each day before today (UTC) not yet digested, digested: the nightly digest, caught up if it was missed. */
-fun digesting(audit: JournalAudit, every: Duration) =
-    Stream.tick(every, Unit)
-        .map { _ -> audit.digestThrough(LocalDate.now(ZoneOffset.UTC).minusDays(1)).toLong() }
-        .restartOnDefect(again)
-        .runFold(0L, Long::plus)
+fun digesting(audit: JournalAudit, every: Duration) = Stream.tick(every, Unit)
+    .map { _ -> audit.digestThrough(LocalDate.now(ZoneOffset.UTC).minusDays(1)).toLong() }
+    .restartOnDefect(again)
+    .runFold(0L, Long::plus)

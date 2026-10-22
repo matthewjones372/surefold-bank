@@ -3,11 +3,16 @@ package bank.app
 import bank.api.OpsJournal
 import bank.api.OpsNode
 import bank.api.OpsSnapshot
+import bank.domain.Currencies
 import bank.protocol.wire.NodeSnapshot
+import io.github.matthewjones372.lark.Reading
 import io.github.matthewjones372.lark.actor.OffsetStore
 import io.github.matthewjones372.lark.actor.ShardedJournal
 import io.github.matthewjones372.lark.actor.Topic
 import io.github.matthewjones372.lark.cluster.Cluster
+import io.github.matthewjones372.lark.gauge
+import io.github.matthewjones372.lark.logWarn
+import io.github.matthewjones372.lark.readings
 import io.github.matthewjones372.lark.stream.Running
 import io.github.matthewjones372.lark.stream.Stream
 import io.github.matthewjones372.lark.stream.StreamBackend
@@ -18,11 +23,6 @@ import io.github.matthewjones372.lark.stream.runFold
 import io.github.matthewjones372.lark.stream.start
 import io.github.matthewjones372.lark.stream.tick
 import io.github.matthewjones372.lark.stream.toSequence
-import io.github.matthewjones372.lark.Reading
-import io.github.matthewjones372.lark.gauge
-import io.github.matthewjones372.lark.logWarn
-import io.github.matthewjones372.lark.readings
-import bank.domain.Currencies
 import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.concurrent.ConcurrentHashMap
@@ -138,8 +138,11 @@ class LiveOps(
     private val backend: StreamBackend,
 ) {
     /** A snapshot a second for one watcher, each built on a virtual thread: it asks the read models, which block. */
-    fun watch(): Sequence<OpsSnapshot> =
-        Stream.tick(every = 1.seconds, element = Unit, after = Duration.ZERO).mapPar(1) { current() }.toSequence(backend)
+    fun watch(): Sequence<OpsSnapshot> = Stream.tick(
+        every = 1.seconds,
+        element = Unit,
+        after = Duration.ZERO,
+    ).mapPar(1) { current() }.toSequence(backend)
 
     fun current(): OpsSnapshot {
         val now = System.currentTimeMillis()
@@ -153,8 +156,14 @@ class LiveOps(
             // A node gone quiet stays on the page, aging, until it has been silent for a minute.
             nodes = latest.values.filter { now - it.atMillis < FORGET_AFTER_MILLIS }.sortedBy { it.node }.map { said ->
                 OpsNode(
-                    said.node, said.status, now - said.atMillis, said.shards, said.entities, said.asksPerSecond,
-                    said.askP99Millis, said.commandsPerSecond,
+                    said.node,
+                    said.status,
+                    now - said.atMillis,
+                    said.shards,
+                    said.entities,
+                    said.asksPerSecond,
+                    said.askP99Millis,
+                    said.commandsPerSecond,
                 )
             },
             ledger = reads.ledger(),

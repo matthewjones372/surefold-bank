@@ -25,8 +25,13 @@ import java.util.UUID
 class PublishedSpec {
     private val run = UUID.randomUUID().toString().take(8)
 
-    private fun change(subject: String) =
-        NewRequest("test.change", subject, "a rule, version 2", before = "amount is at least 1000", after = "amount is at least 500")
+    private fun change(subject: String) = NewRequest(
+        "test.change",
+        subject,
+        "a rule, version 2",
+        before = "amount is at least 1000",
+        after = "amount is at least 500",
+    )
 
     @Test
     fun `a consumer reads a request's events in order, each with its kind and subject, as Apicurio's deserializer reads them`() {
@@ -43,8 +48,13 @@ class PublishedSpec {
             val events = read.distinctBy(ApprovalEvent::getSequence)
             withClue(read.joinToString { "${it.sequence}:${it.eventCase}" }) {
                 events.map { it.eventCase } shouldContainExactly listOf(
-                    EventCase.REQUESTED, EventCase.AWAITING_APPROVAL, EventCase.COMMENTED,
-                    EventCase.APPROVED, EventCase.APPROVED, EventCase.APPROVAL_GIVEN, EventCase.APPLIED,
+                    EventCase.REQUESTED,
+                    EventCase.AWAITING_APPROVAL,
+                    EventCase.COMMENTED,
+                    EventCase.APPROVED,
+                    EventCase.APPROVED,
+                    EventCase.APPROVAL_GIVEN,
+                    EventCase.APPLIED,
                 )
                 events.map { it.sequence } shouldBe (1L..7L).toList()
             }
@@ -75,7 +85,9 @@ class PublishedSpec {
             node.calling("ada", "risk").outcome(approve, In2(view.id, ApproveBody(view.hash))).shouldBeOk()
             node.calling("bob", "risk").outcome(approve, In2(view.id, ApproveBody(view.hash))).shouldBeOk()
 
-            val given = TestKafka.read(setOf(view.id)) { seen -> seen.count { it.eventCase == EventCase.APPROVAL_GIVEN } >= 3 }
+            val given = TestKafka.read(
+                setOf(view.id),
+            ) { seen -> seen.count { it.eventCase == EventCase.APPROVAL_GIVEN } >= 3 }
                 .filter { it.eventCase == EventCase.APPROVAL_GIVEN }
             given.size shouldBeGreaterThanOrEqual 3
             given.map { it.sequence }.toSet() shouldBe setOf(5L)

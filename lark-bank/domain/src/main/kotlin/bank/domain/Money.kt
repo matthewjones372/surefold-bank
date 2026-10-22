@@ -97,7 +97,9 @@ class Currencies(listed: List<Listed>) {
 
     val all: List<Listed> = listed
 
-    fun of(code: String): Either<UnknownCurrency, Currency> = byCode[code]?.currency?.right() ?: UnknownCurrency(code).left()
+    fun of(code: String): Either<UnknownCurrency, Currency> = byCode[code]?.currency?.right() ?: UnknownCurrency(
+        code,
+    ).left()
 
     fun listed(currency: Currency): Listed? = byCode[currency.code]?.takeIf { it.currency == currency }
 
