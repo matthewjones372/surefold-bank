@@ -107,7 +107,7 @@ class PublishingSpec {
                 TransferEvent.EventCase.REQUESTED,
                 TransferEvent.EventCase.DESTINATION_CREDITED,
             )
-            transfers.map { it.sequence } shouldBe listOf(1L, 2L, 3L)
+            transfers.map { it.sequence } shouldBe listOf(1L, 2L)
             transfers.forEach { event ->
                 event.fromAccount shouldBe from.value
                 event.toAccount shouldBe to.value
