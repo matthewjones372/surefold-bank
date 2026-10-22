@@ -147,6 +147,13 @@ fun transfer(
         }
     }
 
+    // Each incarnation drives itself once it starts. A restart takes the timers with it, so a leg sent before it is
+    // waited on no longer.
+    fun Ctx<TransferMessage>.started() {
+        sent = null
+        self.tell(Nudge)
+    }
+
     fun Ctx<TransferMessage>.drive(state: Transfer) {
         when (val step = state.next(id, screens)) {
             is Step.Screen -> when (screening) {
@@ -235,11 +242,7 @@ fun transfer(
             }
         },
         event = Transfer::evolve,
-    ).onStart { ctx ->
-        // A restart takes this incarnation's timers with it, so a leg sent before it is waited on no longer.
-        sent = null
-        ctx.self.tell(Nudge)
-    }
+    ).onStart { ctx -> ctx.started() }
 }
 
 /** Screening's decision, or the bank's for it, written down; then the saga carries on from it. */
