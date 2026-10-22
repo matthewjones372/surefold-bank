@@ -56,7 +56,7 @@ class LateAnswerSpec {
 
         transfer(t1, ada, bob, gbp(3_00)).shouldBeRight().status shouldBe TransferStatus.Completed
 
-        transferEvents(t1).kinds() shouldBe listOf("Requested", "SourceDebited", "DestinationCredited")
+        transferEvents(t1).kinds() shouldBe listOf("Requested", "DestinationCredited")
         movedOnce()
     }
 
@@ -73,11 +73,11 @@ class LateAnswerSpec {
         // The first debit's answer, arriving while the saga is on the credit.
         network.releaseOldest()
 
-        transferEvents(t1).kinds() shouldBe listOf("Requested", "SourceDebited")
+        transferEvents(t1).kinds() shouldBe listOf("Requested")
         transferStatus(t1).shouldBeRight().status shouldBe TransferStatus.Debited
         advance()
         transferStatus(t1).shouldBeRight().status shouldBe TransferStatus.Completed
-        transferEvents(t1).kinds() shouldBe listOf("Requested", "SourceDebited", "DestinationCredited")
+        transferEvents(t1).kinds() shouldBe listOf("Requested", "DestinationCredited")
         movedOnce()
     }
 
@@ -97,7 +97,7 @@ class LateAnswerSpec {
             transferStatus(t1).shouldBeRight().status shouldBe TransferStatus.Completed
             network.releaseOldest()
 
-            transferEvents(t1).kinds() shouldBe listOf("Requested", "SourceDebited", "DestinationCredited")
+            transferEvents(t1).kinds() shouldBe listOf("Requested", "DestinationCredited")
             movedOnce()
         }
 }

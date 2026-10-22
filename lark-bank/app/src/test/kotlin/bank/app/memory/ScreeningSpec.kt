@@ -67,7 +67,7 @@ class ScreeningSpec {
 
             awaitSettled()
             transferEvents().map { it::class.simpleName } shouldBe
-                listOf("Requested", "Screened", "SourceDebited", "DestinationCredited")
+                listOf("Requested", "Screened", "DestinationCredited")
             screenedAs() shouldBe
                 TransferEvent.Screened(ScreeningOutcome.Approved, null, null, "nothing matched", true, 0)
             answered().status shouldBe TransferStatus.Completed

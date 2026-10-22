@@ -28,7 +28,7 @@ without Kafka.
 | Topic | Key | Events |
 |---|---|---|
 | `bank.account-events` | account id | `Opened`, `Deposited`, `Withdrawn`, `Debited`, `Credited`, `Refunded`, `LegsClosed` |
-| `bank.transfer-events` | transfer id | `Requested`, `SourceDebited`, `Rejected`, `DestinationCredited`, `CreditRefused`, `SourceRefunded` |
+| `bank.transfer-events` | transfer id | `Requested`, `Rejected`, `DestinationCredited`, `CreditRefused`, `SourceRefunded`; `SourceDebited` only from journals written before spec 0031 |
 
 A fixed partition count from the start (12), never changed: changing it moves keys between partitions and breaks
 per-key order for anyone mid-stream.

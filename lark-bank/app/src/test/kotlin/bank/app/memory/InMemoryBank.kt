@@ -92,6 +92,9 @@ class InMemoryBank internal constructor(
     fun start(id: TransferId, from: AccountId, to: AccountId, amount: Money): Answers =
         Answers(id).also { actors.sagaOf(id.value).tell(TransferAsk(TransferRequest.Start(from, to, amount), it)) }
 
+    /** The saga crashes as its node's death would: what it held only in memory goes, and its journal stays. */
+    fun crashSaga(id: TransferId) = sim.crash(actors.sagaOf(id.value))
+
     /** A nudge told straight to the saga, as the sweeper sends one to a transfer it finds stuck. */
     fun nudge(id: TransferId) = actors.sagaOf(id.value).tell(Nudge)
 

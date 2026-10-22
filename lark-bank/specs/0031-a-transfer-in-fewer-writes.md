@@ -70,9 +70,9 @@ and loses spec 0001's single place that says where a transfer has got to. Recomm
 
 ## Stack
 
-- [ ] **`transfer-drives-once`**: `Nudge` only from a recovered, unsettled saga.
+- [x] **`transfer-drives-once`**: `Nudge` only from a recovered, unsettled saga.
       Done when: a new transfer sends one `Debit`, shown by a test in spec 0028's in-memory runtime.
-- [ ] **`transfer-no-source-debited`**: the saga moves past a debit without writing it, and a recovered saga sends the
+- [x] **`transfer-no-source-debited`**: the saga moves past a debit without writing it, and a recovered saga sends the
       debit again. `SourceDebited` is still read from old journals.
       Done when: the saga's property tests (spec 0028) pass with a crash between the debit and the credit, and the
       ledger is conserved.
