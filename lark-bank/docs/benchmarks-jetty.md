@@ -16,7 +16,7 @@ The README's and the specs' figures are not changed by this page.
 | `transfers` at 400/s | 0, 0 | 0, 0 | 1.75 s, 1.83 s | 1.50 s, 1.11 s | yes: p50, p99 and max lower |
 | `payroll` of 100 at 2/s | 0, 0 | 0, 0 | 18 ms, 51 ms | 13 ms, 15 ms | p50 and p95 lower; 120 requests a run, so the tail is a few samples |
 | `payroll` of 100 at 20/s | 1,173, 1,149 | 1,115, 1,159 | timeout | timeout | no: both saturate |
-| `transfers` at 400/s, screened, as shipped | 861, 0, 0 | 20,282, 19,871 | 4.21 s, 2.00 s, 1.93 s | 30.1 s, 30.2 s | yes, and it is the stand-in check (below) |
+| `transfers` at 400/s, screened, as shipped | 861, 0, 0 | 192, 19, 0, 9 | 4.21 s, 2.00 s, 1.93 s | 4.36, 3.88, 2.89, 2.99 s | no: the runs overlap |
 | `transfers` at 400/s, screened, check at INFO | 0, 0 | 0, 2 | 2.12 s, 1.98 s | 2.33 s, 2.21 s | no |
 | `chaos`, 200/s for 420 s | 10,795, 7,266 | 5,904, 6,110 | 4.04 s, 4.03 s | 4.01 s, 4.03 s | fewer failed; restarts cost far less |
 
@@ -29,20 +29,24 @@ The README's and the specs' figures are not changed by this page.
 | `app/build/install/app/lib` | 144 jars, 91 MB | 141 jars, 69 MB |
 
 The Jetty build answers `spread`, `hot` and `transfers` with a lower tail than either Pekko run, and loses fewer
-requests under `chaos`. Screened transfers as the branch ships them collapse, because the stand-in check, now on Jetty,
-logs at DEBUG; with the check logging at INFO the two builds are the same within the noise.
+requests under `chaos`. Screened transfers are within the noise, as #54 ships them and with the check's logging at
+INFO in both builds; #54 needs its `loadtest/src/main/resources/logback.xml` for that, and without it the screened
+run collapses (below).
 
 ## What differs between the two builds
 
 | | Before | After |
 |---|---|---|
-| tweet-street | `main`, `cb94b88672603710140fb367c12e3002aff167a7` | `claude/exciting-albattani-0ak864` (#54), `8a5362acc3e9b83c9f14e139a1927b4b0cf9966d` |
+| tweet-street | `main`, `cb94b88672603710140fb367c12e3002aff167a7` | `claude/exciting-albattani-0ak864` (#54): `8a5362acc3e9b83c9f14e139a1927b4b0cf9966d`, and `717fbfa` for screened transfers as shipped |
 | HTTP server | `pelican-pekko`, Pekko HTTP 1.3.0 on Pekko 1.2.1 | `pelican-jetty`, Jetty 12.1.13 |
 | Screening client | `pelican-client-pekko`, a pool of 64 connections and 1,024 queued requests | `pelican-client-jetty`, Jetty's `HttpClient` defaults (64 connections, 1,024 queued per destination) |
 | Stand-in check (`loadtest`) | Pelican on Pekko HTTP | Pelican on Jetty |
 | lark | `3dbffec46baa36534502af5dc6840429c837bc53` | `e2710b5bf8740f4243fa78c031ca0ae1e282ef98` (116 commits later) |
 | pelican | `a2024349bc5504ab4466a1a7bc0c1f0382c2a14a` | `53efbe3c579a1853f13c6327f9306fd6ccbbba65` (134 commits later) |
 | OpenTelemetry | 1.66.0 | 1.67.0 |
+
+`717fbfa` adds only `lark-bank/loadtest/src/main/resources/logback.xml` (root at INFO, `org.eclipse.jetty` at WARN) to
+`8a5362a`, so the bank's image is the same at both; only the load and the stand-in check differ.
 
 Both builds also differ in everything lark and pelican changed between those commits (among them lark's parked
 runners, spec 0143, and pelican's Jetty tuning, spec 0085), so a difference below is the whole change, not the server
@@ -70,8 +74,8 @@ alone.
   load's own 10 s warm-up. Screening on is `SCREENING_ENABLED=true` with the stand-in check. `chaos` is
   `scripts/chaos-docker.sh` at its defaults.
 - Every scenario twice on each build, all of one build before the other. Screened transfers ran a third time on the
-  Pekko build, and twice more on each build with the stand-in check's logging set to INFO through a compose override
-  that mounts a `logback.xml` into the check's container.
+  Pekko build, four times on the Jetty build at `717fbfa`, and twice more on each build with the stand-in check's
+  logging set to INFO through a compose override that mounts a `logback.xml` into the check's container.
 - **Service time** is Proofload's: from the moment a request left to the moment its answer arrived, read from its HTML
   report. **Behind schedule** is how late the generator sent at p99; Proofload says it kept its schedule when that is
   under one interval between departures (2.5 ms at 400/s), so at 400/s and 600/s a millisecond's stall in the
@@ -161,24 +165,28 @@ timeouts.
 
 ### transfers, 400/s, screened, with the stand-in check as each build ships it
 
-| | Before, run 1 | Before, run 2 | Before, run 3 | After, run 1 | After, run 2 |
-|---|---:|---:|---:|---:|---:|
-| Requests, failed | 24,000, 861 | 24,000, 0 | 24,000, 0 | 24,000, 20,282 | 24,000, 19,871 |
-| Answered OK a second | 386 | 400 | 400 | 62 | 69 |
-| Service time p50 | 1.58 s | 495 ms | 524 ms | 16.20 s | 25.20 s |
-| p95 | 3.86 s | 1.59 s | 1.53 s | 30.10 s | 30.10 s |
-| p99 | 4.21 s | 2.00 s | 1.93 s | 30.10 s | 30.20 s |
-| max | 5.23 s | 3.69 s | 4.14 s | 30.30 s | 30.30 s |
-| Generator behind schedule, p99 | 175 ms | 94.4 ms | 111 ms | 210 ms | 145 ms |
-| Proofload: kept its schedule | yes | yes | no | yes | yes |
-| Ledger conserved | yes | yes | yes | yes | not within the load's 180 s |
-| bank-1 restarted | no | no | no | yes, out of heap | yes, out of heap |
+The Jetty build at `717fbfa`. The first of its four runs was the first after the host restarted.
 
-The Jetty stand-in check has no `logback.xml`, so logback's default puts its root logger at DEBUG and Jetty logs every
-request: 1.5 million lines and 492 MB in the run whose logs were kept, against 27 lines from the Pekko check in the
-same scenario. Writing them took the CPU the bank needed: in that run the check answered 10,017 screenings of the
-24,000, up to 11,464 requests were in flight from the generator, bank-1's Postgres pool had up to 5,323 callers
-waiting, and bank-1 stopped with `OutOfMemoryError: Java heap space` before Docker restarted it.
+| | Before, run 1 | Before, run 2 | Before, run 3 | After, run 1 | After, run 2 | After, run 3 | After, run 4 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Requests, failed | 24,000, 861 | 24,000, 0 | 24,000, 0 | 24,000, 192 | 24,000, 19 | 24,000, 0 | 24,000, 9 |
+| Answered OK a second | 386 | 400 | 400 | 397 | 400 | 400 | 400 |
+| Service time p50 | 1.58 s | 495 ms | 524 ms | 1.33 s | 684 ms | 491 ms | 405 ms |
+| p95 | 3.86 s | 1.59 s | 1.53 s | 3.52 s | 2.87 s | 2.11 s | 2.13 s |
+| p99 | 4.21 s | 2.00 s | 1.93 s | 4.36 s | 3.88 s | 2.89 s | 2.99 s |
+| max | 5.23 s | 3.69 s | 4.14 s | 5.74 s | 5.07 s | 4.04 s | 4.60 s |
+| Generator behind schedule, p99 | 175 ms | 94.4 ms | 111 ms | 144 ms | 65.0 ms | 98.6 ms | 85.5 ms |
+| Proofload: kept its schedule | yes | yes | no | yes | yes | yes | yes |
+| Ledger conserved | yes | yes | yes | yes | yes | yes | yes |
+| Peak RSS, bank-1 / 2 / 3 (MiB) | 1151 / 1184 / 1164 | 1189 / 1122 / 1129 | 1159 / 1171 / 1160 | 1131 / 1125 / 1130 | 1075 / 1148 / 1127 | 1092 / 1105 / 1164 | 1095 / 1064 / 1082 |
+
+The check wrote about 20 lines a run at `717fbfa`, and the Pekko check 27. At `8a5362a`, without the `logback.xml`,
+logback's default puts the root logger at DEBUG and the Jetty check logs every request: 1.5 million lines and 492 MB
+in a run. Writing them takes the CPU the bank needs, and both runs there failed: 20,282 and 19,871 of 24,000, p99
+30.1 s and 30.2 s (the load client's timeout). In the run whose logs were kept, the check answered 10,017 screenings,
+up to 11,464 requests were in flight from the generator, bank-1's Postgres pool had up to 5,323 callers waiting, and
+bank-1 stopped with `OutOfMemoryError: Java heap space` before Docker restarted it; its ledger had not settled within
+the load's 180 s.
 
 ### transfers, 400/s, screened, with the stand-in check logging at INFO
 
@@ -214,8 +222,8 @@ at each fault's end:
 | Ledger conserved, no node restarted by Docker, no secret in the logs | yes | yes | yes | yes |
 | Lines searched for secrets | 2,789 | 2,482 | 25,125 | 24,535 |
 
-The p99 of about 4 s on both is the requests that waited out a fault. The Jetty check's DEBUG lines are most of the
-tenfold lines searched.
+The p99 of about 4 s on both is the requests that waited out a fault. The Jetty check's DEBUG lines at `8a5362a` are most
+of the tenfold lines searched.
 
 ## What is larger than the noise
 
@@ -232,13 +240,14 @@ than every run of the other, by more than that spread.
 - **Start-up to listening.** About 5 s on Jetty against 9–12 s on Pekko, with every start inside its build's range. The
   Jetty node now opens its port before it joins the cluster, so it reaches `Up` no sooner: bank-1 at 8.6 s against
   8.9 s, and the two that join it about 3 s later than before. Readiness is `Up`, so `compose up --wait` is unchanged.
-- **Screened transfers as shipped**, which fail on the Jetty build for the stand-in check's logging, not the bank's
-  screening: with the check at INFO, the two builds are within each other's noise.
+- **Screened transfers at `8a5362a`**, which fail for the stand-in check's DEBUG logging, not the bank's screening;
+  `717fbfa`'s `logback.xml` is what brings them back within the noise.
 
 Within the noise: `payroll` at 2/s (120 requests a run, so its p99 is the slowest two), `payroll` at 20/s (both
-saturate), screened transfers with the check at INFO, and peak RSS, which is 1.0–1.2 GiB a node on both builds and
-lower on Jetty by 50–100 MiB in most runs, inside the up to 200 MiB that the same node varies by between runs of one
-build.
+saturate), screened transfers both as shipped and with the check at INFO, and peak RSS, which is 1.0–1.2 GiB a node
+on both builds and lower on Jetty by 50–100 MiB in most runs, inside the up to 200 MiB that the same node varies by
+between runs of one build. Screened transfers as shipped have a higher p99 on Jetty in three of its four runs, 2.89–4.36 s
+against 1.93–4.21 s, which more runs would settle.
 
 ## petshop
 
