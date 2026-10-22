@@ -179,10 +179,10 @@ internal object TransferAnswers : MessageCodec<TransferAnswer> {
     }
 }
 
-/** An account's protocol between nodes: an asked request, or a reliably delivered credit. */
 /** [WriteClosed]'s tag: an account's own timer, never sent between nodes, but encodable as every message is. */
 private const val WRITE_CLOSED = 3
 
+/** An account's protocol between nodes: an asked request, a reliably delivered credit, or its own timer. */
 object AccountMessages : MessageCodec<AccountMessage> {
     override fun write(message: AccountMessage, out: WireOut) = when (message) {
         is AccountAsk -> {
