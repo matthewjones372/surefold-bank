@@ -45,3 +45,6 @@ home overlay, by name.
 | [0028](0028-the-banks-decisions-tested-in-memory.md) | the account and transfer behaviours run in memory under Lark's test runtime, with seeded faults, so the saga is tested and mutation-tested without a cluster; built to `bank-properties`, `mutate-app-fast` waiting on its build change |
 | [0029](0029-a-cluster-that-grows-with-its-load.md) | the bank sized by a HorizontalPodAutoscaler on CPU, three to six nodes, with metrics-server on kind and a load that ramps; draft |
 | [0030](0030-a-leg-refused-stays-refused.md) | a debit or credit an account refused is kept until its transfer closes, so a retry is refused alike and no late retry moves money; built to `leg-refused` |
+| [0031](0031-a-transfer-in-fewer-writes.md) | a transfer in four appends on its path instead of five: no `SourceDebited`, one drive on start, `LegsClosed` batched, no recovery read for a new transfer; draft |
+| [0032](0032-the-journals-commits-sized-and-the-rest-cheaper.md) | group commit sized in config, read-model writes not waiting for a durable flush, `ledger_totals` per partition, the access log batched, and a ramp to measure each; draft |
+| [0033](0033-payrolls-at-the-rate-transfers-run.md) | payroll through several senders per node, and the two changes lark's `Producer` needs; draft |
