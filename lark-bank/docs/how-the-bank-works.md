@@ -111,7 +111,7 @@ sequenceDiagram
     Note right of T: a leg timer: no answer in 2 s, ask again
     alt from can pay
         F-->>T: balance
-        T->>T: persist SourceDebited → Debited
+        T->>T: Debited, held in memory: the account's Debited is the record
         T->>D: Credit(t-1, 250)
         alt to is open
             D-->>T: balance
@@ -135,12 +135,15 @@ nudges any saga that has not moved for 5 s, found through the transfer-status re
 
 ## 4. The saga's states
 
-The next step is read off the state, never remembered separately. That is what makes a restart safe.
+The next step is read off the state, never remembered separately. That is what makes a restart safe. The one state
+not written is Debited (spec 0031): the saga holds it in memory, since the account's own `Debited` records the money
+moving. A saga that restarts before its credit is written is Pending again, sends the debit again, and the account
+answers it as applied. Journals written before that still hold `SourceDebited`, and replay through it.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Pending: Requested
-    Pending --> Debited: SourceDebited<br/>(debit accepted)
+    Pending --> Debited: debit accepted<br/>(held in memory)
     Pending --> Rejected: Rejected<br/>(debit refused)
     Debited --> Completed: DestinationCredited<br/>(credit accepted)
     Debited --> Refunding: CreditRefused<br/>(credit refused)

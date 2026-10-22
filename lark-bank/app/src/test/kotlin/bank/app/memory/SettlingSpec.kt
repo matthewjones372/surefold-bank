@@ -29,7 +29,7 @@ class SettlingSpec {
 
         balanceOf(ada) shouldBe gbp(3_00)
         balanceOf(bob) shouldBe gbp(7_00)
-        transferEvents(t1).kinds() shouldBe listOf("Requested", "SourceDebited", "DestinationCredited")
+        transferEvents(t1).kinds() shouldBe listOf("Requested", "DestinationCredited")
         // Settled, its closes have reached both accounts (spec 0013).
         accountEvents(ada).last().shouldBeInstanceOf<AccountEvent.LegsClosed>()
         accountState(ada).shouldBeInstanceOf<Account.Open>().legs.shouldBeEmpty()
@@ -61,7 +61,7 @@ class SettlingSpec {
 
         refunded.status shouldBe TransferStatus.Refunded
         refunded.reason shouldBe "Account bob is in BTC, not GBP"
-        transferEvents(t1).kinds() shouldBe listOf("Requested", "SourceDebited", "CreditRefused", "SourceRefunded")
+        transferEvents(t1).kinds() shouldBe listOf("Requested", "CreditRefused", "SourceRefunded")
         balanceOf(ada) shouldBe gbp(1_00)
         balanceOf(bob) shouldBe Money.ofMinor(50_000_000, BTC)
     }

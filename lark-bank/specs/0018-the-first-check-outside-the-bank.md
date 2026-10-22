@@ -38,7 +38,7 @@ two things with the same rules, which an admin writes in a wizard in the browser
 **A step in the saga.** A transfer screens before it debits:
 
 ```
-Requested → Screened (approved) → SourceDebited → DestinationCredited
+Requested → Screened (approved) → DestinationCredited       (the debit between is not written, spec 0031)
           → Screened (declined) → Rejected      (nothing moved, as when the source refuses)
 ```
 

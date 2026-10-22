@@ -74,9 +74,11 @@ private const val LEG = "leg"
 private const val SCREEN = "screen"
 
 /**
- * One transfer, as a saga (spec 0001): each step is an event, and the next step is read off the state, so a saga
- * recovered on another node carries on from where its last event left it. The replies waiting for it to settle are
- * this incarnation's only: after a move they are gone, and the caller's own timeout answers it as still pending.
+ * One transfer, as a saga (spec 0001): each step but a debit heard is an event, and the next step is read off the
+ * state, so a saga recovered on another node carries on from where its last event left it. One recovered before its
+ * credit was written debits again, which the account answers as applied (spec 0031). The replies waiting for it to
+ * settle are this incarnation's only: after a move they are gone, and the caller's own timeout answers it as still
+ * pending.
  */
 fun transfer(
     id: TransferId,
@@ -94,6 +96,10 @@ fun transfer(
     // The leg this incarnation has sent and is waiting on. Its timer sends it again, so a nudge that finds the saga
     // still on it sends nothing: without this, every new transfer sent its debit twice (spec 0031).
     var sent: Step? = null
+
+    // Where the saga is ahead of its journal: a debit it has heard but not written (spec 0031). The account's own
+    // `Debited` is the record, so a saga that restarts without this sends the debit again and hears it applied.
+    var heard: Transfer? = null
 
     /** The check asked, and its answer, or its silence, told to [saga]. */
     fun screened(on: Screening.On, step: Step.Screen, saga: ActorRef<TransferMessage>) =
@@ -151,10 +157,12 @@ fun transfer(
     // waited on no longer.
     fun Ctx<TransferMessage>.started() {
         sent = null
+        heard = null
         self.tell(Nudge)
     }
 
-    fun Ctx<TransferMessage>.drive(state: Transfer) {
+    fun Ctx<TransferMessage>.drive(written: Transfer) {
+        val state = heard ?: written
         when (val step = state.next(id, screens)) {
             is Step.Screen -> when (screening) {
                 is Screening.On -> screen(screening, step)
@@ -181,11 +189,31 @@ fun transfer(
         }
     }
 
+    // A step the saga has taken, counted by its event: a debit is only heard, and every other step is written before
+    // the saga goes on.
+    fun Effects<TransferEvent, Transfer>.took(
+        event: TransferEvent,
+        moving: Transfer.Moving,
+        ctx: Ctx<TransferMessage>,
+    ) = run {
+        counter("bank.transfer.steps", "event" to event::class.simpleName.orEmpty()).increment()
+        if (event is TransferEvent.SourceDebited) {
+            heard = moving.evolve(event)
+            none().then { after -> ctx.drive(after) }
+        } else {
+            persist(event).then { after ->
+                heard = null
+                ctx.drive(after)
+            }
+        }
+    }
+
     return persistent<TransferMessage, TransferEvent, Transfer>(
         id = PersistenceId(Kinds.TRANSFER, id.value),
         empty = Transfer.Unrequested,
         codec = TransferEvents,
-        command = { ctx, state, message ->
+        command = { ctx, written, message ->
+            val state = heard ?: written
             when (message) {
                 is TransferAsk -> asked(id, state, message, waiting) { after -> ctx.drive(after) }
 
@@ -202,8 +230,7 @@ fun transfer(
                             null -> none()
 
                             else -> {
-                                counter("bank.transfer.steps", "event" to event::class.simpleName.orEmpty()).increment()
-                                persist(event).then { after -> ctx.drive(after) }
+                                took(event, moving, ctx)
                             }
                         }
                     }

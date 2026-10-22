@@ -29,7 +29,7 @@ class SecondStartSpec {
             transfer(t1, ada, bob, gbp(7_00)).shouldBeRight() shouldBe first
 
             first.status shouldBe TransferStatus.Completed
-            transferEvents(t1) shouldHaveSize 3
+            transferEvents(t1) shouldHaveSize 2
             balanceOf(ada) shouldBe gbp(3_00)
             balanceOf(bob) shouldBe gbp(7_00)
         }
@@ -43,7 +43,7 @@ class SecondStartSpec {
         transfer(t1, ada, bob, gbp(1)).shouldBeLeft() shouldBe TransferError.TransferIdReused("t-1")
         transfer(t1, bob, ada, gbp(7_00)).shouldBeLeft() shouldBe TransferError.TransferIdReused("t-1")
 
-        transferEvents(t1) shouldHaveSize 3
+        transferEvents(t1) shouldHaveSize 2
         balanceOf(ada) shouldBe gbp(3_00)
     }
 
@@ -68,7 +68,7 @@ class SecondStartSpec {
 
         first.answers.single().shouldBeRight().status shouldBe TransferStatus.Completed
         second.answers.single() shouldBe first.answers.single()
-        transferEvents(t1).kinds() shouldBe listOf("Requested", "SourceDebited", "DestinationCredited")
+        transferEvents(t1).kinds() shouldBe listOf("Requested", "DestinationCredited")
         balanceOf(ada) shouldBe gbp(3_00)
     }
 }
