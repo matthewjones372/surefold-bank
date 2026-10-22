@@ -53,6 +53,18 @@ class BankPropertiesSpec {
         broken shouldBe emptyMap()
     }
 
+    @Test
+    fun `with every account holding its closes for its next write, the same 1,000 schedules keep every property`() {
+        // Closes held past the legs' retries and the crashes (bank spec 0031): a leg left open by a lost close must
+        // still be applied once, and a late copy of one must move nothing.
+        val broken = (1L..1_000L)
+            .associateWith { seed ->
+                inMemoryOf(order = Ordering.seeded(seed), faults = UNKIND, closeAfter = 5.seconds) { brokenUnder(seed) }
+            }
+            .filterValues { it.isNotEmpty() }
+        broken shouldBe emptyMap()
+    }
+
     /** The properties [seed]'s schedule broke, by name; none when it kept them all. */
     private fun InMemoryBank.brokenUnder(seed: Long): List<String> {
         opened(ada, gbp(100_00), dailyLimit = ADA_LIMIT)

@@ -23,6 +23,8 @@ data class EntitySettings(
     val transferWait: Duration,
     val legTimeout: Duration,
     val batch: Int,
+    /** How long an account holds a settled transfer's close for its next write; zero writes each at once. */
+    val closeAfter: Duration,
 )
 
 /**
@@ -189,6 +191,7 @@ val settings: Module =
                 duration("transferWait"),
                 duration("legTimeout"),
                 int("batch"),
+                duration("closeAfter"),
             )
         } +
         config<ReadModelSettings>("bank.readModels") {

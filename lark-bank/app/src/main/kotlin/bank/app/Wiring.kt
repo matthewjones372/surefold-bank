@@ -327,7 +327,8 @@ private val clustered: Module =
                     settings.passivateAfter,
                     settings.shards,
                 ) { id ->
-                    account(AccountId(id), snapshots, settings.batch, tracer)
+                    val closeAfter = settings.closeAfter.takeIf { it.isPositive() }
+                    account(AccountId(id), snapshots, settings.batch, tracer, closeAfter)
                 }
                 val transfers = cluster.sharding(
                     Kinds.TRANSFER,

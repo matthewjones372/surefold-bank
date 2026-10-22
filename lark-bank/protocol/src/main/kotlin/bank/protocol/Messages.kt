@@ -34,6 +34,12 @@ data class BulkCreditSent(val credit: BulkCredit, override val delivery: Deliver
     AccountMessage,
     Delivered
 
+/**
+ * An account's own timer: the transfers' closes it holds in memory, waiting to ride on its next write, are written
+ * now (bank spec 0031).
+ */
+data object WriteClosed : AccountMessage
+
 /** What a transfer saga is asked. */
 sealed interface TransferRequest {
     /** The same start twice is one transfer. */

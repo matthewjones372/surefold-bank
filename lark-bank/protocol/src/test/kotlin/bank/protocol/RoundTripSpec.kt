@@ -97,6 +97,7 @@ class RoundTripSpec {
                 ).request
         } shouldBe requests
         TransferMessages.roundTrip(Nudge) shouldBe Nudge
+        AccountMessages.roundTrip(WriteClosed) shouldBe WriteClosed
     }
 
     @Test
