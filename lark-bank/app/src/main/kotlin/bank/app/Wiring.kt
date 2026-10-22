@@ -340,20 +340,38 @@ private val clustered: Module =
                 Entities(accounts, transfers)
             }
         } +
-        single { actors: Actors, entities: Entities ->
+        single { actors: Actors, entities: Entities, settings: PayrollSettings ->
             // Drained when the flock closes, before the node leaves: a credit sent is a credit confirmed.
-            actors.within { entities.accounts.reliable("payroll") }
+            actors.within {
+                val producers = (0 until settings.senders).map { sender ->
+                    entities.accounts.reliable("payroll-$sender", keep = settings.window)
+                }
+                PayrollSenders(producers)
+            }
         } +
         single { actors: Actors -> actors.within { StreamActors(this) } }.boundTo<StreamBackend>()
 
 // ---- the bank ----
 
+/** A node's payroll producers (bank spec 0033), each with a window and a mailbox of its own. */
+class PayrollSenders(val producers: List<Producer<AccountMessage>>) {
+    init {
+        require(producers.isNotEmpty()) { "a node sends payrolls through at least one producer" }
+    }
+
+    /** The producer [account]'s credits go through: always the same one, so they arrive in the order sent. */
+    fun of(account: AccountId): Producer<AccountMessage> = producers[senderOf(account, producers.size)]
+}
+
+/** Which of [senders] producers sends [account]'s credits, spread evenly by the account's id. */
+fun senderOf(account: AccountId, senders: Int): Int = Math.floorMod(account.value.hashCode(), senders)
+
 /** A payroll's credits, each sent reliably. A resend after `Busy` is safe: each credit's reference is its own. */
-class ReliablePayrolls(private val producer: Producer<AccountMessage>) : Payrolls {
+class ReliablePayrolls(private val senders: PayrollSenders) : Payrolls {
     override fun send(id: String, credits: List<Pair<AccountId, Money>>): Either<Busy, PayrollAccepted> {
         credits.forEachIndexed { sent, (account, amount) ->
             val credited = BulkCredit(amount, "payroll:$id:$account")
-            producer.send(account.value) { delivery -> BulkCreditSent(credited, delivery) }
+            senders.of(account).send(account.value) { delivery -> BulkCreditSent(credited, delivery) }
                 .onLeft { return Either.Left(Busy("$sent of ${credits.size} credits sent; send the payroll again")) }
         }
         return Either.Right(PayrollAccepted(id, credits.size))
