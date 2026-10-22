@@ -55,14 +55,21 @@ account's currency, at the places the bank's registry gives it, so pounds to the
 ## What it carries
 
 Three nodes as containers on one 4-core, 16 GB machine, with Postgres committing durably, every event published, and
-the load generator on the same machine, so these are a floor:
+the load generator on the same machine, so these are a floor. The load sends each request to any of the three nodes
+(`BASE_URLS`) as the account's owner, and a transfer is answered once it completes or its 1 s `TRANSFER_WAIT` runs
+out. Where a row ran more than once, it gives the range across runs:
 
 | Run, 60 s | Failed | p50 | p95 | p99 |
 |---|---|---|---|---|
-| `transfers` at 200/s | 0 | 54 ms | 489 ms | 948 ms |
-| `transfers` at 400/s | 0 | 62 ms | 367 ms | 700 ms |
-| `transfers` at 400/s, screened | 0 | 184 ms | 1.16 s | 1.49 s |
-| `hot`, 600/s at one account | 0 | 5 ms | 22 ms | 39 ms |
+| `transfers` at 200/s | 0 | 19–24 ms | 177–228 ms | 390–491 ms |
+| `transfers` at 400/s | 0 | 134–193 ms | 1.17–1.33 s | 1.54–1.64 s |
+| `spread`, deposits and withdrawals at 400/s | 0 | 3.1 ms | 12 ms | 35 ms |
+| `hot`, 600/s at one account | 0 | 2.9 ms | 12 ms | 29 ms |
+| `payroll` of 100 at 20/s, 2,000 credits a second | 0 | 6.6–8.4 ms | 30–45 ms | 64–93 ms |
+
+`transfers` runs clean, under 1 in 1,000 failed and a p99 under 1 s, up to 250 to 300 a second; at 400/s, 13–15% of
+transfers are answered before they complete. Every run, and screened transfers, are in
+[the benchmarks](docs/benchmarks-jetty.md).
 
 At one CPU and 768 MiB a node (`scripts/small-docker.sh`, the size of a small machine), it carries 200 transfers a
 second with no failures and a p99 of 108 ms.

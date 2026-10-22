@@ -64,16 +64,21 @@ flowchart TB
 ## How fast
 
 Three bank nodes as containers on one 4-core, 16 GB machine, with Postgres committing durably, every event published
-to Kafka, and the load generator on the same machine, measured with
-[Proofload](https://github.com/matthewjones372/proofload):
+to Kafka, and the load generator on the same machine sending each request to any of the three nodes as the account's
+owner, measured with [Proofload](https://github.com/matthewjones372/proofload). Where a row ran more than once, it
+gives the range across runs:
 
 | 60 seconds of | Failed | p50 | p99 |
 |---|---|---|---|
-| transfers at 400/s | 0 | 62 ms | 700 ms |
-| transfers at 400/s, each one screened | 0 | 184 ms | 1.49 s |
-| 600 payments a second into one account | 0 | 5 ms | 39 ms |
+| transfers at 200/s | 0 | 19–24 ms | 390–491 ms |
+| transfers at 400/s | 0 | 134–193 ms | 1.54–1.64 s |
+| deposits and withdrawals at 400/s | 0 | 3.1 ms | 35 ms |
+| 600 payments a second into one account | 0 | 2.9 ms | 29 ms |
+| payrolls of 100 credits at 20/s, 2,000 credits a second | 0 | 6.6–8.4 ms | 64–93 ms |
 
-More runs, including what tracing costs, are in [lark-bank's README](lark-bank/README.md#what-it-carries).
+Transfers run clean, under 1 in 1,000 failed and a p99 under 1 s, up to 250 to 300 a second. Every run is in
+[the benchmarks](lark-bank/docs/benchmarks-jetty.md); what tracing costs, and a smaller machine, are in
+[lark-bank's README](lark-bank/README.md#what-it-carries).
 
 ## Where to start reading
 
