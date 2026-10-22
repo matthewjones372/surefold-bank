@@ -39,7 +39,7 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
      * by the balance read first: the totals add only the lines this batch inserted, a balance is only ever moved
      * forward, and the totals' rows are written in one order, so two batches never wait on each other in a circle.
      */
-    fun project(batch: List<Sequenced<AccountEvent>>, share: String = ""): Int = transaction(derived = true) { connection ->
+    fun project(batch: List<Sequenced<AccountEvent>>, share: String = ""): Int = transaction(true) { connection ->
         val ids = batch.map { it.id }.distinct()
         val known = connection.balances(ids)
         // Only events that move money reach the statements and the ledger: a transfer's legs closing moves none.
