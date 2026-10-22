@@ -58,18 +58,24 @@ fun inMemory(
 ) {
     // Unit, so a spec written `= inMemory { ... }` is a void @Test, which JUnit runs: one returning its last value
     // is skipped. A spec that wants a value back asks [inMemoryOf].
-    inMemoryOf(legTimeout, order, faults, block)
+    inMemoryOf(legTimeout, order, faults, block = block)
 }
 
-/** As [inMemory], answering what [block] does: for a spec that runs many and looks at each. */
+/**
+ * As [inMemory], answering what [block] does: for a spec that runs many and looks at each. With [closeAfter], each
+ * account holds a settled transfer's close for its next write, as a node does (bank spec 0031).
+ */
 fun <A> inMemoryOf(
     legTimeout: Duration = 1.seconds,
     order: Ordering = Ordering.Told,
     faults: Faults = Faults(),
+    closeAfter: Duration? = null,
     block: InMemoryBank.() -> A,
 ): A = // Events are stamped from lark's clock, bound here for the test's thread.
     clock.locally(fixedClock(NOON)) {
-        testActors(clock = fixedClock(NOON), order = order, faults = faults) { InMemoryBank(this, legTimeout).block() }
+        testActors(clock = fixedClock(NOON), order = order, faults = faults) {
+            InMemoryBank(this, legTimeout, Actors(this, legTimeout, closeAfter)).block()
+        }
     }
 
 /** The [Bank] port as it ships, [ShardedBank], over account and transfer test actors instead of sharded entities. */
@@ -150,7 +156,11 @@ class InMemoryBank internal constructor(
 }
 
 /** Each entity's test actor, spawned on first use as sharding starts one, and every saga on the one [network]. */
-internal class Actors(private val sim: TestActors, private val legTimeout: Duration) {
+internal class Actors(
+    private val sim: TestActors,
+    private val legTimeout: Duration,
+    private val closeAfter: Duration? = null,
+) {
     private val accounts = HashMap<String, TestActor<AccountMessage, Remembered<Account>, JournalConflict>>()
     private val sagas = HashMap<String, TestActor<TransferMessage, Remembered<Transfer>, JournalConflict>>()
 
@@ -158,8 +168,9 @@ internal class Actors(private val sim: TestActors, private val legTimeout: Durat
 
     val sagaIds: Set<String> get() = sagas.keys.toSet()
 
-    fun accountOf(id: String) =
-        accounts.getOrPut(id) { sim.spawn("account-$id", account(AccountId(id), snapshots = null)) }
+    fun accountOf(id: String) = accounts.getOrPut(id) {
+        sim.spawn("account-$id", account(AccountId(id), snapshots = null, closeAfter = closeAfter))
+    }
 
     fun sagaOf(id: String) =
         sagas.getOrPut(id) { sim.spawn("transfer-$id", transfer(TransferId(id), network, legTimeout)) }

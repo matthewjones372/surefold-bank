@@ -21,7 +21,9 @@ prevents it.
   `Account.Open.legs`, as well as to `recent`. A command whose reference is in either set is a repeat, and writes
   nothing.
 - **The saga closes them.** Once a transfer has settled (Completed, Rejected or Refunded), its saga tells both
-  accounts `Close(t-1)`. Each account that holds a leg of `t-1` writes `LegsClosed(t-1)`, which removes them.
+  accounts `Close(t-1)`. Each account that holds a leg of `t-1` writes `LegsClosed(t-1)`, which removes them. Since
+  spec 0031 an account holds the close and writes it with its next write, or alone after `closeAfter` (30 s); until
+  then the legs stay open, which only answers a late copy as applied.
   An account with none writes nothing.
 - A settled saga that is recovered sends its closes again, and a second close changes nothing. A close that is
   lost leaves the leg open. That costs a few bytes, never a second payment.

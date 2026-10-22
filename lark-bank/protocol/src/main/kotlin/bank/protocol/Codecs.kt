@@ -193,6 +193,8 @@ object AccountMessages : MessageCodec<AccountMessage> {
             out.bytes(bulkCredits.write(message.credit.toWire()))
             out.delivery(message.delivery)
         }
+
+        WriteClosed -> out.int(3)
     }
 
     override fun read(input: WireIn): AccountMessage = when (val tag = input.int()) {
@@ -203,6 +205,8 @@ object AccountMessages : MessageCodec<AccountMessage> {
         }
 
         2 -> BulkCreditSent(wired { bulkCredits.read(input.bytes()) }.toDomain(), input.delivery())
+
+        3 -> WriteClosed
 
         else -> throw WireException("no account message has the tag $tag")
     }
