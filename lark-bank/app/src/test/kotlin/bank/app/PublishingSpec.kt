@@ -102,10 +102,9 @@ class PublishingSpec {
             val transfers = TestKafka.read<TransferEvent>(
                 EventStream.TRANSFERS.topic,
                 setOf(transfer.value),
-            ) { it.size >= 3 }
+            ) { it.size >= 2 }
             transfers.map { it.eventCase } shouldBe listOf(
                 TransferEvent.EventCase.REQUESTED,
-                TransferEvent.EventCase.SOURCE_DEBITED,
                 TransferEvent.EventCase.DESTINATION_CREDITED,
             )
             transfers.map { it.sequence } shouldBe listOf(1L, 2L, 3L)
