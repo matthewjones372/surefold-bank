@@ -66,6 +66,9 @@ and loses spec 0001's single place that says where a transfer has got to. Recomm
 
 - **Skipping the recovery read** needs lark to start a persistent entity as empty when its caller knows the id is new.
   That is a lark spec, not yet written. Until it lands the read stays, and the other changes still apply.
+- **Driving once on start** needs the saga's start hook to see the state it recovered, which lark's `onStart` does
+  not pass. Until lark offers that, `Transfers.kt` wraps the persistent behaviour's start through `Behaviour`'s public
+  constructor (`onRecovered`), which takes no batch: fine for the saga, which steps one message at a time.
 - Everything else is the bank's own code.
 
 ## Stack

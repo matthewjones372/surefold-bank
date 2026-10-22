@@ -6,14 +6,17 @@ import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.TransferId
 import bank.domain.TransferStatus
+import bank.protocol.Nudge
+import io.github.matthewjones372.lark.actor.TraceEntry
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
 /**
- * A nudge while the saga waits on a leg it sent sends nothing (bank spec 0031): the leg's timer sends it again. A new
- * saga is nudged by itself as it starts, so before this every transfer sent its debit twice.
+ * A transfer is driven once as it starts (bank spec 0031): a new saga is not nudged, and a nudge while the saga waits
+ * on a leg it sent sends nothing, since the leg's timer sends it again. A saga recovered still moving drives itself.
  */
 class DrivenOnceSpec {
     private val ada = AccountId("ada")
@@ -75,5 +78,45 @@ class DrivenOnceSpec {
         balanceOf(ada) shouldBe gbp(7_00)
         balanceOf(bob) shouldBe gbp(3_00)
         accountEvents(ada).filterIsInstance<AccountEvent.Debited>() shouldHaveSize 1
+    }
+
+    @Test
+    fun `a new transfer is not nudged, and sends one debit`() = inMemory {
+        accounts()
+        val answers = start(t1, ada, bob, gbp(3_00))
+
+        settleAll()
+        answers.answers.single().shouldBeRight().status shouldBe TransferStatus.Completed
+        trace.filterIsInstance<TraceEntry.Delivered>().filter { it.message == Nudge }.shouldBeEmpty()
+        network.sent.filterIsInstance<AccountCommand.Debit>() shouldHaveSize 1
+    }
+
+    @Test
+    fun `a saga recovered with its debit unanswered sends it again at once, and the transfer settles`() = inMemory {
+        accounts()
+        network.next(Fault.Drop) { it is AccountCommand.Debit }
+        start(t1, ada, bob, gbp(3_00))
+        crash(t1)
+
+        // No time passes: the crash took the leg's timer, so only the recovery's own drive can send the debit again.
+        poke(t1)
+        settle()
+        network.sent.filterIsInstance<AccountCommand.Debit>() shouldHaveSize 2
+        transferEvents(t1).kinds().last() shouldBe "DestinationCredited"
+        balanceOf(ada) shouldBe gbp(7_00)
+        balanceOf(bob) shouldBe gbp(3_00)
+    }
+
+    @Test
+    fun `a saga recovered settled is not nudged`() = inMemory {
+        accounts()
+        start(t1, ada, bob, gbp(3_00))
+        settleAll()
+        crash(t1)
+
+        poke(t1)
+        settle()
+        trace.filterIsInstance<TraceEntry.Delivered>().filter { it.message == Nudge }.shouldBeEmpty()
+        network.sent.filterIsInstance<AccountCommand.Debit>() shouldHaveSize 1
     }
 }

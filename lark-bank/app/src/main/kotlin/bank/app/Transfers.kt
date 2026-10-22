@@ -35,10 +35,10 @@ import io.github.matthewjones372.lark.actor.Behaviour
 import io.github.matthewjones372.lark.actor.Ctx
 import io.github.matthewjones372.lark.actor.Effects
 import io.github.matthewjones372.lark.actor.JournalConflict
+import io.github.matthewjones372.lark.actor.Next
 import io.github.matthewjones372.lark.actor.PersistenceId
 import io.github.matthewjones372.lark.actor.Remembered
 import io.github.matthewjones372.lark.actor.Reply
-import io.github.matthewjones372.lark.actor.onStart
 import io.github.matthewjones372.lark.actor.persistent
 import io.github.matthewjones372.lark.counter
 import io.github.matthewjones372.lark.increment
@@ -89,12 +89,12 @@ fun transfer(
 ): Behaviour<TransferMessage, Remembered<Transfer>, JournalConflict> {
     val waiting = ArrayList<Reply<TransferAnswer>>()
     val screens = screening is Screening.On
-    // A new saga is driven twice at once, by its start and by the nudge it sends itself on starting: harmless for a
-    // leg, which is idempotent, but one call to the check each is enough. The timer always ends the wait.
+    // A saga can be driven twice at once, by its start and by the sweeper's nudge: harmless for a leg, which is
+    // idempotent, but one call to the check each is enough. The timer always ends the wait.
     var asking = false
 
     // The leg this incarnation has sent and is waiting on. Its timer sends it again, so a nudge that finds the saga
-    // still on it sends nothing: without this, every new transfer sent its debit twice (spec 0031).
+    // still on it sends nothing.
     var sent: Step? = null
 
     // Where the saga is ahead of its journal: a debit it has heard but not written (spec 0031). The account's own
@@ -144,7 +144,7 @@ fun transfer(
     }
 
     // Settled, no leg of this transfer can be sent again: each account may forget the legs it applied (spec 0013).
-    // Sent on every drive that finds the saga settled, a recovery's included; a second close writes nothing.
+    // Sent on every drive that finds the saga settled, and on recovering one; a second close writes nothing.
     fun Ctx<TransferMessage>.close(moving: Transfer.Moving) = listOf(moving.from, moving.to).forEach { account ->
         try {
             accounts.entity(account.value).tell(AccountAsk(AccountCommand.Close(id), Unheeded(self)))
@@ -153,12 +153,12 @@ fun transfer(
         }
     }
 
-    // Each incarnation drives itself once it starts. A restart takes the timers with it, so a leg sent before it is
-    // waited on no longer.
-    fun Ctx<TransferMessage>.started() {
+    // A restart takes the timers with it, so a leg sent before it is waited on no longer: an incarnation that recovers
+    // a transfer still moving drives it. A new one is driven by its start alone, and sends its debit once (spec 0031).
+    fun Ctx<TransferMessage>.started(recovered: Transfer) {
         sent = null
         heard = null
-        self.tell(Nudge)
+        if (recovered is Transfer.Moving) if (recovered.settled) close(recovered) else self.tell(Nudge)
     }
 
     fun Ctx<TransferMessage>.drive(written: Transfer) {
@@ -269,8 +269,20 @@ fun transfer(
             }
         },
         event = Transfer::evolve,
-    ).onStart { ctx -> ctx.started() }
+    ).onRecovered { ctx, recovered -> ctx.started(recovered.value) }
 }
+
+/**
+ * This behaviour, running [handler] with the state its start recovered, after that start and again after each restart:
+ * lark's `onStart` is not shown it. Behaviour's public constructor takes no batch, so this is for a behaviour that
+ * steps one message at a time, as the saga does.
+ */
+private fun <M : Any, S, E> Behaviour<M, S, E>.onRecovered(handler: (ctx: Ctx<M>, recovered: S) -> Unit) =
+    Behaviour(initial, step, signal, { ctx, state ->
+        val next = start?.invoke(this, ctx, state) ?: Next.Stay
+        handler(ctx, (next as? Next.Become)?.state ?: state)
+        next
+    })
 
 /** Screening's decision, or the bank's for it, written down; then the saga carries on from it. */
 private fun Effects<TransferEvent, Transfer>.screened(event: TransferEvent.Screened, then: (Transfer) -> Unit) = run {
