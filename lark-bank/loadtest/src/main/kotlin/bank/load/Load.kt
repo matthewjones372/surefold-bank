@@ -164,7 +164,9 @@ fun scenarioFor(plan: Plan, customer: Nodes, ops: Nodes): Scenario = when (plan.
     // Credits sent in bulk through a reliable producer: many writes per request, confirmed rather than answered.
     "payroll" -> scenario("payroll") {
         exec(bulk) { step ->
-            val credits = (1..CREDITS_PER_PAYROLL).map { account(plan).let { PayrollCredit(it, amountOf(heldBy(it), most = 1)) } }
+            val credits = (1..CREDITS_PER_PAYROLL).map {
+                account(plan).let { PayrollCredit(it, amountOf(heldBy(it), most = 1)) }
+            }
             step.expect(ops.any().outcome(payroll, In2(UUID.randomUUID().toString(), Payroll(credits)))) { false }
         }
     }
