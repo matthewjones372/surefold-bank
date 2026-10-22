@@ -66,9 +66,9 @@ Nothing. `GroupCommit` already takes both numbers.
 
 ## Stack
 
-- [ ] **`group-commit-settings`**: `maxAppends` and `committers` in config and the compose file.
+- [x] **`group-commit-settings`**: `maxAppends` and `committers` in config and the compose file.
       Done when: a node started with `JOURNAL_GROUP_COMMITTERS=4` logs it, and the defaults are unchanged.
-- [ ] **`derived-writes-async`**: `set local synchronous_commit = off` in the read-model and offset transactions.
+- [x] **`derived-writes-async`**: `set local synchronous_commit = off` in the read-model and offset transactions.
       Done when: `ReadModelsSpec` passes, and a test kills Postgres mid-projection and the ledger still conserves after
       a restart.
 - [ ] **`ledger-totals-per-partition`**: a migration adds `partition` to the key; reads sum it.

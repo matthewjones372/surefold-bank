@@ -280,7 +280,7 @@ private val clustered: Module =
                 // Which database owns which slices is a table in the primary (lark spec 0105), written on first start
                 // from the databases configured then. One added later owns nothing until a range is moved to it.
                 val slices = JdbcSliceTable(data, databases.map { it.first })
-                val grouped = if (settings.groupCommit) GroupCommit() else null
+                val grouped = if (settings.groupCommit) GroupCommit(settings.maxAppends, settings.committers) else null
                 val journals = databases.map { (name, source) -> name to JdbcJournal(source, groupCommit = grouped) }
                 val shared = ShardedJournal(journals, slices)
                 journal(shared)

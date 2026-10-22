@@ -23,6 +23,9 @@ x-bank-env: &bank-env
   # The journal split by id across two databases (lark spec 0088): postgres is db-0, and keeps the read models.
   JOURNAL_DATABASES: db-1=jdbc:postgresql://postgres-2:5432/bank
   JOURNAL_GROUP_COMMIT: ${JOURNAL_GROUP_COMMIT:-true}
+  # Each commit's size and how many run at once on each database (bank spec 0032), for a ramp to try.
+  JOURNAL_GROUP_MAX_APPENDS: ${JOURNAL_GROUP_MAX_APPENDS:-64}
+  JOURNAL_GROUP_COMMITTERS: ${JOURNAL_GROUP_COMMITTERS:-2}
   # How long a transfer is waited on before it is answered as pending (bank spec 0001).
   TRANSFER_WAIT: ${TRANSFER_WAIT:-1s}
   # Every event published (bank spec 0015): Kafka for the records, Apicurio for their schemas.

@@ -39,7 +39,7 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
      * by the balance read first: the totals add only the lines this batch inserted, a balance is only ever moved
      * forward, and the totals' rows are written in one order, so two batches never wait on each other in a circle.
      */
-    fun project(batch: List<Sequenced<AccountEvent>>): Int = transaction { connection ->
+    fun project(batch: List<Sequenced<AccountEvent>>): Int = transaction(derived = true) { connection ->
         val ids = batch.map { it.id }.distinct()
         val known = connection.balances(ids)
         // Only events that move money reach the statements and the ledger: a transfer's legs closing moves none.
@@ -111,7 +111,7 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
     }
 
     /** Each transfer's state, so the sweeper can find the ones that stopped moving. */
-    fun projectTransfers(batch: List<Sequenced<TransferEvent>>): Int = transaction { connection ->
+    fun projectTransfers(batch: List<Sequenced<TransferEvent>>): Int = transaction(derived = true) { connection ->
         val ids = batch.map { it.id }.distinct()
         val known = connection.transfers(ids)
         val fresh = batch.filter { it.sequence > (known[it.id]?.second ?: 0) }
@@ -344,15 +344,23 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
         connection.createStatement().use { it.executeQuery("select count(*) from account_balance").close() }
     }
 
-    private fun <A> transaction(work: (Connection) -> A): A = data.connection.use { connection ->
-        connection.autoCommit = false
-        try {
-            work(connection).also { connection.commit() }
-        } catch (failed: java.sql.SQLException) {
-            connection.rollback()
-            throw failed
+    /**
+     * [work] in one transaction. One that writes what is [derived] from the journal does not wait for its commit to
+     * reach the disk (bank spec 0032): the batch's offset is saved after it, durably and on this same server, and
+     * Postgres flushes its log in order, so the offset's flush takes this commit with it. A crash before then loses
+     * both, and the batch is projected again.
+     */
+    private fun <A> transaction(derived: Boolean = false, work: (Connection) -> A): A =
+        data.connection.use { connection ->
+            connection.autoCommit = false
+            try {
+                if (derived) connection.createStatement().use { it.execute("set local synchronous_commit = off") }
+                work(connection).also { connection.commit() }
+            } catch (failed: java.sql.SQLException) {
+                connection.rollback()
+                throw failed
+            }
         }
-    }
 }
 
 /**

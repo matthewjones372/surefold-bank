@@ -44,9 +44,16 @@ data class DatabaseSettings(val url: String, val user: String, val password: Str
  * The journal's databases (lark spec 0088): [primary] names `bank.database`, which also keeps the read models, and
  * [others] are the rest by name, with its user, password and pool size. The list is fixed once the bank holds data:
  * each database owns a range of slices worked out from how many there are, so adding one or reordering them moves
- * ids away from their events. With [groupCommit], each database's appends share commits (lark spec 0108).
+ * ids away from their events. With [groupCommit], each database's appends share commits (lark spec 0108): up to
+ * [maxAppends] a commit, with up to [committers] commits in flight on each database (bank spec 0032).
  */
-data class JournalSettings(val primary: String, val others: List<Pair<String, String>>, val groupCommit: Boolean)
+data class JournalSettings(
+    val primary: String,
+    val others: List<Pair<String, String>>,
+    val groupCommit: Boolean,
+    val maxAppends: Int,
+    val committers: Int,
+)
 
 /** `db-1=jdbc:postgresql://…,db-2=jdbc:postgresql://…` as named URLs, in order. */
 private fun named(databases: String): List<Pair<String, String>> =
@@ -191,7 +198,13 @@ val settings: Module =
             DatabaseSettings(string("url"), string("user"), secret("password").reveal(), int("poolSize"))
         } +
         config<JournalSettings>("bank.journal") {
-            JournalSettings(string("primary"), named(string("databases")), boolean("groupCommit"))
+            JournalSettings(
+                string("primary"),
+                named(string("databases")),
+                boolean("groupCommit"),
+                int("maxAppends"),
+                int("committers"),
+            )
         } +
         config<KafkaSettings>("bank.kafka") {
             KafkaSettings(
