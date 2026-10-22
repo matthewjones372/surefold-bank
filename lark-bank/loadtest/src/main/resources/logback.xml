@@ -1,0 +1,9 @@
+<configuration>
+  <!-- The load and the stand-in check at INFO: without a configuration logback logs everything at DEBUG, and Jetty's
+       DEBUG lines alone, a million and more a run, starve the bank of the cores it is measured on. -->
+  <appender name="plain" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder><pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{20} %msg%n</pattern></encoder>
+  </appender>
+  <logger name="org.eclipse.jetty" level="WARN"/>
+  <root level="INFO"><appender-ref ref="plain"/></root>
+</configuration>
