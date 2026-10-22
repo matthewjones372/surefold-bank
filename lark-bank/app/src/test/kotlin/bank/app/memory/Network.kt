@@ -39,6 +39,9 @@ class Network(private val accounts: AccountsById) : AccountsById {
     /** How many answers are being kept back. */
     val holding: Int get() = held.size
 
+    /** Every leg a saga has sent, in the order sent, whatever then happened to it on the way. */
+    val sent = mutableListOf<AccountCommand>()
+
     /** The next [times] legs that match [leg] meet [fault]; every other leg goes through untouched. */
     fun next(fault: Fault, times: Int = 1, leg: (AccountCommand) -> Boolean) {
         rules += Rule(fault, times, leg)
@@ -59,6 +62,7 @@ class Network(private val accounts: AccountsById) : AccountsById {
         override val address: Address get() = account.address
 
         override fun tell(message: AccountMessage) {
+            (message as? AccountAsk)?.command?.let { sent += it }
             when (faultFor(message)) {
                 null -> account.tell(message)
                 Fault.Drop -> Unit

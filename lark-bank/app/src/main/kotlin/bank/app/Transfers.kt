@@ -91,6 +91,10 @@ fun transfer(
     // leg, which is idempotent, but one call to the check each is enough. The timer always ends the wait.
     var asking = false
 
+    // The leg this incarnation has sent and is waiting on. Its timer sends it again, so a nudge that finds the saga
+    // still on it sends nothing: without this, every new transfer sent its debit twice (spec 0031).
+    var sent: Step? = null
+
     /** The check asked, and its answer, or its silence, told to [saga]. */
     fun screened(on: Screening.On, step: Step.Screen, saga: ActorRef<TransferMessage>) =
         on.screener.screen(id, step).fold(
@@ -119,6 +123,7 @@ fun transfer(
     fun Ctx<TransferMessage>.sendLeg(step: Step, account: AccountId, command: AccountCommand) {
         // The timer first: a leg that cannot be sent now is sent again when it fires, as one whose answer was lost is.
         timers.after(LEG, legTimeout, LegTimedOut(step))
+        sent = step
         try {
             // Sent inside a span of its own, so the account's handling of it is that span's child (bank spec 0024).
             tracer.tracedSpan("transfer ${step::class.simpleName?.lowercase()}") {
@@ -177,7 +182,7 @@ fun transfer(
             when (message) {
                 is TransferAsk -> asked(id, state, message, waiting) { after -> ctx.drive(after) }
 
-                Nudge -> none().then { after -> ctx.drive(after) }
+                Nudge -> if (state.next(id, screens) == sent) none() else none().then { after -> ctx.drive(after) }
 
                 is LegAnswered -> {
                     val moving = state as? Transfer.Moving
@@ -230,7 +235,11 @@ fun transfer(
             }
         },
         event = Transfer::evolve,
-    ).onStart { ctx -> ctx.self.tell(Nudge) }
+    ).onStart { ctx ->
+        // A restart takes this incarnation's timers with it, so a leg sent before it is waited on no longer.
+        sent = null
+        ctx.self.tell(Nudge)
+    }
 }
 
 /** Screening's decision, or the bank's for it, written down; then the saga carries on from it. */

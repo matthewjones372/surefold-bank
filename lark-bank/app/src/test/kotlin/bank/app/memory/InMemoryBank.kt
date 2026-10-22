@@ -15,6 +15,7 @@ import bank.domain.evolve
 import bank.protocol.AccountEvents
 import bank.protocol.AccountMessage
 import bank.protocol.Kinds
+import bank.protocol.Nudge
 import bank.protocol.TransferAnswer
 import bank.protocol.TransferAsk
 import bank.protocol.TransferEvents
@@ -90,6 +91,9 @@ class InMemoryBank internal constructor(
     /** A start told straight to the saga, with a reply that keeps every answer: one still moving has none yet. */
     fun start(id: TransferId, from: AccountId, to: AccountId, amount: Money): Answers =
         Answers(id).also { actors.sagaOf(id.value).tell(TransferAsk(TransferRequest.Start(from, to, amount), it)) }
+
+    /** A nudge told straight to the saga, as the sweeper sends one to a transfer it finds stuck. */
+    fun nudge(id: TransferId) = actors.sagaOf(id.value).tell(Nudge)
 
     /** Every delivery, loss, duplicate, delay and crash so far, to read when a seed fails. */
     val trace: List<TraceEntry> get() = sim.trace
