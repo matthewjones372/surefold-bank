@@ -25,11 +25,10 @@ class LevelFile(private val file: Path) {
     }
 
     /** Reads the file [every] while the bank runs, on a thread of its own that never holds the bank up. */
-    fun follow(every: Duration): Thread =
-        Thread.ofVirtual().name("log-level").start {
-            while (true) {
-                read()
-                Thread.sleep(every.inWholeMilliseconds)
-            }
+    fun follow(every: Duration): Thread = Thread.ofVirtual().name("log-level").start {
+        while (true) {
+            read()
+            Thread.sleep(every.inWholeMilliseconds)
         }
+    }
 }

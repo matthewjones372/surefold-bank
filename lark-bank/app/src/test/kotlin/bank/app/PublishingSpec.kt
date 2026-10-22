@@ -43,10 +43,18 @@ object TestKafka {
     """.trimIndent()
 
     /** Every record on [topic] so far whose key is one of [keys], read by Apicurio's own deserializer, in order. */
-    inline fun <reified M : com.google.protobuf.Message> read(topic: String, keys: Set<String>, noinline until: (List<M>) -> Boolean): List<M> =
-        read(topic, M::class.java, keys, until)
+    inline fun <reified M : com.google.protobuf.Message> read(
+        topic: String,
+        keys: Set<String>,
+        noinline until: (List<M>) -> Boolean,
+    ): List<M> = read(topic, M::class.java, keys, until)
 
-    fun <M : com.google.protobuf.Message> read(topic: String, type: Class<M>, keys: Set<String>, until: (List<M>) -> Boolean): List<M> {
+    fun <M : com.google.protobuf.Message> read(
+        topic: String,
+        type: Class<M>,
+        keys: Set<String>,
+        until: (List<M>) -> Boolean,
+    ): List<M> {
         val properties = mapOf<String, Any>(
             ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrap,
             ConsumerConfig.GROUP_ID_CONFIG to "test-${UUID.randomUUID()}",
@@ -65,7 +73,9 @@ object TestKafka {
             val seen = mutableListOf<M>()
             val deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos()
             while (!until(seen) && System.nanoTime() < deadline) {
-                it.poll(Duration.ofMillis(500)).filter { record -> record.key() in keys }.forEach { record -> seen += record.value() }
+                it.poll(
+                    Duration.ofMillis(500),
+                ).filter { record -> record.key() in keys }.forEach { record -> seen += record.value() }
             }
             seen
         }
@@ -83,11 +93,20 @@ class PublishingSpec {
             node.bank.open(from, "Ada", gbp(10_000), "open:$from").shouldBeRight()
             node.bank.open(to, "Bob", gbp(0), "open:$to").shouldBeRight()
             node.bank.transfer(transfer, from, to, gbp(2_500)).shouldBeRight()
-            eventually { node.bank.transferStatus(transfer).getOrNull()?.status == TransferStatus.Completed } shouldBe true
+            eventually {
+                node.bank.transferStatus(
+                    transfer,
+                ).getOrNull()?.status == TransferStatus.Completed
+            } shouldBe true
 
-            val transfers = TestKafka.read<TransferEvent>(EventStream.TRANSFERS.topic, setOf(transfer.value)) { it.size >= 3 }
+            val transfers = TestKafka.read<TransferEvent>(
+                EventStream.TRANSFERS.topic,
+                setOf(transfer.value),
+            ) { it.size >= 3 }
             transfers.map { it.eventCase } shouldBe listOf(
-                TransferEvent.EventCase.REQUESTED, TransferEvent.EventCase.SOURCE_DEBITED, TransferEvent.EventCase.DESTINATION_CREDITED,
+                TransferEvent.EventCase.REQUESTED,
+                TransferEvent.EventCase.SOURCE_DEBITED,
+                TransferEvent.EventCase.DESTINATION_CREDITED,
             )
             transfers.map { it.sequence } shouldBe listOf(1L, 2L, 3L)
             transfers.forEach { event ->
@@ -96,7 +115,10 @@ class PublishingSpec {
             }
             transfers.first().requested.amount.amount shouldBe "25.00"
 
-            val accounts = TestKafka.read<AccountEvent>(EventStream.ACCOUNTS.topic, setOf(from.value, to.value)) { seen ->
+            val accounts = TestKafka.read<AccountEvent>(
+                EventStream.ACCOUNTS.topic,
+                setOf(from.value, to.value),
+            ) { seen ->
                 seen.any { it.hasCredited() } && seen.any { it.hasDebited() }
             }
             accounts.filter { it.accountId == from.value }.map { it.eventCase } shouldContainAll
@@ -141,7 +163,13 @@ class PublishingSpec {
             .put("version", money.version).put("name", EventStream.MONEY)
         // Retyped: a sequence as a string, which no earlier reader can read.
         val broken = resource(EventStream.ACCOUNTS.schema).replace("int64 sequence = 2;", "string sequence = 2;")
-        val refused = shouldThrow<SchemaRefused> { registry.register(EventStream.ACCOUNTS.artifact, broken, listOf(reference)) }
+        val refused = shouldThrow<SchemaRefused> {
+            registry.register(
+                EventStream.ACCOUNTS.artifact,
+                broken,
+                listOf(reference),
+            )
+        }
         refused.message shouldContain EventStream.ACCOUNTS.artifact
     }
 

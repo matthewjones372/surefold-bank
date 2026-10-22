@@ -7,7 +7,12 @@ import kotlin.time.Duration
 
 data class WebSettings(val host: String, val port: Int)
 
-data class EntitySettings(val shards: Int, val passivateAfter: Duration, val askTimeout: Duration, val applyEvery: Duration)
+data class EntitySettings(
+    val shards: Int,
+    val passivateAfter: Duration,
+    val askTimeout: Duration,
+    val applyEvery: Duration,
+)
 
 data class DatabaseSettings(val url: String, val user: String, val password: String, val poolSize: Int)
 
@@ -30,14 +35,16 @@ data class KafkaSettings(
 ) {
     /** Every client's connection: the brokers, and how to sign in to them. */
     val client: Map<String, Any>
-        get() = mapOf<String, Any>("bootstrap.servers" to bootstrap) + (username?.let { user ->
-            mapOf(
-                "security.protocol" to "SASL_PLAINTEXT",
-                "sasl.mechanism" to "SCRAM-SHA-512",
-                "sasl.jaas.config" to "org.apache.kafka.common.security.scram.ScramLoginModule required " +
-                    "username=\"${user.quoted()}\" password=\"${password.orEmpty().quoted()}\";",
+        get() = mapOf<String, Any>("bootstrap.servers" to bootstrap) + (
+            username?.let { user ->
+                mapOf(
+                    "security.protocol" to "SASL_PLAINTEXT",
+                    "sasl.mechanism" to "SCRAM-SHA-512",
+                    "sasl.jaas.config" to "org.apache.kafka.common.security.scram.ScramLoginModule required " +
+                        "username=\"${user.quoted()}\" password=\"${password.orEmpty().quoted()}\";",
+                )
+            } ?: emptyMap()
             )
-        } ?: emptyMap())
 
     private fun String.quoted() = replace("\"", "\\\"")
 }
@@ -81,14 +88,23 @@ val settings: Module =
         config<PolicySettings>("approvals") { PolicySettings(string("policies")) } +
         config<KafkaSettings>("approvals.kafka") {
             KafkaSettings(
-                string("bootstrap"), string("registry"), int("replication").toShort(), int("publishers"), duration("every"),
-                string("username").ifEmpty { null }, secret("password").reveal().ifEmpty { null },
+                string("bootstrap"),
+                string("registry"),
+                int("replication").toShort(),
+                int("publishers"),
+                duration("every"),
+                string("username").ifEmpty { null },
+                secret("password").reveal().ifEmpty { null },
             )
         } +
         config<AuditSettings>("approvals.audit") { AuditSettings(duration("digestEvery")) } +
         config<IdentitySettings>("approvals.identity") {
             IdentitySettings(
-                string("issuer"), string("audience"), string("clientId"), secret("clientSecret").reveal(), string("callbackUrl"),
+                string("issuer"),
+                string("audience"),
+                string("clientId"),
+                secret("clientSecret").reveal(),
+                string("callbackUrl"),
                 secret("sessionKey").reveal(),
                 string("services").split(',').map(String::trim).filter(String::isNotEmpty),
             )

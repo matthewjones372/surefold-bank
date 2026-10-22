@@ -10,14 +10,14 @@ import bank.domain.Money
 import bank.domain.ScreeningOutcome
 import bank.domain.TransferEvent
 import bank.domain.TransferId
-import bank.events.v1.AccountEvent as AccountRecord
-import bank.events.v1.TransferEvent as TransferRecord
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import kotlin.reflect.KClass
+import bank.events.v1.AccountEvent as AccountRecord
+import bank.events.v1.TransferEvent as TransferRecord
 
 /** Bank spec 0015: every domain event as its Protobuf message, and back, exactly. */
 class ContractSpec {
@@ -43,7 +43,14 @@ class ContractSpec {
         TransferEvent.DestinationCredited(2_003),
         TransferEvent.CreditRefused("No account a-2", 2_004),
         TransferEvent.SourceRefunded(2_005),
-        TransferEvent.Screened(ScreeningOutcome.Declined, "large-transfer", 3, "amount >= 1000.00", answered = true, atMillis = 2_006),
+        TransferEvent.Screened(
+            ScreeningOutcome.Declined,
+            "large-transfer",
+            3,
+            "amount >= 1000.00",
+            answered = true,
+            atMillis = 2_006,
+        ),
         TransferEvent.Screened(ScreeningOutcome.Approved, null, null, "", answered = false, atMillis = 2_007),
     )
 
@@ -59,7 +66,9 @@ class ContractSpec {
     @Test
     fun `every transfer event survives the wire as itself, with both its accounts on it`() {
         transferEvents.forEachIndexed { i, event ->
-            val record = TransferRecord.parseFrom(event.toContract(transfer, i + 1L, AccountId("a-1"), AccountId("a-2")).toByteArray())
+            val record = TransferRecord.parseFrom(
+                event.toContract(transfer, i + 1L, AccountId("a-1"), AccountId("a-2")).toByteArray(),
+            )
             record.fromAccount shouldBe "a-1"
             record.toAccount shouldBe "a-2"
             record.fromContract(currencies).shouldBeRight() shouldBe FromContract("t-1", i + 1L, event)
@@ -88,5 +97,6 @@ class ContractSpec {
 
     /** The kinds of [root] that none of [samples] is: each one a domain event this spec has no round trip for. */
     private fun <E : Any> covered(root: KClass<E>, samples: List<E>): Set<String> =
-        root.sealedSubclasses.map { it.simpleName.orEmpty() }.toSet() - samples.map { it::class.simpleName.orEmpty() }.toSet()
+        root.sealedSubclasses.map { it.simpleName.orEmpty() }.toSet() -
+            samples.map { it::class.simpleName.orEmpty() }.toSet()
 }

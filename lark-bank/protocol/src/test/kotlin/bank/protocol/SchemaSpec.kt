@@ -39,10 +39,16 @@ class SchemaSpec {
         val requested = Bank.TransferEvent.newBuilder()
             .setRequested(
                 Bank.Requested.newBuilder().setFrom("a").setTo("b").setAtMillis(1)
-                    .setAmount(Bank.Money.newBuilder().setAmount("0.00000009").setCurrency(Bank.Currency.newBuilder().setCode("BTC").setExponent(8))),
+                    .setAmount(
+                        Bank.Money.newBuilder().setAmount(
+                            "0.00000009",
+                        ).setCurrency(Bank.Currency.newBuilder().setCode("BTC").setExponent(8)),
+                    ),
             )
             .build()
             .toByteArray()
-        TransferEvents.decode(requested) shouldBe TransferEvent.Requested(AccountId("a"), AccountId("b"), Money.ofMinor(9, BTC), 1)
+        TransferEvents.decode(
+            requested,
+        ) shouldBe TransferEvent.Requested(AccountId("a"), AccountId("b"), Money.ofMinor(9, BTC), 1)
     }
 }

@@ -50,11 +50,10 @@ class Network(private val accounts: AccountsById) : AccountsById {
     override fun entity(id: String): ActorRef<AccountMessage> = Wire(accounts.entity(id))
 
     /** The fault the next matching rule gives [message], used up as it is given, or none. */
-    private fun faultFor(message: AccountMessage): Fault? =
-        (message as? AccountAsk)?.command
-            ?.let { command -> rules.firstOrNull { it.times > 0 && it.leg(command) } }
-            ?.also { it.times-- }
-            ?.fault
+    private fun faultFor(message: AccountMessage): Fault? = (message as? AccountAsk)?.command
+        ?.let { command -> rules.firstOrNull { it.times > 0 && it.leg(command) } }
+        ?.also { it.times-- }
+        ?.fault
 
     private inner class Wire(private val account: ActorRef<AccountMessage>) : ActorRef<AccountMessage> {
         override val address: Address get() = account.address

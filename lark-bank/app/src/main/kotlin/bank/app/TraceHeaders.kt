@@ -9,6 +9,9 @@ import io.opentelemetry.context.Context
  */
 fun traceHeaders(): Map<String, String> {
     val headers = HashMap<String, String>(2)
-    W3CTraceContextPropagator.getInstance().inject(Context.current(), headers) { carrier, key, value -> carrier?.put(key, value) }
+    W3CTraceContextPropagator.getInstance().inject(
+        Context.current(),
+        headers,
+    ) { carrier, key, value -> carrier?.put(key, value) }
     return headers
 }

@@ -10,7 +10,11 @@ import bank.domain.Unavailable
 // Opening an account with its daily limit, and the refusals that limit adds (bank spec 0027).
 
 internal fun capped(refused: AccountError.DailyLimitExceeded) = DailyLimitExceeded(
-    refused.id, refused.limit.toAmount(), refused.remaining.toAmount(), refused.requested.toAmount(), refused.message,
+    refused.id,
+    refused.limit.toAmount(),
+    refused.remaining.toAmount(),
+    refused.requested.toAmount(),
+    refused.message,
 )
 
 /** An opening's initial amount and daily limit, both read in the account's currency (bank spec 0027). */
@@ -21,8 +25,11 @@ internal fun Currencies.opening(body: OpenAccount): Either<InvalidAmount, Pair<M
 
 internal fun openRefused(refusal: AccountError) = when (refusal) {
     is AccountError.AlreadyOpen -> accountExists(refusal)
+
     is AccountError.InvalidAmount -> invalidAmount(InvalidAmount(refusal.message))
+
     is Unavailable -> unavailable(refusal)
+
     is AccountError.NoSuchAccount, is AccountError.InsufficientFunds, is AccountError.CurrencyMismatch,
     is AccountError.DailyLimitExceeded, is AccountError.LegRefused,
     -> error("opening refused as $refusal")

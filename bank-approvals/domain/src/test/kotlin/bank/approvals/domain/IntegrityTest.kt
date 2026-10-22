@@ -9,14 +9,22 @@ import org.junit.jupiter.api.Test
 class IntegrityTest {
 
     private val proposal = Proposal(
-        kind = "checks.rule-version", subject = "checks/rule/large-transfer", title = "v4",
-        before = "amount is at least 1000", after = "amount is at least 500", facts = mapOf("change" to "tighten"),
+        kind = "checks.rule-version",
+        subject = "checks/rule/large-transfer",
+        title = "v4",
+        before = "amount is at least 1000",
+        after = "amount is at least 500",
+        facts = mapOf("change" to "tighten"),
     )
 
     @Test
     fun `the content hash is one an owning service can make itself, as bank-checks' PolicySpec does`() {
         val proposal = Proposal(
-            "checks.rule-version", "checks/rule/large", "large", "amount is at least 1000", "amount is at least 500",
+            "checks.rule-version",
+            "checks/rule/large",
+            "large",
+            "amount is at least 1000",
+            "amount is at least 500",
             facts = mapOf("severity" to "high", "change" to "tighten"),
         )
         proposal.contentHash shouldBe "47d22c0de0e7bbc23492e9967a25cf4268cd1e6c0ef15f87639dc13a76c05408"
@@ -28,7 +36,11 @@ class IntegrityTest {
         proposal.copy(before = "").contentHash shouldNotBe proposal.contentHash
         proposal.copy(facts = mapOf("change" to "loosen")).contentHash shouldNotBe proposal.contentHash
 
-        proposal.copy(title = "a better title", impact = "{}", link = "https://x").contentHash shouldBe proposal.contentHash
+        proposal.copy(
+            title = "a better title",
+            impact = "{}",
+            link = "https://x",
+        ).contentHash shouldBe proposal.contentHash
     }
 
     @Test
@@ -41,7 +53,10 @@ class IntegrityTest {
 
     @Test
     fun `the text cannot be moved from before to after without the hash changing`() {
-        proposal.copy(before = "x", after = "yz").contentHash shouldNotBe proposal.copy(before = "xy", after = "z").contentHash
+        proposal.copy(
+            before = "x",
+            after = "yz",
+        ).contentHash shouldNotBe proposal.copy(before = "xy", after = "z").contentHash
     }
 
     private val events = listOf("Requested req-1", "Approved ada", "Commented bob: why?", "Approved bob", "Applied")

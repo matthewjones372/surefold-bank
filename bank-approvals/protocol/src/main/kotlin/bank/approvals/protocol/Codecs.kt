@@ -18,7 +18,6 @@ import io.github.matthewjones372.lark.actor.remote.WireIn
 import io.github.matthewjones372.lark.actor.remote.WireOut
 import io.github.matthewjones372.lark.actor.remote.kotlinx.Kotlinx
 import io.github.matthewjones372.lark.actor.versioned
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.protobuf.ProtoBuf
 import bank.approvals.protocol.wire.Act as WireAct
@@ -86,16 +85,24 @@ data class ChainedEvent(val event: RequestEvent, val link: String)
 class StoredLink(val event: ByteArray, val link: String)
 
 private object LinkedBody : EventCodec<StoredLink> {
-    override fun encode(event: StoredLink): ByteArray = ProtoBuf.encodeToByteArray(Linked.serializer(), Linked(event.event, event.link))
+    override fun encode(event: StoredLink): ByteArray = ProtoBuf.encodeToByteArray(
+        Linked.serializer(),
+        Linked(event.event, event.link),
+    )
 
-    override fun decode(bytes: ByteArray): StoredLink = ProtoBuf.decodeFromByteArray(Linked.serializer(), bytes).let { StoredLink(it.event, it.link) }
+    override fun decode(bytes: ByteArray): StoredLink = ProtoBuf.decodeFromByteArray(
+        Linked.serializer(),
+        bytes,
+    ).let { StoredLink(it.event, it.link) }
 }
 
 /** The journal's entries as they are stored: each event's bytes and link, not yet read as an event. */
 val StoredLinks: EventCodec<StoredLink> = versioned(JOURNAL_VERSION, LinkedBody)
 
 private object ChainedBody : EventCodec<ChainedEvent> {
-    override fun encode(event: ChainedEvent): ByteArray = LinkedBody.encode(StoredLink(event.event.stored(), event.link))
+    override fun encode(event: ChainedEvent): ByteArray = LinkedBody.encode(
+        StoredLink(event.event.stored(), event.link),
+    )
 
     override fun decode(bytes: ByteArray): ChainedEvent =
         LinkedBody.decode(bytes).let { ChainedEvent(requestEvents.read(it.event).toDomain(), it.link) }
@@ -175,14 +182,28 @@ private fun Act.toWire(): WireAct = when (this) {
 }
 
 private fun WireAct.toDomain(): Act = when (this) {
-    is WireAct.Ask -> Act.Ask(proposal.toDomain(), requester.toDomain(), policy.toDomain(), policyVersion, origin.toDomain())
+    is WireAct.Ask -> Act.Ask(
+        proposal.toDomain(),
+        requester.toDomain(),
+        policy.toDomain(),
+        policyVersion,
+        origin.toDomain(),
+    )
+
     is WireAct.Approve -> Act.Approve(by.toDomain(), hash, comment.ifEmpty { null }, origin.toDomain())
+
     is WireAct.Reject -> Act.Reject(by.toDomain(), comment, origin.toDomain())
+
     is WireAct.Comment -> Act.Comment(by.toDomain(), text, origin.toDomain())
+
     is WireAct.Withdraw -> Act.Withdraw(by.toDomain(), origin.toDomain())
+
     is WireAct.Supersede -> Act.Supersede(RequestId(by))
+
     is WireAct.MarkApplied -> Act.MarkApplied(by.toDomain(), hash, origin.toDomain())
+
     is WireAct.MarkApplyFailed -> Act.MarkApplyFailed(by.toDomain(), reason, origin.toDomain())
+
     WireAct.Read -> Act.Read
 }
 
@@ -194,7 +215,9 @@ object RequestMessages : MessageCodec<RequestMessage> {
             out.reply(message.reply, RequestAnswers)
             out.bytes(acts.write(message.act.toWire()))
         }
+
         Wake -> out.int(2)
+
         ExpiryDue, AskOwnerAgain -> error("$message is the request's message to itself and never crosses a node")
     }
 
@@ -203,7 +226,9 @@ object RequestMessages : MessageCodec<RequestMessage> {
             val reply = input.reply(RequestAnswers)
             RequestAsk(wired { acts.read(input.bytes()) }.toDomain(), reply)
         }
+
         2 -> Wake
+
         else -> throw WireException("no request message has the tag $tag")
     }
 }
@@ -215,6 +240,7 @@ object SubjectMessages : MessageCodec<SubjectMessage> {
             out.reply(message.reply, Codecs.string)
             Codecs.string.write(message.request.value, out)
         }
+
         is Release -> {
             out.int(2)
             Codecs.string.write(message.request.value, out)
@@ -226,7 +252,9 @@ object SubjectMessages : MessageCodec<SubjectMessage> {
             val reply = input.reply(Codecs.string)
             Claim(RequestId(Codecs.string.read(input)), reply)
         }
+
         2 -> Release(RequestId(Codecs.string.read(input)))
+
         else -> throw WireException("no subject message has the tag $tag")
     }
 }

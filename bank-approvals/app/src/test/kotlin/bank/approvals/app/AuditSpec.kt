@@ -17,7 +17,6 @@ import bank.approvals.api.read
 import bank.approvals.api.verify
 import bank.approvals.domain.Proposal
 import bank.approvals.domain.RequestEvent
-import bank.approvals.protocol.ChainedEvent
 import bank.approvals.protocol.RequestEvents
 import bank.approvals.protocol.chained
 import bank.events.v1.ApprovalEvent.EventCase
@@ -48,23 +47,40 @@ class AuditSpec {
     private val before = "amount is at least 1000"
     private val after = "amount is at least 500"
 
-    private fun change(subject: String) = NewRequest("test.change", subject, "a rule, version 2", before = before, after = after)
+    private fun change(subject: String) = NewRequest(
+        "test.change",
+        subject,
+        "a rule, version 2",
+        before = before,
+        after = after,
+    )
 
     private fun ApiClient.asked(subject: String): RequestView = outcome(ask, change(subject)).shouldBeOk()
 
-    private fun ApiClient.approved(view: RequestView) = outcome(approve, In2(view.id, ApproveBody(view.hash))).shouldBeOk()
+    private fun ApiClient.approved(view: RequestView) = outcome(
+        approve,
+        In2(view.id, ApproveBody(view.hash)),
+    ).shouldBeOk()
 
     /** Request [id]'s stored events, each as the journal row holds it, in order. */
-    private fun rows(database: String, id: String): List<ByteArray> = DriverManager.getConnection(database).use { connection ->
-        connection.prepareStatement("select bytes from lark_journal where kind = 'request' and id = ? order by seq_nr").use {
+    private fun rows(database: String, id: String): List<ByteArray> = DriverManager.getConnection(
+        database,
+    ).use { connection ->
+        connection.prepareStatement(
+            "select bytes from lark_journal where kind = 'request' and id = ? order by seq_nr",
+        ).use {
             it.setString(1, id)
             it.executeQuery().use { rows -> generateSequence { if (rows.next()) rows.getBytes(1) else null }.toList() }
         }
     }
 
     /** Writes [bytes] over request [id]'s event [sequence], as someone with the database's password could. */
-    private fun overwrite(database: String, id: String, sequence: Long, bytes: ByteArray) = DriverManager.getConnection(database).use { connection ->
-        connection.prepareStatement("update lark_journal set bytes = ? where kind = 'request' and id = ? and seq_nr = ?").use {
+    private fun overwrite(database: String, id: String, sequence: Long, bytes: ByteArray) = DriverManager.getConnection(
+        database,
+    ).use { connection ->
+        connection.prepareStatement(
+            "update lark_journal set bytes = ? where kind = 'request' and id = ? and seq_nr = ?",
+        ).use {
             it.setBytes(1, bytes)
             it.setString(2, id)
             it.setLong(3, sequence)
@@ -92,7 +108,12 @@ class AuditSpec {
             auditor.outcome(verify, Unit).shouldBeOk().broken.shouldBeEmpty()
 
             // The first event, Requested: the rule as asked, changed to one nobody saw.
-            overwrite(cluster.database, view.id, 1, rows(cluster.database, view.id)[0].replacing(after, "amount is at least 900"))
+            overwrite(
+                cluster.database,
+                view.id,
+                1,
+                rows(cluster.database, view.id)[0].replacing(after, "amount is at least 900"),
+            )
 
             val found = auditor.outcome(verify, Unit).shouldBeOk()
             withClue(found.broken.toString()) {
@@ -118,9 +139,18 @@ class AuditSpec {
             val events = rows(cluster.database, view.id).map { RequestEvents.decode(it).event }
             val requested = events.first() as RequestEvent.Requested
             val forged = listOf(
-                requested.copy(asked = requested.asked.copy(proposal = requested.asked.proposal.copy(after = "amount is at least 5"))),
+                requested.copy(
+                    asked = requested.asked.copy(
+                        proposal = requested.asked.proposal.copy(after = "amount is at least 5"),
+                    ),
+                ),
             ) + events.drop(1)
-            chained(null, forged).map(RequestEvents::encode).forEachIndexed { at, bytes -> overwrite(cluster.database, view.id, at + 1L, bytes) }
+            chained(
+                null,
+                forged,
+            ).map(
+                RequestEvents::encode,
+            ).forEachIndexed { at, bytes -> overwrite(cluster.database, view.id, at + 1L, bytes) }
 
             val found = node.calling("aud", "auditor").outcome(verify, Unit).shouldBeOk()
             withClue(found.broken.toString()) {
@@ -151,7 +181,10 @@ class AuditSpec {
             val inHand = edited.contentHash
             inHand shouldNotBe given.approvalGiven.contentHash
             val owner = node.calling("checks", "services")
-            owner.outcome(applyFailed, In2(view.id, ApplyFailedBody("the change was edited after it was approved"))).shouldBeOk()
+            owner.outcome(
+                applyFailed,
+                In2(view.id, ApplyFailedBody("the change was edited after it was approved")),
+            ).shouldBeOk()
 
             // Said applied of the edited change anyway, the record refuses it, and the request is still only approved.
             owner.response(applied, In2(view.id, AppliedBody(inHand))).status shouldBe 409
@@ -193,7 +226,10 @@ class AuditSpec {
             }
 
             // A subject's requests, and nothing outside the days asked for.
-            auditor.outcome(auditEntries, In5(null, "test/hers-$run", null, null, null)).shouldBeOk().map { it.what } shouldBe
+            auditor.outcome(
+                auditEntries,
+                In5(null, "test/hers-$run", null, null, null),
+            ).shouldBeOk().map { it.what } shouldBe
                 listOf("requested", "awaiting-approval", "vote-refused")
             val yesterday = today.minusDays(1).toString()
             auditor.outcome(auditEntries, In5("ada", null, null, null, yesterday)).shouldBeOk().shouldBeEmpty()
@@ -203,7 +239,10 @@ class AuditSpec {
             csv.lines().first() shouldStartWith "request,sequence,at"
             csv.lines().filter { it.isNotBlank() }.size shouldBe 6
             node.audit.exportsBy("aud") shouldBe 1
-            node.calling("eve", "marketing").response(auditExport, In6("csv", "ada", null, null, null, null)).status shouldBe 403
+            node.calling(
+                "eve",
+                "marketing",
+            ).response(auditExport, In6("csv", "ada", null, null, null, null)).status shouldBe 403
             node.audit.exportsBy("eve") shouldBe 0
         }.shouldBeRight()
     }

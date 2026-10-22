@@ -9,8 +9,8 @@ import bank.api.TransferRequest
 import bank.api.deposit
 import bank.api.getAccount
 import bank.api.getTransfer
-import bank.api.listCurrencies
 import bank.api.ledger
+import bank.api.listCurrencies
 import bank.api.openAccount
 import bank.api.statement
 import bank.api.transfer
@@ -38,15 +38,27 @@ class ApiSpec {
                 val client = anyone.calling("ada")
                 val bob = anyone.calling("bob")
                 val ops = anyone.calling("olga", "ops")
-                client.outcome(openAccount, In2("ada", OpenAccount("GBP", "10.00"))).shouldBeOk().balance shouldBe pounds("10.00")
+                client.outcome(
+                    openAccount,
+                    In2("ada", OpenAccount("GBP", "10.00")),
+                ).shouldBeOk().balance shouldBe pounds("10.00")
                 bob.outcome(openAccount, In2("bob", OpenAccount("GBP"))).shouldBeOk()
 
-                client.outcome(openAccount, In2("ada", OpenAccount("GBP", "10.00"))).shouldBeOk().balance shouldBe pounds("10.00")
+                client.outcome(
+                    openAccount,
+                    In2("ada", OpenAccount("GBP", "10.00")),
+                ).shouldBeOk().balance shouldBe pounds("10.00")
                 val clash = anyone.calling("eve").outcome(openAccount, In2("ada", OpenAccount("GBP", "10.00")))
                 (clash as Outcome.Err).error.shouldBeInstanceOf<AccountError.AlreadyOpen>()
 
-                client.outcome(deposit, In2("ada", Movement(pounds("5"), "pay-1"))).shouldBeOk().balance shouldBe pounds("15.00")
-                client.outcome(deposit, In2("ada", Movement(pounds("5"), "pay-1"))).shouldBeOk().balance shouldBe pounds("15.00")
+                client.outcome(
+                    deposit,
+                    In2("ada", Movement(pounds("5"), "pay-1")),
+                ).shouldBeOk().balance shouldBe pounds("15.00")
+                client.outcome(
+                    deposit,
+                    In2("ada", Movement(pounds("5"), "pay-1")),
+                ).shouldBeOk().balance shouldBe pounds("15.00")
 
                 val short = bob.outcome(withdraw, In2("bob", Movement(pounds("0.01"), "w-1")))
                 (short as Outcome.Err).error shouldBe
@@ -55,20 +67,34 @@ class ApiSpec {
                 val missing = client.outcome(getAccount, "nobody")
                 (missing as Outcome.Err).error shouldBe AccountError.NoSuchAccount("nobody")
 
-                val moved = client.outcome(transfer, In2("t-1", TransferRequest("ada", "bob", pounds("7.00")))).shouldBeOk()
+                val moved = client.outcome(
+                    transfer,
+                    In2("t-1", TransferRequest("ada", "bob", pounds("7.00"))),
+                ).shouldBeOk()
                 moved.status shouldBe "Completed"
                 moved.amount shouldBe pounds("7.00")
-                client.outcome(transfer, In2("t-1", TransferRequest("ada", "bob", pounds("7.00")))).shouldBeOk().status shouldBe
+                client.outcome(
+                    transfer,
+                    In2("t-1", TransferRequest("ada", "bob", pounds("7.00"))),
+                ).shouldBeOk().status shouldBe
                     "Completed"
                 val reused = client.outcome(transfer, In2("t-1", TransferRequest("ada", "bob", pounds("0.01"))))
                 (reused as Outcome.Err).error shouldBe TransferError.TransferIdReused("t-1")
-                (client.outcome(getTransfer, "t-404") as Outcome.Err).error shouldBe TransferError.NoSuchTransfer("t-404")
+                (
+                    client.outcome(
+                        getTransfer,
+                        "t-404",
+                    ) as Outcome.Err
+                    ).error shouldBe TransferError.NoSuchTransfer("t-404")
 
                 client.outcome(getAccount, "ada").shouldBeOk().balance shouldBe pounds("8.00")
                 bob.outcome(getAccount, "bob").shouldBeOk().balance shouldBe pounds("7.00")
 
                 eventually { ops.call(ledger, Unit).let { it.conserved && it.eventsProjected >= 5 } } shouldBe true
-                client.call(statement, In3("ada", 10, null)).map { it.kind } shouldBe listOf("debited", "deposited", "opened")
+                client.call(
+                    statement,
+                    In3("ada", 10, null),
+                ).map { it.kind } shouldBe listOf("debited", "deposited", "opened")
                 // The next page is the lines before the last one seen.
                 client.call(statement, In3("ada", 10, 3L)).map { it.kind } shouldBe listOf("deposited", "opened")
 
@@ -90,7 +116,10 @@ class ApiSpec {
         TestCluster(1).running { (node) ->
             apiClient(node.server.baseUrl, JacksonCodecs).use { anyone ->
                 val client = anyone.calling("ada")
-                client.call(listCurrencies, Unit).map { it.code } shouldBe listOf("BTC", "ETH", "EUR", "GBP", "JPY", "USD")
+                client.call(
+                    listCurrencies,
+                    Unit,
+                ).map { it.code } shouldBe listOf("BTC", "ETH", "EUR", "GBP", "JPY", "USD")
                 client.outcome(openAccount, In2("wallet", OpenAccount("BTC", "0.5"))).shouldBeOk().balance shouldBe
                     Amount("0.50000000", "BTC")
                 client.outcome(openAccount, In2("purse", OpenAccount("GBP", "1.00"))).shouldBeOk()
@@ -102,16 +131,30 @@ class ApiSpec {
                 val inPounds = client.outcome(deposit, In2("wallet", Movement(pounds("1.00"), "d-3")))
                 (inPounds as Outcome.Err).error.shouldBeInstanceOf<InvalidAmount>().accountCurrency shouldBe "BTC"
 
-                client.outcome(deposit, In2("wallet", Movement(Amount("0.00000001", "BTC"), "d-4"))).shouldBeOk().balance shouldBe
+                client.outcome(
+                    deposit,
+                    In2("wallet", Movement(Amount("0.00000001", "BTC"), "d-4")),
+                ).shouldBeOk().balance shouldBe
                     Amount("0.50000001", "BTC")
                 // In the source's currency, to an account in another: the destination refuses it, and the source is refunded.
-                val across = client.outcome(transfer, In2("t-x", TransferRequest("purse", "wallet", pounds("0.50")))).shouldBeOk()
+                val across = client.outcome(
+                    transfer,
+                    In2("t-x", TransferRequest("purse", "wallet", pounds("0.50"))),
+                ).shouldBeOk()
                 across.amount shouldBe pounds("0.50")
                 eventually { client.outcome(getTransfer, "t-x").shouldBeOk().status == "Refunded" } shouldBe true
                 client.outcome(getAccount, "purse").shouldBeOk().balance shouldBe pounds("1.00")
 
                 val books = mapOf("BTC" to "0.50000001", "GBP" to "1.00")
-                eventually { anyone.calling("olga", "ops").call(ledger, Unit).let { it.conserved && it.currencies.associate { c -> c.currency to c.balances } == books } } shouldBe
+                eventually {
+                    anyone.calling(
+                        "olga",
+                        "ops",
+                    ).call(
+                        ledger,
+                        Unit,
+                    ).let { it.conserved && it.currencies.associate { c -> c.currency to c.balances } == books }
+                } shouldBe
                     true
             }
         }

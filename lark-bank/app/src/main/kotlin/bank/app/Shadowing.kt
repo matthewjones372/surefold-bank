@@ -10,6 +10,7 @@ import bank.access.fga.Fga
 import bank.api.Asked
 import bank.api.Caller
 import bank.api.Shadow
+import io.github.matthewjones372.lark.Carriers
 import io.github.matthewjones372.lark.counter
 import io.github.matthewjones372.lark.increment
 import io.github.matthewjones372.lark.logWarn
@@ -18,7 +19,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
-import io.github.matthewjones372.lark.Carriers
 
 /**
  * Every question the bank's own rules answer put to bank-access too (bank spec 0022's access-shadow), off the request:
@@ -63,8 +63,18 @@ class ShadowedAccess(private val access: Access, private val recheckAfter: Durat
     private fun ask(asked: Asked, who: Caller, target: String): Boolean? {
         val answer = when (asked) {
             Asked.ViewAccount -> access.check(Asker(who.subject, who.actor, who.groups), Account.viewer, target)
+
             // Paying while acting as someone is the bank's own refusal, whatever the model says of the customer.
-            Asked.PayFromAccount -> if (who.isImpersonating) Answer.No else access.check(Asker(who.subject), Account.payer, target)
+            Asked.PayFromAccount -> if (who.isImpersonating) {
+                Answer.No
+            } else {
+                access.check(
+                    Asker(who.subject),
+                    Account.payer,
+                    target,
+                )
+            }
+
             Asked.ActAs -> access.check(Asker(checkNotNull(who.actor)), Person.impersonator, target)
         }
         return when (answer) {
@@ -74,14 +84,23 @@ class ShadowedAccess(private val access: Access, private val recheckAfter: Durat
         }
     }
 
-    private fun agreed(asked: Asked) = counter("bank.access.shadow", "asked" to asked.label, "answer" to "agreed").increment()
+    private fun agreed(asked: Asked) = counter(
+        "bank.access.shadow",
+        "asked" to asked.label,
+        "answer" to "agreed",
+    ).increment()
 
-    private fun unanswered(asked: Asked) = counter("bank.access.shadow", "asked" to asked.label, "answer" to "unanswered").increment()
+    private fun unanswered(asked: Asked) = counter(
+        "bank.access.shadow",
+        "asked" to asked.label,
+        "answer" to "unanswered",
+    ).increment()
 
     companion object {
-        fun of(settings: AccessShadowSettings): Shadow =
-            if (!settings.enabled) Shadow.none
-            else ShadowedAccess(
+        fun of(settings: AccessShadowSettings): Shadow = if (!settings.enabled) {
+            Shadow.none
+        } else {
+            ShadowedAccess(
                 // Decisions are kept once a rule is answered by bank-access; in shadow, the bank's answer is the one used.
                 Access(
                     Fga(settings.url, settings.token, settings.store, Access.BUDGET, carried = ::traceHeaders),
@@ -90,5 +109,6 @@ class ShadowedAccess(private val access: Access, private val recheckAfter: Durat
                 ),
                 settings.recheckAfter,
             )
+        }
     }
 }

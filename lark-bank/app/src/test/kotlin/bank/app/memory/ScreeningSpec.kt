@@ -36,11 +36,11 @@ import io.github.matthewjones372.lark.actor.Address
 import io.github.matthewjones372.lark.actor.PersistenceId
 import io.github.matthewjones372.lark.actor.Reply
 import io.github.matthewjones372.lark.actor.TestActors
-import io.github.matthewjones372.lark.metrics
 import io.github.matthewjones372.lark.actor.events
 import io.github.matthewjones372.lark.actor.testActors
 import io.github.matthewjones372.lark.clock
 import io.github.matthewjones372.lark.fixedClock
+import io.github.matthewjones372.lark.metrics
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf

@@ -23,6 +23,8 @@ x-bank-env: &bank-env
   # The journal split by id across two databases (lark spec 0088): postgres is db-0, and keeps the read models.
   JOURNAL_DATABASES: db-1=jdbc:postgresql://postgres-2:5432/bank
   JOURNAL_GROUP_COMMIT: ${JOURNAL_GROUP_COMMIT:-true}
+  # How long a transfer is waited on before it is answered as pending (bank spec 0001).
+  TRANSFER_WAIT: ${TRANSFER_WAIT:-1s}
   # Every event published (bank spec 0015): Kafka for the records, Apicurio for their schemas.
   KAFKA_ENABLED: ${KAFKA_ENABLED:-true}
   KAFKA_BOOTSTRAP: kafka:9092
@@ -337,12 +339,12 @@ services:
     environment: { <<: *bank-env, POD_NAME: bank-3, POD_IP: bank-3 }
     depends_on: { bank-2: { condition: service_healthy } }
 
-  # Spreads its calls over the three nodes by name, as the Service does on Kubernetes.
+  # Spreads its calls over the three nodes, each request to one at random, as the Service does on Kubernetes.
   load:
     image: lark-bank-loadtest:dev
     profiles: [ load ]
     environment:
-      BASE_URL: http://bank-1:8080
+      BASE_URLS: http://bank-1:8080,http://bank-2:8080,http://bank-3:8080
       ISSUER_URL: http://issuer:9000
       REPORT_DIR: /reports
     volumes: [ "../../build/reports:/reports" ]

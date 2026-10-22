@@ -46,7 +46,10 @@ class ShardedBank(
     override fun withdraw(id: AccountId, amount: Money, reference: String) =
         command(id, AccountCommand.Withdraw(amount, reference))
 
-    override fun balance(id: AccountId): Either<AccountError, Balance> = timed("bank.ask.duration", "entity" to "account") {
+    override fun balance(id: AccountId): Either<AccountError, Balance> = timed(
+        "bank.ask.duration",
+        "entity" to "account",
+    ) {
         accounts(id.value).ask<AccountMessage, AccountAnswer>(askTimeout) { AccountAsk(null, it) }
             .fold({ failure -> unavailable("account $id", failure).left() }, { it })
     }
@@ -61,36 +64,45 @@ class ShardedBank(
      * Waits [transferWait] for the saga to settle. One that has not is asked where it has got to, and answered as
      * pending, debited or refunding: still moving, and safe to ask about again.
      */
-    override fun transfer(id: TransferId, from: AccountId, to: AccountId, amount: Money): Either<TransferError, TransferView> =
-        when {
-            from == to -> TransferError.SameAccount(from.value).left()
-            !amount.isPositive -> TransferError.InvalidTransferAmount(amount).left()
-            else -> timed("bank.ask.duration", "entity" to "transfer") {
-                transfers(id.value).ask<TransferMessage, TransferAnswer>(transferWait) {
-                    TransferAsk(TransferRequest.Start(from, to, amount), it)
-                }.fold(
-                    { failure ->
-                        when (failure) {
-                            // Not heard of means the start has not landed yet, lost with a node or still on its way:
-                            // the same id again is safe, so it is Unavailable and not a transfer that does not exist.
-                            AskFailure.TimedOut -> transferStatus(id).mapLeft { refusal ->
-                                if (refusal is TransferError.NoSuchTransfer) {
-                                    Unavailable("transfer $id did not start in time; send it again with the same id")
-                                } else {
-                                    refusal
-                                }
+    override fun transfer(
+        id: TransferId,
+        from: AccountId,
+        to: AccountId,
+        amount: Money,
+    ): Either<TransferError, TransferView> = when {
+        from == to -> TransferError.SameAccount(from.value).left()
+
+        !amount.isPositive -> TransferError.InvalidTransferAmount(amount).left()
+
+        else -> timed("bank.ask.duration", "entity" to "transfer") {
+            transfers(id.value).ask<TransferMessage, TransferAnswer>(transferWait) {
+                TransferAsk(TransferRequest.Start(from, to, amount), it)
+            }.fold(
+                { failure ->
+                    when (failure) {
+                        // Not heard of means the start has not landed yet, lost with a node or still on its way:
+                        // the same id again is safe, so it is Unavailable and not a transfer that does not exist.
+                        AskFailure.TimedOut -> transferStatus(id).mapLeft { refusal ->
+                            if (refusal is TransferError.NoSuchTransfer) {
+                                Unavailable("transfer $id did not start in time; send it again with the same id")
+                            } else {
+                                refusal
                             }
-                            AskFailure.Stopped, AskFailure.Unreachable -> unavailable("transfer $id", failure).left()
                         }
-                    },
-                    { it },
-                )
-            }
+
+                        AskFailure.Stopped, AskFailure.Unreachable -> unavailable("transfer $id", failure).left()
+                    }
+                },
+                { it },
+            )
         }
+    }
 
     override fun transferStatus(id: TransferId): Either<TransferError, TransferView> =
         timed("bank.ask.duration", "entity" to "transfer") {
-            transfers(id.value).ask<TransferMessage, TransferAnswer>(askTimeout) { TransferAsk(TransferRequest.Status, it) }
+            transfers(
+                id.value,
+            ).ask<TransferMessage, TransferAnswer>(askTimeout) { TransferAsk(TransferRequest.Status, it) }
                 .fold({ failure -> unavailable("transfer $id", failure).left() }, { it })
         }
 }
@@ -102,4 +114,3 @@ private fun unavailable(what: String, failure: AskFailure) = Unavailable(
         AskFailure.Unreachable -> "$what is on a node that cannot be reached"
     },
 )
-

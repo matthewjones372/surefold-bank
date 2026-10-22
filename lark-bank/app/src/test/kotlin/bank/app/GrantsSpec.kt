@@ -39,7 +39,11 @@ class StubApprovals : AutoCloseable {
     val calls = CopyOnWriteArrayList<Call>()
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
         createContext("/requests") { exchange ->
-            calls += Call(exchange.requestURI.path, exchange.requestHeaders.getFirst("Authorization"), exchange.requestBody.readAllBytes().decodeToString())
+            calls += Call(
+                exchange.requestURI.path,
+                exchange.requestHeaders.getFirst("Authorization"),
+                exchange.requestBody.readAllBytes().decodeToString(),
+            )
             exchange.sendResponseHeaders(200, -1)
             exchange.close()
         }
@@ -62,7 +66,11 @@ object ApprovalEvents {
                 if (failed.cause !is TopicExistsException) throw failed
             }
         }
-        KafkaProducer(mapOf<String, Any>("bootstrap.servers" to TestKafka.bootstrap), StringSerializer(), ByteArraySerializer())
+        KafkaProducer(
+            mapOf<String, Any>("bootstrap.servers" to TestKafka.bootstrap),
+            StringSerializer(),
+            ByteArraySerializer(),
+        )
     }
 
     fun send(vararg events: ApprovalEvent) = events.forEach { event ->
@@ -70,7 +78,9 @@ object ApprovalEvents {
     }
 
     private fun event(request: String, sequence: Long, subject: String, at: Instant) = ApprovalEvent.newBuilder()
-        .setRequestId(request).setSequence(sequence).setAtMillis(at.toEpochMilli()).setKind(GRANT_KIND).setSubject(subject)
+        .setRequestId(
+            request,
+        ).setSequence(sequence).setAtMillis(at.toEpochMilli()).setKind(GRANT_KIND).setSubject(subject)
 
     /** [person], in [groups], asks to see [account] for [lasting]: what a person in support sends Approvals. */
     fun asked(
@@ -81,14 +91,13 @@ object ApprovalEvents {
         groups: List<String> = listOf("support"),
         forWhom: String = person,
         access: Map<String, String> = mapOf("access" to "view", "account" to account),
-    ) =
-        event(request, 1, "bank/account/$account/viewer/$forWhom", Instant.now()).setRequested(
-            ApprovalEvent.Requested.newBuilder()
-                .setTitle("$forWhom to see $account").setBefore("").setAfter("$forWhom may see $account for $lasting")
-                .putAllFacts(access + mapOf("person" to forWhom, "for" to lasting, "ticket" to "1234"))
-                .setRequester(ApprovalEvent.Person.newBuilder().setSubject(person).setName(person).addAllGroups(groups))
-                .setContentHash("hash-$request"),
-        ).build()
+    ) = event(request, 1, "bank/account/$account/viewer/$forWhom", Instant.now()).setRequested(
+        ApprovalEvent.Requested.newBuilder()
+            .setTitle("$forWhom to see $account").setBefore("").setAfter("$forWhom may see $account for $lasting")
+            .putAllFacts(access + mapOf("person" to forWhom, "for" to lasting, "ticket" to "1234"))
+            .setRequester(ApprovalEvent.Person.newBuilder().setSubject(person).setName(person).addAllGroups(groups))
+            .setContentHash("hash-$request"),
+    ).build()
 
     fun given(request: String, account: String, forWhom: String, at: Instant = Instant.now()) =
         event(request, 3, "bank/account/$account/viewer/$forWhom", at).setApprovalGiven(
@@ -167,7 +176,13 @@ class GrantsSpec {
         StubApprovals().use { approvals ->
             TestCluster(1, extra = config(approvals)).running { (node) ->
                 val request = "$run-act-as"
-                val asked = ApprovalEvents.asked(request, "sam", "ada", "PT10M", access = mapOf("access" to "act-as", "customer" to "ada"))
+                val asked = ApprovalEvents.asked(
+                    request,
+                    "sam",
+                    "ada",
+                    "PT10M",
+                    access = mapOf("access" to "act-as", "customer" to "ada"),
+                )
                 val approved = Instant.now()
                 ApprovalEvents.send(asked, ApprovalEvents.given(request, "ada", "sam", approved))
                 eventually(what = "Approvals told $request applied") { approvals.to(request).isNotEmpty() }
@@ -189,17 +204,29 @@ class GrantsSpec {
                     val asks = listOf(
                         ApprovalEvents.asked("$run-for-gil", "sam", account, "PT30M", forWhom = "gil") to "gil",
                         ApprovalEvents.asked("$run-too-long", "sam", account, "PT5H") to "sam",
-                        ApprovalEvents.asked("$run-not-support", "eve", account, "PT30M", groups = emptyList()) to "eve",
+                        ApprovalEvents.asked(
+                            "$run-not-support",
+                            "eve",
+                            account,
+                            "PT30M",
+                            groups = emptyList(),
+                        ) to "eve",
                     )
                     asks.forEach { (asked, forWhom) ->
                         ApprovalEvents.send(asked, ApprovalEvents.given(asked.requestId, account, forWhom))
                     }
                     asks.forEach { (asked, _) ->
-                        eventually(what = "Approvals told ${asked.requestId} failed") { approvals.to(asked.requestId).isNotEmpty() }
+                        eventually(
+                            what = "Approvals told ${asked.requestId} failed",
+                        ) { approvals.to(asked.requestId).isNotEmpty() }
                         approvals.to(asked.requestId).single().path shouldBe "/requests/${asked.requestId}/apply-failed"
                     }
                     approvals.to("$run-too-long").single().body shouldContain "at most"
-                    listOf("gil", "sam", "eve").forEach { who -> client.calling(who, "support").status(account) shouldBe 404 }
+                    listOf(
+                        "gil",
+                        "sam",
+                        "eve",
+                    ).forEach { who -> client.calling(who, "support").status(account) shouldBe 404 }
                     node.grants.held(account).shouldBeEmpty()
                 }
             }

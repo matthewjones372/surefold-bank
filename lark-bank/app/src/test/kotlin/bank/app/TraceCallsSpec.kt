@@ -42,14 +42,26 @@ class TraceCallsSpec {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
             createContext("/") { exchange ->
                 seen += exchange.requestHeaders.getFirst("traceparent").orEmpty()
-                val body = if (exchange.requestURI.path == "/stores") """{"stores":[{"name":"bank","id":"s1"}]}""" else """{"allowed":true}"""
+                val body = if (exchange.requestURI.path ==
+                    "/stores"
+                ) {
+                    """{"stores":[{"name":"bank","id":"s1"}]}"""
+                } else {
+                    """{"allowed":true}"""
+                }
                 exchange.sendResponseHeaders(200, body.length.toLong())
                 exchange.responseBody.use { it.write(body.toByteArray()) }
             }
             start()
         }
         try {
-            val fga = Fga("http://127.0.0.1:${server.address.port}", "key", "bank", Access.BUDGET, carried = ::traceHeaders)
+            val fga = Fga(
+                "http://127.0.0.1:${server.address.port}",
+                "key",
+                "bank",
+                Access.BUDGET,
+                carried = ::traceHeaders,
+            )
             val shadow = ShadowedAccess(Access(fga, Decisions.none, SimpleMeterRegistry()), 1.seconds)
             val ada = Caller("ada", "Ada", emptySet())
 

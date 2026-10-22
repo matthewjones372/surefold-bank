@@ -1,6 +1,5 @@
 package bank.api
 
-import kotlin.time.Duration.Companion.seconds
 import bank.domain.AccountError
 import bank.domain.TransferError
 import bank.domain.Unavailable
@@ -9,24 +8,30 @@ import io.github.matthewjones372.pelican.div
 import io.github.matthewjones372.pelican.endpoint
 import io.github.matthewjones372.pelican.errorJson
 import io.github.matthewjones372.pelican.headerParam
-import io.github.matthewjones372.pelican.responseHeader
 import io.github.matthewjones372.pelican.json
 import io.github.matthewjones372.pelican.jsonBody
+import io.github.matthewjones372.pelican.optional
 import io.github.matthewjones372.pelican.orFail
 import io.github.matthewjones372.pelican.pathParam
-import io.github.matthewjones372.pelican.optional
 import io.github.matthewjones372.pelican.queryParam
-import io.github.matthewjones372.pelican.text
+import io.github.matthewjones372.pelican.responseHeader
+import kotlin.time.Duration.Companion.seconds
 
 // ---- inputs ----
 
 val accountId = pathParam<String>("accountId", description = "The account's id, chosen by whoever opens it")
 val transferId = pathParam<String>("transferId", description = "The transfer's id: the same id twice is one transfer")
-val payrollId = pathParam<String>("payrollId", description = "The payroll's id: each credit's reference derives from it")
+val payrollId = pathParam<String>(
+    "payrollId",
+    description = "The payroll's id: each credit's reference derives from it",
+)
 val limit = queryParam<Int>("limit", description = "How many to return").default(50)
 
 /** The next page of a statement: the lines before this sequence number. */
-val before = queryParam<Long>("before", description = "Only lines before this sequence number: the next page").optional()
+val before = queryParam<Long>(
+    "before",
+    description = "Only lines before this sequence number: the next page",
+).optional()
 
 /**
  * An amount as the API writes it (bank spec 0011): a plain decimal string with no more places than its currency has,
@@ -80,12 +85,7 @@ data class TransferView(
  * exists for: in every currency, every balance plus the money in flight between accounts is exactly what was paid
  * in less what was paid out. Currencies never net against each other.
  */
-data class Ledger(
-    val accounts: Long,
-    val eventsProjected: Long,
-    val conserved: Boolean,
-    val currencies: List<Books>,
-)
+data class Ledger(val accounts: Long, val eventsProjected: Long, val conserved: Boolean, val currencies: List<Books>)
 
 data class Books(
     val currency: String,
@@ -103,7 +103,13 @@ data class PayrollAccepted(val payroll: String, val sent: Int)
 
 data class Member(val node: String, val status: String, val upNumber: Int)
 
-data class ClusterView(val self: String, val leader: String?, val members: List<Member>, val unreachable: List<String>, val readModelsOn: String?)
+data class ClusterView(
+    val self: String,
+    val leader: String?,
+    val members: List<Member>,
+    val unreachable: List<String>,
+    val readModelsOn: String?,
+)
 
 data class Healthy(val ready: Boolean, val failing: List<String>)
 
@@ -159,6 +165,7 @@ val forbidden = errorJson<Forbidden>(403, "The caller's groups do not allow this
 
 val accountMissing = errorJson<AccountError.NoSuchAccount>(404, "No account with that id")
 val accountExists = errorJson<AccountError.AlreadyOpen>(409, "An account with that id is already open")
+
 /** The account holds less than was asked of it. */
 data class InsufficientFunds(val account: String, val balance: Amount, val requested: Amount, val message: String)
 
@@ -182,11 +189,17 @@ val insufficientFunds =
     errorJson<InsufficientFunds>(409, "The account cannot cover that amount").tagged("insufficient_funds")
 val dailyLimitExceeded =
     errorJson<DailyLimitExceeded>(409, "The account would pass its daily limit").tagged("daily_limit_exceeded")
-val invalidAmount = errorJson<InvalidAmount>(422, "Only a positive amount, in its currency's places and the account's currency, moves")
+val invalidAmount = errorJson<InvalidAmount>(
+    422,
+    "Only a positive amount, in its currency's places and the account's currency, moves",
+)
 val unavailable = errorJson<Unavailable>(503, "The bank could not answer in time; try again with the same reference")
 
 val transferMissing = errorJson<TransferError.NoSuchTransfer>(404, "No transfer with that id")
-val transferReused = errorJson<TransferError.TransferIdReused>(409, "That transfer id was used for a different transfer")
+val transferReused = errorJson<TransferError.TransferIdReused>(
+    409,
+    "That transfer id was used for a different transfer",
+)
 
 /** Why a transfer request cannot be a transfer at all: from and to are the same, or the amount is not one. */
 data class InvalidTransfer(val message: String)

@@ -10,10 +10,9 @@ import org.junit.jupiter.api.Test
 class AccountSpec {
     private val id = AccountId("acc-1")
 
-    private fun Account.after(vararg commands: AccountCommand): Account =
-        commands.fold(this) { state, command ->
-            state.decide(id, command, now = 0).shouldBeRight().fold(state, Account::evolve)
-        }
+    private fun Account.after(vararg commands: AccountCommand): Account = commands.fold(this) { state, command ->
+        state.decide(id, command, now = 0).shouldBeRight().fold(state, Account::evolve)
+    }
 
     private val opened = Account.Unopened.after(AccountCommand.Open("ada", gbp(1_000), "open"))
 
@@ -47,7 +46,11 @@ class AccountSpec {
 
     @Test
     fun `a zero or negative amount never moves`() {
-        opened.decide(id, AccountCommand.Deposit(gbp(0), "d"), 0).shouldBeLeft().shouldBeInstanceOf<AccountError.InvalidAmount>()
+        opened.decide(
+            id,
+            AccountCommand.Deposit(gbp(0), "d"),
+            0,
+        ).shouldBeLeft().shouldBeInstanceOf<AccountError.InvalidAmount>()
         opened.decide(id, AccountCommand.Debit(TransferId("t"), gbp(-5)), 0).shouldBeLeft()
             .shouldBeInstanceOf<AccountError.InvalidAmount>()
     }
@@ -90,7 +93,9 @@ class AccountSpec {
     @Test
     fun `a transfer's leg retried after hundreds of other commands is still applied once`() {
         val debited = opened.after(AccountCommand.Debit(TransferId("t1"), gbp(400)))
-        val busy = (1..Account.RECENT + 44).fold(debited) { state, n -> state.after(AccountCommand.Deposit(gbp(1), "d$n")) }
+        val busy = (1..Account.RECENT + 44).fold(
+            debited,
+        ) { state, n -> state.after(AccountCommand.Deposit(gbp(1), "d$n")) }
         busy.decide(id, AccountCommand.Debit(TransferId("t1"), gbp(400)), 0).shouldBeRight().shouldBeEmpty()
         busy.decide(id, AccountCommand.Credit(TransferId("t1"), gbp(400)), 0).shouldBeRight().size shouldBe 1
     }

@@ -16,14 +16,20 @@ val bearer = bearerAuth(name = "approvals", description = "An access token from 
 /** Someone signed in, and the session their token was issued to: who, on every act, and part of from where. */
 data class Signed(val person: Person, val session: String)
 
-val caller = authenticated(bearer) { id: Identity -> Signed(Person(id.subject, id.name ?: id.subject, id.groups), session(id)) }
+val caller = authenticated(
+    bearer,
+) { id: Identity -> Signed(Person(id.subject, id.name ?: id.subject, id.groups), session(id)) }
 
 /** The provider's session id when the token names one, else the token's own id, else when it was issued. */
-private fun session(id: Identity): String =
-    (id.claims["sid"] ?: id.claims["jti"])?.toString()
-        ?: id.claims["iat"]?.let { issued -> "issued:" + ((issued as? Date)?.toInstant()?.epochSecond ?: issued) }.orEmpty()
+private fun session(id: Identity): String = (id.claims["sid"] ?: id.claims["jti"])?.toString()
+    ?: id.claims["iat"]?.let { issued ->
+        "issued:" + ((issued as? Date)?.toInstant()?.epochSecond ?: issued)
+    }.orEmpty()
 
-val userAgent = headerParam<String>("User-Agent", description = "Recorded on the act, as part of where it came from").optional()
+val userAgent = headerParam<String>(
+    "User-Agent",
+    description = "Recorded on the act, as part of where it came from",
+).optional()
 
 val forwardedFor = headerParam<String>(
     "X-Forwarded-For",
@@ -46,9 +52,8 @@ object Rules {
     const val AUDITOR = "auditor"
 
     /** Everyone on the request may read it: its requester, anyone who may approve it, and the auditors and services. */
-    fun canRead(who: Person, asked: Asked): Boolean =
-        who.subject == asked.requester.subject ||
-            who.groups.any { it in asked.policy.approvers || it == AUDITOR || it == SERVICES }
+    fun canRead(who: Person, asked: Asked): Boolean = who.subject == asked.requester.subject ||
+        who.groups.any { it in asked.policy.approvers || it == AUDITOR || it == SERVICES }
 
     fun speaksForOwner(who: Person): Boolean = SERVICES in who.groups
 

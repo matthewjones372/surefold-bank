@@ -117,7 +117,9 @@ object TestKafka {
             val seen = mutableListOf<ConsumerRecord<String, ApprovalEvent>>()
             val deadline = System.nanoTime() + Duration.ofSeconds(seconds).toNanos()
             while (!until(seen) && System.nanoTime() < deadline) {
-                consumer.poll(Duration.ofMillis(200)).filter { record -> record.key() in keys }.forEach { record -> seen += record }
+                consumer.poll(
+                    Duration.ofMillis(200),
+                ).filter { record -> record.key() in keys }.forEach { record -> seen += record }
             }
             seen
         }
@@ -140,15 +142,18 @@ class RecordingOwners : Owners {
 class TestNode(val server: PelicanServer, val entities: Entities, val cluster: Cluster, val audit: JournalAudit) {
     fun client(): ApiClient = apiClient(server.baseUrl, JacksonCodecs)
 
-    fun calling(subject: String, vararg groups: String): ApiClient = client().signedInAs(TestIdentity.token(subject, *groups))
+    fun calling(subject: String, vararg groups: String): ApiClient = client().signedInAs(
+        TestIdentity.token(subject, *groups),
+    )
 }
 
 /** Calls from [address], as the ingress forwards it, with [agent] as the user agent. */
 fun ApiClient.from(address: String, agent: String): ApiClient {
     val underneath = transport
     val forwarded = object : Transport {
-        override fun send(request: RequestSpec): ResponseSpec =
-            underneath.send(request.withHeader("X-Forwarded-For", "$address, 198.51.100.1").withHeader("User-Agent", agent))
+        override fun send(request: RequestSpec): ResponseSpec = underneath.send(
+            request.withHeader("X-Forwarded-For", "$address, 198.51.100.1").withHeader("User-Agent", agent),
+        )
     }
     return ApiClient(forwarded, codecs, prefers)
 }
@@ -157,7 +162,9 @@ fun ApiClient.from(address: String, agent: String): ApiClient {
 fun ApiClient.inTrace(traceparent: String): ApiClient {
     val underneath = transport
     val traced = object : Transport {
-        override fun send(request: RequestSpec): ResponseSpec = underneath.send(request.withHeader("traceparent", traceparent))
+        override fun send(request: RequestSpec): ResponseSpec = underneath.send(
+            request.withHeader("traceparent", traceparent),
+        )
     }
     return ApiClient(traced, codecs, prefers)
 }
@@ -204,10 +211,18 @@ class TestCluster(
     private val web = List(size) { freePort() }
     private val seeds = remoting.joinToString(", ") { "\"127.0.0.1:$it\"" }
 
-    fun node(index: Int): Module =
-        (approvalsModule(if (onKafka) kafkaOwners else single<Owners> { owners }) +
-            single { server: PelicanServer, entities: Entities, cluster: Cluster, audit: JournalAudit -> TestNode(server, entities, cluster, audit) })
-            .overridingConfig(
+    fun node(index: Int): Module = (
+        approvalsModule(if (onKafka) kafkaOwners else single<Owners> { owners }) +
+            single { server: PelicanServer, entities: Entities, cluster: Cluster, audit: JournalAudit ->
+                TestNode(
+                    server,
+                    entities,
+                    cluster,
+                    audit,
+                )
+            }
+        )
+        .overridingConfig(
             """
             approvals.port = ${web[index]}
             approvals.cluster.node.name = "a$index"
@@ -238,13 +253,17 @@ class TestCluster(
 class Detached(module: Module) {
     private val stop = CountDownLatch(1)
     private val up = CountDownLatch(1)
+
     @Volatile var node: TestNode? = null
     private val thread = Thread.ofPlatform().start {
         module.use { started: TestNode ->
             node = started
             up.countDown()
             stop.await()
-        }.onLeft { error -> System.err.println("detached node did not start: $error"); up.countDown() }
+        }.onLeft { error ->
+            System.err.println("detached node did not start: $error")
+            up.countDown()
+        }
     }
 
     fun awaitUp(): TestNode {

@@ -1,6 +1,5 @@
 package bank.load
 
-import java.io.IOException
 import bank.api.Amount
 import bank.api.InsufficientFunds
 import bank.api.Movement
@@ -15,17 +14,13 @@ import bank.api.payroll
 import bank.api.transfer
 import bank.api.transferCounts
 import bank.api.withdraw
+import bank.issuer.TestIssuer
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.apiClient
 import io.github.matthewjones372.pelican.test.signedInAs
-import bank.issuer.TestIssuer
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.Scenario
 import io.github.matthewjones372.proofload.StepScope
@@ -36,13 +31,20 @@ import io.github.matthewjones372.proofload.report.writeHtmlReport
 import io.github.matthewjones372.proofload.scenario
 import io.github.matthewjones372.proofload.step
 import io.github.matthewjones372.proofload.warmingUp
+import java.io.IOException
 import java.math.BigDecimal
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import java.util.concurrent.ThreadLocalRandom
+import java.util.concurrent.atomic.LongAdder
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -50,7 +52,8 @@ import kotlin.time.Duration.Companion.seconds
 /** What a run is told, from the Job's environment. */
 data class Plan(
     val scenario: String,
-    val baseUrl: String,
+    /** Every node the load calls, each request to one of them at random, as a Service spreads its connections. */
+    val baseUrls: List<String>,
     val rate: Int,
     val over: Duration,
     val accounts: Int,
@@ -62,7 +65,7 @@ data class Plan(
     companion object {
         fun fromEnvironment(env: Map<String, String> = System.getenv()) = Plan(
             scenario = env["SCENARIO"] ?: "transfers",
-            baseUrl = env["BASE_URL"] ?: "http://127.0.0.1:8080",
+            baseUrls = (env["BASE_URLS"] ?: env["BASE_URL"] ?: "http://127.0.0.1:8080").split(',').map(String::trim),
             rate = env["RATE"]?.toInt() ?: 500,
             over = (env["SECONDS"]?.toLong() ?: 60).seconds,
             accounts = env["ACCOUNTS"]?.toInt() ?: 10_000,
@@ -83,6 +86,14 @@ private fun StepScope.expect(outcome: Outcome<*, *>, declared: (Any?) -> Boolean
     if (outcome is Outcome.Err && !declared(outcome.error)) fail("undeclared or unavailable: ${outcome.error}")
 }
 
+/** The bank's nodes, as one caller: each call goes to one of them at random. */
+class Nodes(private val clients: List<ApiClient>) {
+    fun any(): ApiClient = clients[ThreadLocalRandom.current().nextInt(clients.size)]
+}
+
+/** How each transfer was answered: settled within the bank's wait, or still moving when it ran out. */
+private val answered = ConcurrentHashMap<String, LongAdder>()
+
 private fun account(plan: Plan) = "acc-${ThreadLocalRandom.current().nextInt(plan.accounts)}"
 
 // Two currencies, so every run checks that each balances on its own (bank spec 0011): even accounts are in pounds,
@@ -95,8 +106,10 @@ private val bitcoin = Held("BTC", 8, "10", 200_000)
 private fun heldBy(account: String) = if (account.substringAfterLast('-').toInt() % 2 == 0) pounds else bitcoin
 
 /** A random amount of [held]'s currency, from its smallest unit up to [Held.most] of them. */
-private fun amountOf(held: Held, most: Long = held.most) =
-    Amount(BigDecimal.valueOf(ThreadLocalRandom.current().nextLong(1, most + 1), held.exponent).toPlainString(), held.code)
+private fun amountOf(held: Held, most: Long = held.most) = Amount(
+    BigDecimal.valueOf(ThreadLocalRandom.current().nextLong(1, most + 1), held.exponent).toPlainString(),
+    held.code,
+)
 
 /** Another account in [account]'s currency, or null where the draw gave the same one. */
 private fun partnerOf(plan: Plan, account: String): String? {
@@ -104,41 +117,57 @@ private fun partnerOf(plan: Plan, account: String): String? {
     return "acc-$draw".takeIf { it != account && draw < plan.accounts }
 }
 
-fun scenarioFor(plan: Plan, client: ApiClient): Scenario = when (plan.scenario) {
+/**
+ * The scenario's calls go to [customer], who owns every account the load opens; a payroll needs ops, so it goes to
+ * [ops]. A staff caller's every request is a recorded look (bank spec 0021), a row written that a customer's is not.
+ */
+fun scenarioFor(plan: Plan, customer: Nodes, ops: Nodes): Scenario = when (plan.scenario) {
     // Many accounts, evenly: every node's shards busy, and the journal written from all of them at once.
     "spread" -> scenario("spread") {
         exec(move) { step ->
             val random = ThreadLocalRandom.current()
             val account = account(plan)
             val body = Movement(amountOf(heldBy(account)), UUID.randomUUID().toString())
-            val outcome = if (random.nextBoolean()) client.outcome(deposit, In2(account, body))
-            else client.outcome(withdraw, In2(account, body))
+            val outcome = if (random.nextBoolean()) {
+                customer.any().outcome(deposit, In2(account, body))
+            } else {
+                customer.any().outcome(withdraw, In2(account, body))
+            }
             step.expect(outcome) { it is InsufficientFunds }
         }
     }
+
     // Everything at a handful of accounts: each is one actor, so this is the single-writer ceiling.
     "hot" -> scenario("hot") {
         exec(pay) { step ->
             val merchant = "merchant-${ThreadLocalRandom.current().nextInt(plan.hotAccounts)}"
-            step.expect(client.outcome(deposit, In2(merchant, Movement(Amount("0.01", "GBP"), UUID.randomUUID().toString())))) { false }
+            val body = Movement(Amount("0.01", "GBP"), UUID.randomUUID().toString())
+            step.expect(customer.any().outcome(deposit, In2(merchant, body))) { false }
         }
     }
+
     // Sagas between accounts on different nodes; "chaos" is the same load while pods are deleted under it.
     "transfers", "chaos" -> scenario(plan.scenario) {
         exec(send) { step ->
             val from = account(plan)
             val to = partnerOf(plan, from) ?: return@exec
-            val outcome = client.outcome(transfer, In2(UUID.randomUUID().toString(), TransferRequest(from, to, amountOf(heldBy(from)))))
+            val outcome = customer.any().outcome(
+                transfer,
+                In2(UUID.randomUUID().toString(), TransferRequest(from, to, amountOf(heldBy(from)))),
+            )
+            if (outcome is Outcome.Ok) answered.computeIfAbsent(outcome.value.status) { LongAdder() }.increment()
             step.expect(outcome) { false }
         }
     }
+
     // Credits sent in bulk through a reliable producer: many writes per request, confirmed rather than answered.
     "payroll" -> scenario("payroll") {
         exec(bulk) { step ->
             val credits = (1..100).map { account(plan).let { PayrollCredit(it, amountOf(heldBy(it), most = 1)) } }
-            step.expect(client.outcome(payroll, In2(UUID.randomUUID().toString(), Payroll(credits)))) { false }
+            step.expect(ops.any().outcome(payroll, In2(UUID.randomUUID().toString(), Payroll(credits)))) { false }
         }
     }
+
     else -> error("no scenario called ${plan.scenario}: spread, hot, transfers, chaos or payroll")
 }
 
@@ -169,8 +198,14 @@ fun settles(client: ApiClient, within: Duration = 180.seconds): Boolean {
         try {
             val counts = client.call(transferCounts, Unit)
             val books = client.call(ledger, Unit)
-            println("pending ${counts.pending}, completed ${counts.completed}, conserved ${books.conserved}, events ${books.eventsProjected}")
-            books.currencies.forEach { println("  ${it.currency}: ${it.accounts} accounts, balances ${it.balances}, in flight ${it.inFlight}, conserved ${it.conserved}") }
+            println(
+                "pending ${counts.pending}, completed ${counts.completed}, conserved ${books.conserved}, events ${books.eventsProjected}",
+            )
+            books.currencies.forEach {
+                println(
+                    "  ${it.currency}: ${it.accounts} accounts, balances ${it.balances}, in flight ${it.inFlight}, conserved ${it.conserved}",
+                )
+            }
             if (counts.pending == 0L && books.conserved) return true
         } catch (unreachable: IOException) {
             // The node asked may be restarting after chaos; the books are checked again, not given up on.
@@ -197,18 +232,30 @@ fun summary(result: RunResult): String = buildString {
     appendLine("requests ${result.count}, ok ${result.ok}, failed ${result.failed}")
     result.steps.values.forEach { stats ->
         val time = stats.responseTime
-        appendLine("  ${stats.name}: ${stats.count} — p50 ${time.p50}, p95 ${time.p95}, p99 ${time.p99}, max ${time.max}")
+        appendLine(
+            "  ${stats.name}: ${stats.count} — p50 ${time.p50}, p95 ${time.p95}, p99 ${time.p99}, max ${time.max}",
+        )
+    }
+    // A transfer still moving when the bank's wait ran out took that wait: those set the transfer's tail.
+    if (answered.isNotEmpty()) {
+        appendLine("  transfers answered: ${answered.toSortedMap().mapValues { it.value.sum() }}")
     }
 }
 
 fun main() {
     val plan = Plan.fromEnvironment()
     println("$plan")
-    val passed = apiClient(plan.baseUrl, JacksonCodecs).use { anyone ->
-        // One caller owns every account the load opens, and is in ops to read the ledger and send payrolls.
-        val client = anyone.signedInAs(tokenFrom(plan.issuer, subject = "load", groups = listOf("ops")))
-        open(plan, client)
-        val load = scenarioFor(plan, client).at(plan.rate.perSecond, over = plan.over).warmingUp(10.seconds)
+    val anyone = plan.baseUrls.map { apiClient(it, JacksonCodecs) }
+    val passed = try {
+        // One subject owns every account the load opens: as a customer for the load, and in ops for the ledger and
+        // payrolls.
+        val customerToken = tokenFrom(plan.issuer, subject = "load", groups = emptyList())
+        val opsToken = tokenFrom(plan.issuer, subject = "load", groups = listOf("ops"))
+        val customer = Nodes(anyone.map { it.signedInAs(customerToken) })
+        val ops = Nodes(anyone.map { it.signedInAs(opsToken) })
+        val client = ops.any()
+        open(plan, customer.any())
+        val load = scenarioFor(plan, customer, ops).at(plan.rate.perSecond, over = plan.over).warmingUp(10.seconds)
         val result = Proofload().run(load)
         Files.createDirectories(plan.reports)
         result.writeHtmlReport(plan.reports.resolve("${plan.scenario}.html"))
@@ -216,9 +263,10 @@ fun main() {
         val balanced = settles(client)
         println(if (balanced) "LEDGER CONSERVED" else "LEDGER DID NOT BALANCE")
         balanced && result.failed * 1_000 <= result.count
+    } finally {
+        anyone.forEach { it.close() }
     }
     // Long enough for load.sh to copy the report out of the pod before it goes.
     System.getenv("HOLD_SECONDS")?.toLong()?.let { Thread.sleep(it * 1_000) }
     exitProcess(if (passed) 0 else 1)
 }
-

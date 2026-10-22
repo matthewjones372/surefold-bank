@@ -3,9 +3,9 @@ package bank.app
 import bank.domain.AccountId
 import bank.domain.TransferError
 import bank.domain.TransferId
-import io.kotest.assertions.arrow.core.shouldBeLeft
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainAll
@@ -34,7 +34,9 @@ class TraceActorsSpec {
         val asked = HttpRequest.newBuilder(URI.create("${TestTempo.api}/api/v2/traces/$trace")).build()
         val answer = http.send(asked, HttpResponse.BodyHandlers.ofString())
         if (answer.statusCode() == 404) return Held(emptyList())
-        val spans = json.readTree(answer.body()).findValues("resourceSpans").flatMap { it.toList() }.flatMap { resource ->
+        val spans = json.readTree(
+            answer.body(),
+        ).findValues("resourceSpans").flatMap { it.toList() }.flatMap { resource ->
             val node = resource.path("resource").path("attributes")
                 .first { it.path("key").asText() == "service.instance.id" }.path("value").path("stringValue").asText()
             resource.findValues("spans").flatMap { spans: JsonNode -> spans.map { it.path("name").asText() to node } }
@@ -55,7 +57,10 @@ class TraceActorsSpec {
             // later, outside the trace it came in (lark's sharding keeps the message, not what it carried). So the
             // traced requests wait until every shard they touch has settled where it will stay.
             withClue("every node sees three members up") {
-                eventually { nodes.all { node -> node.cluster.view.members.count { it.status.name == "Up" } == 3 } } shouldBe true
+                eventually {
+                    nodes.all { node -> node.cluster.view.members.count { it.status.name == "Up" } == 3 }
+                } shouldBe
+                    true
             }
             (1..6).forEach { n ->
                 val from = "from-$n-$run"
@@ -63,7 +68,9 @@ class TraceActorsSpec {
                 // Each answered by its account, or by its saga as not yet started: their shards are in place.
                 first.bank.open(AccountId(from), "ada", gbp(5_000), "open:$from").shouldBeRight()
                 first.bank.open(AccountId(to), "bob", gbp(0), "open:$to").shouldBeRight()
-                first.bank.transferStatus(TransferId("t-$n-$run")).shouldBeLeft() shouldBe TransferError.NoSuchTransfer("t-$n-$run")
+                first.bank.transferStatus(
+                    TransferId("t-$n-$run"),
+                ).shouldBeLeft() shouldBe TransferError.NoSuchTransfer("t-$n-$run")
             }
             val traces = (1..6).map { n ->
                 val from = "from-$n-$run"
@@ -74,7 +81,11 @@ class TraceActorsSpec {
                         .header("Authorization", "Bearer ${TestIdentity.token("ada")}")
                         .header("Content-Type", "application/json")
                         .header("traceparent", "00-$trace-00f067aa0ba902b7-01")
-                        .PUT(HttpRequest.BodyPublishers.ofString("""{"from":"$from","to":"$to","amount":{"value":"1.00","currency":"GBP"}}"""))
+                        .PUT(
+                            HttpRequest.BodyPublishers.ofString(
+                                """{"from":"$from","to":"$to","amount":{"value":"1.00","currency":"GBP"}}""",
+                            ),
+                        )
                         .build(),
                     HttpResponse.BodyHandlers.discarding(),
                 ).statusCode()
@@ -84,7 +95,12 @@ class TraceActorsSpec {
 
             // Each node exports its spans on its own schedule, so wait for every span the trace is checked for, not
             // only the last ones made: the request's own spans can reach Tempo after the accounts' do.
-            val expected = listOf("PUT /transfers/{transferId}", "transfer debitsource", "account debit", "account credit")
+            val expected = listOf(
+                "PUT /transfers/{transferId}",
+                "transfer debitsource",
+                "account debit",
+                "account credit",
+            )
             val until = System.nanoTime() + 60_000_000_000
             fun complete(trace: String) = held(trace).names.containsAll(expected)
             while (!traces.all(::complete) && System.nanoTime() < until) Thread.sleep(500)

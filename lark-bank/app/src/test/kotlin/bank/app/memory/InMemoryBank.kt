@@ -66,8 +66,7 @@ fun <A> inMemoryOf(
     order: Ordering = Ordering.Told,
     faults: Faults = Faults(),
     block: InMemoryBank.() -> A,
-): A =
-    // Events are stamped from lark's clock, bound here for the test's thread.
+): A = // Events are stamped from lark's clock, bound here for the test's thread.
     clock.locally(fixedClock(NOON)) {
         testActors(clock = fixedClock(NOON), order = order, faults = faults) { InMemoryBank(this, legTimeout).block() }
     }

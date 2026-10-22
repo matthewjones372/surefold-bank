@@ -35,17 +35,17 @@ import io.github.matthewjones372.lark.cluster.spread
 import io.github.matthewjones372.lark.logInfo
 import io.github.matthewjones372.lark.stream.start
 import io.github.matthewjones372.pelican.Api
-import io.github.matthewjones372.pelican.openapi.docs
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.jetty.docs.startWithDocs
+import io.github.matthewjones372.pelican.openapi.docs
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
+import io.opentelemetry.context.Context
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
-import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.trace.ReadWriteSpan
 import io.opentelemetry.sdk.trace.ReadableSpan
 import io.opentelemetry.sdk.trace.SdkTracerProvider
@@ -111,10 +111,20 @@ private val clustered: Module =
         cluster("approvals.cluster") +
         single { actors: Actors, cluster: Cluster, settings: EntitySettings, owners: Owners, _: JournalReady ->
             actors.within {
-                val subjects = cluster.sharding(Kinds.SUBJECT, SubjectMessages, settings.passivateAfter, settings.shards) { id ->
+                val subjects = cluster.sharding(
+                    Kinds.SUBJECT,
+                    SubjectMessages,
+                    settings.passivateAfter,
+                    settings.shards,
+                ) { id ->
                     subject(id)
                 }
-                val requests = cluster.sharding(Kinds.REQUEST, RequestMessages, settings.passivateAfter, settings.shards) { id ->
+                val requests = cluster.sharding(
+                    Kinds.REQUEST,
+                    RequestMessages,
+                    settings.passivateAfter,
+                    settings.shards,
+                ) { id ->
                     request(RequestId(id), subjects::entity, owners, settings.applyEvery)
                 }
                 Entities(requests, subjects)
@@ -130,6 +140,7 @@ class JournalReady(val journal: JdbcJournal)
 object Published
 
 /** The owning service asked again on Kafka. */
+
 /**
  * The SDK Approvals' spans are made through (lark-bank spec 0024): W3C's `traceparent` in and out, sampled where a
  * request enters at [TelemetrySettings.sampled] and as its parent was otherwise, batched to Tempo when enabled.
@@ -143,7 +154,9 @@ private fun telemetry(settings: TelemetrySettings, web: WebSettings): OpenTeleme
         .setSampler(Sampler.parentBased(Sampler.traceIdRatioBased(settings.sampled)))
         .apply {
             if (settings.enabled) {
-                val exporter = OtlpHttpSpanExporter.builder().setEndpoint(settings.otlp.trimEnd('/') + "/v1/traces").build()
+                val exporter = OtlpHttpSpanExporter.builder().setEndpoint(
+                    settings.otlp.trimEnd('/') + "/v1/traces",
+                ).build()
                 addSpanProcessor(BatchSpanProcessor.builder(exporter).build())
             } else {
                 addSpanProcessor(Unexported)
@@ -174,7 +187,14 @@ val kafkaOwners: Module = single { events: ApprovalEvents -> KafkaOwners(events)
 
 private val publishing: Module =
     singleOf({ settings: KafkaSettings -> approvalEvents(settings) }, { events -> events.close() }) +
-        single { actors: Actors, cluster: Cluster, ready: JournalReady, data: DataSource, events: ApprovalEvents, settings: KafkaSettings ->
+        single {
+                actors: Actors,
+                cluster: Cluster,
+                ready: JournalReady,
+                data: DataSource,
+                events: ApprovalEvents,
+                settings: KafkaSettings,
+            ->
             actors.within {
                 val backend = StreamActors(this)
                 val heads = RequestHeads(ready.journal)
@@ -182,7 +202,15 @@ private val publishing: Module =
                 // Each a share of the requests, by slice, placed on a node and moved with its offset when that node goes.
                 cluster.spread(ApprovalTopic.PUBLISHED, settings.publishers) { share ->
                     Projection.worker {
-                        publishedRequests(ready.journal, offsets, events, heads, share, settings.publishers, settings.every).start(backend)
+                        publishedRequests(
+                            ready.journal,
+                            offsets,
+                            events,
+                            heads,
+                            share,
+                            settings.publishers,
+                            settings.every,
+                        ).start(backend)
                     }
                 }
             }
@@ -197,12 +225,30 @@ private val web: Module =
             ShardedApprovals(entities::request, entities::subject, policies::current, settings.askTimeout)
         }.boundTo<Approvals>() +
         single { identity: IdentitySettings -> signing(identity) } +
-        single { settings: TelemetrySettings, web: WebSettings -> install({ telemetry(settings, web) }) { sdk, _ -> sdk.close() } } +
-        single { approvals: Approvals, audit: JournalAudit, signing: Signing, policies: PolicyFile, sdk: OpenTelemetrySdk ->
+        single { settings: TelemetrySettings, web: WebSettings ->
+            install(
+                { telemetry(settings, web) },
+            ) { sdk, _ -> sdk.close() }
+        } +
+        single {
+                approvals: Approvals,
+                audit: JournalAudit,
+                signing: Signing,
+                policies: PolicyFile,
+                sdk: OpenTelemetrySdk,
+            ->
             approvalsApi(approvals, audit, audit, signing, sdk) { policies.current().approverGroups }
         } +
         single { api: Api, settings: WebSettings, _: Published, _: Digesting ->
-            install({ api.startWithDocs(port = settings.port, host = settings.host, docs = docs { docsPath = "/api-docs" }) }) { server, _ ->
+            install(
+                {
+                    api.startWithDocs(
+                        port = settings.port,
+                        host = settings.host,
+                        docs = docs { docsPath = "/api-docs" },
+                    )
+                },
+            ) { server, _ ->
                 server.stop()
             }.also { server ->
                 onStarted { logInfo("Approvals on ${server.baseUrl}, docs at ${server.baseUrl}/api-docs") }
@@ -220,13 +266,17 @@ private val auditing: Module =
             actors.within {
                 val backend = StreamActors(this)
                 // One worker, placed on a node and moved when it goes: a day is digested once, wherever.
-                cluster.spread("digest", 1) { _ -> Projection.worker { digesting(audit, settings.digestEvery).start(backend) } }
+                cluster.spread(
+                    "digest",
+                    1,
+                ) { _ -> Projection.worker { digesting(audit, settings.digestEvery).start(backend) } }
             }
             Digesting
         }
 
 /** Everything but how the owning service is asked again, which [owners] says. */
-fun approvalsModule(owners: Module = kafkaOwners): Module = settings + storage + publishing + owners + clustered + auditing + web
+fun approvalsModule(owners: Module = kafkaOwners): Module =
+    settings + storage + publishing + owners + clustered + auditing + web
 
 /** The application as a value: the build reads the graph from here, and `main` runs it. */
 object BankApprovals : LarkApp<PelicanServer>() {

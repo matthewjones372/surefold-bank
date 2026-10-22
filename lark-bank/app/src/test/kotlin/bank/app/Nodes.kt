@@ -2,22 +2,22 @@ package bank.app
 
 import bank.domain.Bank
 import bank.issuer.TestIssuer
-import io.github.matthewjones372.pelican.test.ApiClient
-import io.github.matthewjones372.pelican.test.signedInAs
 import io.github.matthewjones372.lark.app.Module
 import io.github.matthewjones372.lark.app.single
 import io.github.matthewjones372.lark.app.typesafe.overridingConfig
 import io.github.matthewjones372.lark.app.use
 import io.github.matthewjones372.lark.cluster.Cluster
 import io.github.matthewjones372.pelican.jetty.PelicanServer
+import io.github.matthewjones372.pelican.test.ApiClient
+import io.github.matthewjones372.pelican.test.signedInAs
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.io.IOException
 import java.net.ServerSocket
-import kotlin.random.Random
 import java.sql.DriverManager
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.random.Random
 
 /** One Postgres for the test JVM, in a container started on first use, and an empty database in it per cluster. */
 object TestPostgres {
@@ -65,7 +65,9 @@ object TestIdentity {
 }
 
 /** A client calling as [subject]: a customer, or staff with [groups]. */
-fun ApiClient.calling(subject: String, vararg groups: String): ApiClient = signedInAs(TestIdentity.token(subject, *groups))
+fun ApiClient.calling(subject: String, vararg groups: String): ApiClient = signedInAs(
+    TestIdentity.token(subject, *groups),
+)
 
 /** What a test holds of one running node. */
 class TestNode(
@@ -114,19 +116,29 @@ class TestCluster(
     private val extra: String = "",
 ) {
     private val others = (2..journals).joinToString(",") { "db-$it=${TestPostgres.fresh()}" }
+
     // Ascending, so node 0 holds the lowest seed: with static seeds only the lowest forms the cluster.
     private val ports = freePorts(size * 2)
     private val remoting = ports.take(size).sorted()
+
     // Known before a node starts, so its sign-in knows where the provider sends people back to.
     private val web = ports.drop(size)
     private val seeds = remoting.joinToString(", ") { "\"127.0.0.1:$it\"" }
 
-    fun node(index: Int, extra: String = ""): Module =
-        (bankModule + single { server: PelicanServer, bank: Bank, reads: JdbcReadModels, cluster: Cluster, persistence: Persistence,
-            grants: JdbcGrants ->
-            TestNode(server, bank, reads, cluster, persistence, grants)
-        }).overridingConfig(
-            """
+    fun node(index: Int, extra: String = ""): Module = (
+        bankModule +
+            single {
+                    server: PelicanServer,
+                    bank: Bank,
+                    reads: JdbcReadModels,
+                    cluster: Cluster,
+                    persistence: Persistence,
+                    grants: JdbcGrants,
+                ->
+                TestNode(server, bank, reads, cluster, persistence, grants)
+            }
+        ).overridingConfig(
+        """
             bank.port = ${web[index]}
             bank.identity.issuer = "${TestIdentity.issuer.url}"
             bank.identity.callbackUrl = "http://127.0.0.1:${web[index]}/callback"
@@ -148,8 +160,8 @@ class TestCluster(
             bank.database.poolSize = 16
             bank.journal.databases = "$others"
             $extra
-            """.trimIndent(),
-        )
+        """.trimIndent(),
+    )
 
     /** Every node started, one after another so each joins the one before, and all given back after [block]. */
     fun <A> running(block: (List<TestNode>) -> A): A = start(0, emptyList(), block)
@@ -167,6 +179,7 @@ class TestCluster(
 class Detached(module: Module) {
     private val stop = CountDownLatch(1)
     private val up = CountDownLatch(1)
+
     @Volatile var node: TestNode? = null
     private val thread = Thread.ofPlatform().start {
         try {

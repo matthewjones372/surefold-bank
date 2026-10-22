@@ -3,9 +3,9 @@ package bank.app
 import arrow.core.Either
 import bank.domain.AccountCommand
 import bank.domain.AccountId
-import bank.domain.TransferError
 import bank.domain.Step
 import bank.domain.Transfer
+import bank.domain.TransferError
 import bank.domain.TransferEvent
 import bank.domain.TransferId
 import bank.domain.after
@@ -14,8 +14,8 @@ import bank.domain.next
 import bank.domain.screened
 import bank.domain.unanswered
 import bank.domain.view
-import bank.protocol.AccountAsk
 import bank.protocol.AccountAnswer
+import bank.protocol.AccountAsk
 import bank.protocol.AccountMessage
 import bank.protocol.Kinds
 import bank.protocol.LegAnswered
@@ -23,11 +23,12 @@ import bank.protocol.LegTimedOut
 import bank.protocol.Nudge
 import bank.protocol.ScreeningAnswered
 import bank.protocol.ScreeningUnanswered
+import bank.protocol.TransferAnswer
 import bank.protocol.TransferAsk
 import bank.protocol.TransferEvents
-import bank.protocol.TransferAnswer
 import bank.protocol.TransferMessage
 import bank.protocol.TransferRequest
+import io.github.matthewjones372.lark.Carriers
 import io.github.matthewjones372.lark.actor.ActorRef
 import io.github.matthewjones372.lark.actor.Address
 import io.github.matthewjones372.lark.actor.Behaviour
@@ -40,13 +41,12 @@ import io.github.matthewjones372.lark.actor.Reply
 import io.github.matthewjones372.lark.actor.onStart
 import io.github.matthewjones372.lark.actor.persistent
 import io.github.matthewjones372.lark.counter
-import io.github.matthewjones372.lark.logDebug
 import io.github.matthewjones372.lark.increment
-import kotlin.time.Duration
+import io.github.matthewjones372.lark.logDebug
+import io.github.matthewjones372.lark.otel.tracedSpan
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
-import io.github.matthewjones372.lark.otel.tracedSpan
-import io.github.matthewjones372.lark.Carriers
+import kotlin.time.Duration
 
 /** Where an account entity is, by id, on whichever node asks. */
 fun interface AccountsById {
@@ -146,9 +146,11 @@ fun transfer(
         when (val step = state.next(id, screens)) {
             is Step.Screen -> when (screening) {
                 is Screening.On -> screen(screening, step)
+
                 // Screening off never asks for this step.
                 Screening.Off -> Unit
             }
+
             Step.Done -> {
                 if (state is Transfer.Moving) {
                     val answer: TransferAnswer = Either.Right(state.view(id))
@@ -158,8 +160,11 @@ fun transfer(
                 }
                 timers.cancel(LEG)
             }
+
             is Step.DebitSource -> sendLeg(step, step.account, step.command)
+
             is Step.CreditDestination -> sendLeg(step, step.account, step.command)
+
             is Step.RefundSource -> sendLeg(step, step.account, step.command)
         }
     }
@@ -171,7 +176,9 @@ fun transfer(
         command = { ctx, state, message ->
             when (message) {
                 is TransferAsk -> asked(id, state, message, waiting) { after -> ctx.drive(after) }
+
                 Nudge -> none().then { after -> ctx.drive(after) }
+
                 is LegAnswered -> {
                     val moving = state as? Transfer.Moving
                     // An answer to a leg the saga has moved past: a retry's twin, arriving second.
@@ -181,6 +188,7 @@ fun transfer(
                         val refusal = message.answer.leftOrNull()
                         when (val event = moving.after(message.step, refusal, now())) {
                             null -> none()
+
                             else -> {
                                 counter("bank.transfer.steps", "event" to event::class.simpleName.orEmpty()).increment()
                                 persist(event).then { after -> ctx.drive(after) }
@@ -188,25 +196,35 @@ fun transfer(
                         }
                     }
                 }
+
                 is LegTimedOut ->
                     if (state.next(id, screens) == message.step) none().then { after -> ctx.drive(after) } else none()
+
                 // Either is for a saga still waiting on screening; a second, or one after a move, is ignored.
                 is ScreeningAnswered ->
-                    if (state.next(id, screens) !is Step.Screen) none().also { asking = false }
-                    else screened(message.decision.screened(now())) { after ->
-                        asking = false
-                        ctx.timers.cancel(SCREEN)
-                        ctx.drive(after)
-                    }
-                ScreeningUnanswered -> when (screening) {
-                    is Screening.On ->
-                        if (state.next(id, screens) !is Step.Screen) none().also { asking = false }
-                        else screened(unanswered(screening.whenUnanswered, now())) { after ->
+                    if (state.next(id, screens) !is Step.Screen) {
+                        none().also { asking = false }
+                    } else {
+                        screened(message.decision.screened(now())) { after ->
                             asking = false
-                            counter("bank.transfer.screened_unanswered").increment()
                             ctx.timers.cancel(SCREEN)
                             ctx.drive(after)
                         }
+                    }
+
+                ScreeningUnanswered -> when (screening) {
+                    is Screening.On ->
+                        if (state.next(id, screens) !is Step.Screen) {
+                            none().also { asking = false }
+                        } else {
+                            screened(unanswered(screening.whenUnanswered, now())) { after ->
+                                asking = false
+                                counter("bank.transfer.screened_unanswered").increment()
+                                ctx.timers.cancel(SCREEN)
+                                ctx.drive(after)
+                            }
+                        }
+
                     Screening.Off -> none()
                 }
             }
@@ -237,6 +255,7 @@ private fun Effects<TransferEvent, Transfer>.asked(
                         waiting += message.reply
                         drive(after)
                     }
+
             is Transfer.Moving ->
                 if (state.from != request.from || state.to != request.to || state.amount != request.amount) {
                     none().then { message.reply(Either.Left(TransferError.TransferIdReused(id.value))) }
@@ -246,6 +265,7 @@ private fun Effects<TransferEvent, Transfer>.asked(
                     none().then { waiting += message.reply }
                 }
         }
+
     TransferRequest.Status ->
         none().then {
             message.reply(

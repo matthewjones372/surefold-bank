@@ -15,18 +15,26 @@ class PagesSpec {
 
     private val http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
 
-    private fun get(url: String, token: String? = null): HttpResponse<String> =
-        http.send(
-            HttpRequest.newBuilder(URI.create(url)).apply { token?.let { header("Authorization", "Bearer $it") } }.GET().build(),
-            HttpResponse.BodyHandlers.ofString(),
-        )
+    private fun get(url: String, token: String? = null): HttpResponse<String> = http.send(
+        HttpRequest.newBuilder(
+            URI.create(url),
+        ).apply { token?.let { header("Authorization", "Bearer $it") } }.GET().build(),
+        HttpResponse.BodyHandlers.ofString(),
+    )
 
     @Test
     fun `the pages are served beside the API, and an endpoint still answers as itself`() {
         TestCluster(1).running { (node) ->
             val base = node.server.baseUrl
             // Nobody signed in is sent to sign in first; the API's own document is open.
-            get("$base/").let { it.statusCode() shouldBe 302; it.headers().firstValue("location").get() shouldBe "/login?return=%2F" }
+            get(
+                "$base/",
+            ).let {
+                it.statusCode() shouldBe 302
+                it.headers().firstValue(
+                    "location",
+                ).get() shouldBe "/login?return=%2F"
+            }
             get("$base/api-docs").statusCode() shouldBe 200
             get("$base/accounts/nobody").statusCode() shouldBe 401
             get("$base/accounts/nobody", TestIdentity.token("ada")).let { answer ->

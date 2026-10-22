@@ -45,7 +45,9 @@ class TraceExportSpec {
         val answer = http.send(asked, HttpResponse.BodyHandlers.ofString())
         if (answer.statusCode() == 404) return emptyList()
         check(answer.statusCode() == 200) { "Tempo answered ${answer.statusCode()}: ${answer.body()}" }
-        return json.readTree(answer.body()).findValues("spans").flatMap { spans -> spans.map { it.path("name").asText() } }
+        return json.readTree(
+            answer.body(),
+        ).findValues("spans").flatMap { spans -> spans.map { it.path("name").asText() } }
     }
 
     private fun eventually(what: String, done: () -> Boolean) {
@@ -74,7 +76,11 @@ class TraceExportSpec {
                     .header("Authorization", "Bearer ${TestIdentity.token("ada")}")
                     .header("Content-Type", "application/json")
                     .header("traceparent", traceparent)
-                    .PUT(HttpRequest.BodyPublishers.ofString("""{"from":"$from","to":"$to","amount":{"value":"1.00","currency":"GBP"}}"""))
+                    .PUT(
+                        HttpRequest.BodyPublishers.ofString(
+                            """{"from":"$from","to":"$to","amount":{"value":"1.00","currency":"GBP"}}""",
+                        ),
+                    )
                     .build(),
                 HttpResponse.BodyHandlers.discarding(),
             ).statusCode()

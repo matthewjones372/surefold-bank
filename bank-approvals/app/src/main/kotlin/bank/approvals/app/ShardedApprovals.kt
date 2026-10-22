@@ -35,7 +35,11 @@ class ShardedApprovals(
     private val newId: () -> String = { "req-${UUID.randomUUID()}" },
 ) : Approvals {
 
-    override fun ask(proposal: Proposal, requester: Person, origin: Origin): Either<Unanswered, Pair<RequestId, List<RequestEvent>>> {
+    override fun ask(
+        proposal: Proposal,
+        requester: Person,
+        origin: Origin,
+    ): Either<Unanswered, Pair<RequestId, List<RequestEvent>>> {
         val id = RequestId(newId())
         val current = policies()
         return act(id, Act.Ask(proposal, requester, current.forKind(proposal.kind), current.version, origin))

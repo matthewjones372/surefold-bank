@@ -38,17 +38,29 @@ class DbRolesSpec {
         node.bank.transfer(TransferId("t-$run"), AccountId(ada1), AccountId(bob1), gbp(100)).shouldBeRight()
         // Bob's opening, deposit and credit; Ada's opening and debit.
         eventually("every line projected") {
-            node.reads.statement(auditor, bob1, 50, null).size == 3 && node.reads.statement(auditor, ada1, 50, null).size == 2
+            node.reads.statement(
+                auditor,
+                bob1,
+                50,
+                null,
+            ).size == 3 && node.reads.statement(auditor, ada1, 50, null).size == 2
         }
     }
 
     private val auditor = Caller("aud", "aud", setOf("auditor"))
 
     /** In a transaction rolled back after: as [role], with `bank.caller` and `bank.auditor` set as the bank sets them. */
-    private fun <A> Connection.seenAs(role: String, caller: String?, auditing: Boolean = false, query: (Connection) -> A): A {
+    private fun <A> Connection.seenAs(
+        role: String,
+        caller: String?,
+        auditing: Boolean = false,
+        query: (Connection) -> A,
+    ): A {
         autoCommit = false
         try {
-            prepareStatement("select set_config('role', ?, true), set_config('bank.caller', ?, true), set_config('bank.auditor', ?, true)")
+            prepareStatement(
+                "select set_config('role', ?, true), set_config('bank.caller', ?, true), set_config('bank.auditor', ?, true)",
+            )
                 .use {
                     it.setString(1, role)
                     it.setString(2, caller ?: "")
@@ -62,8 +74,11 @@ class DbRolesSpec {
         }
     }
 
-    private fun Connection.accountsIn(sql: String): Set<String> =
-        createStatement().use { it.executeQuery(sql).use { rows -> generateSequence { if (rows.next()) rows.getString(1) else null }.toSet() } }
+    private fun Connection.accountsIn(sql: String): Set<String> = createStatement().use {
+        it.executeQuery(
+            sql,
+        ).use { rows -> generateSequence { if (rows.next()) rows.getString(1) else null }.toSet() }
+    }
 
     @Test
     fun `as bank_reader with bank caller set to Ada, select star from statement_line returns only her rows`() {
@@ -80,11 +95,18 @@ class DbRolesSpec {
                 connection.seenAs("bank_reader", null) { it.accountsIn(lines) }.shouldBeEmpty()
                 // Support sees the one account a grant names, and an auditor every one.
                 connection.seenAs("bank_reader", "sam") { it.accountsIn(lines) } shouldBe setOf(bob1)
-                connection.seenAs("auditor_ro", "aud", auditing = true) { it.accountsIn(lines) } shouldBe setOf(ada1, ada2, bob1)
+                connection.seenAs(
+                    "auditor_ro",
+                    "aud",
+                    auditing = true,
+                ) { it.accountsIn(lines) } shouldBe setOf(ada1, ada2, bob1)
                 connection.seenAs("auditor_ro", "aud") { it.accountsIn(lines) }.shouldBeEmpty()
 
                 // Balances the same way, and a transfer is seen by whoever owns either end of it.
-                connection.seenAs("bank_reader", "ada") { it.accountsIn("select account_id from account_balance") } shouldBe setOf(ada1, ada2)
+                connection.seenAs(
+                    "bank_reader",
+                    "ada",
+                ) { it.accountsIn("select account_id from account_balance") } shouldBe setOf(ada1, ada2)
                 val transfers = "select transfer_id from transfer_status"
                 connection.seenAs("bank_reader", "ada") { it.accountsIn(transfers) } shouldBe setOf("t-$run")
                 connection.seenAs("bank_reader", "bob") { it.accountsIn(transfers) } shouldBe setOf("t-$run")
@@ -92,10 +114,22 @@ class DbRolesSpec {
 
                 // The reader reads: it writes nothing, and it cannot read the journal at all.
                 connection.seenAs("bank_reader", "ada") {
-                    shouldThrow<SQLException> { it.createStatement().use { s -> s.executeUpdate("update account_balance set balance = 0") } }
+                    shouldThrow<SQLException> {
+                        it.createStatement().use { s ->
+                            s.executeUpdate(
+                                "update account_balance set balance = 0",
+                            )
+                        }
+                    }
                 }
                 connection.seenAs("bank_reader", "ada") {
-                    shouldThrow<SQLException> { it.createStatement().use { s -> s.executeQuery("select count(*) from lark_journal") } }
+                    shouldThrow<SQLException> {
+                        it.createStatement().use { s ->
+                            s.executeQuery(
+                                "select count(*) from lark_journal",
+                            )
+                        }
+                    }
                 }
             }
         }

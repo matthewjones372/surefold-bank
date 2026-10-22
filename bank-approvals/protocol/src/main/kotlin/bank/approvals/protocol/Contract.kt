@@ -20,7 +20,12 @@ import bank.events.v1.ApprovalEvent
 data class RequestHead(val id: RequestId, val kind: String, val subject: String, val contentHash: String)
 
 /** The head a request's first event names: every request begins with its `Requested`. */
-fun RequestEvent.Requested.head(): RequestHead = RequestHead(asked.id, asked.proposal.kind, asked.proposal.subject, asked.hash)
+fun RequestEvent.Requested.head(): RequestHead = RequestHead(
+    asked.id,
+    asked.proposal.kind,
+    asked.proposal.subject,
+    asked.hash,
+)
 
 /** Request [head]'s event as published: [sequence] is its place in the request, from 1. */
 fun RequestEvent.toContract(head: RequestHead, sequence: Long): ApprovalEvent {
@@ -33,28 +38,58 @@ fun RequestEvent.toContract(head: RequestHead, sequence: Long): ApprovalEvent {
     origin()?.let { record.setOrigin(it) }
     when (this) {
         is RequestEvent.Requested -> record.setRequested(requested())
+
         is RequestEvent.AutoApproved -> record.setAutoApproved(
             ApprovalEvent.AutoApproved.newBuilder().putAllCondition(condition.facts).setContentHash(head.contentHash),
         )
+
         is RequestEvent.AwaitingApproval ->
-            record.setAwaitingApproval(ApprovalEvent.AwaitingApproval.newBuilder().setNeeded(needed).addAllApprovers(approvers.sorted()))
+            record.setAwaitingApproval(
+                ApprovalEvent.AwaitingApproval.newBuilder().setNeeded(needed).addAllApprovers(approvers.sorted()),
+            )
+
         is RequestEvent.Approved -> record.setApproved(
-            ApprovalEvent.Approved.newBuilder().setBy(by.toContract()).setContentHash(hash).also { built -> comment?.let(built::setComment) },
+            ApprovalEvent.Approved.newBuilder().setBy(
+                by.toContract(),
+            ).setContentHash(hash).also { built -> comment?.let(built::setComment) },
         )
+
         is RequestEvent.ApprovalGiven ->
-            record.setApprovalGiven(ApprovalEvent.ApprovalGiven.newBuilder().addAllApprovers(approvers).setContentHash(head.contentHash))
-        is RequestEvent.Rejected -> record.setRejected(ApprovalEvent.Rejected.newBuilder().setBy(by.toContract()).setComment(comment))
-        is RequestEvent.Commented -> record.setCommented(ApprovalEvent.Commented.newBuilder().setBy(by.toContract()).setText(text))
-        is RequestEvent.VoteRefused ->
-            record.setVoteRefused(ApprovalEvent.VoteRefused.newBuilder().setBy(by.toContract()).setBecause(because.toContract()))
-        is RequestEvent.Withdrawn -> record.setWithdrawn(ApprovalEvent.Withdrawn.newBuilder().setBy(by.toContract()))
-        is RequestEvent.Superseded -> record.setSuperseded(ApprovalEvent.Superseded.newBuilder().setByRequestId(by.value))
-        is RequestEvent.Expired -> record.setExpired(ApprovalEvent.Expired.getDefaultInstance())
-        is RequestEvent.Applied -> record.setApplied(
-            ApprovalEvent.Applied.newBuilder().setContentHash(hash).also { built -> by?.let { built.setBy(it.toContract()) } },
+            record.setApprovalGiven(
+                ApprovalEvent.ApprovalGiven.newBuilder().addAllApprovers(approvers).setContentHash(head.contentHash),
+            )
+
+        is RequestEvent.Rejected -> record.setRejected(
+            ApprovalEvent.Rejected.newBuilder().setBy(by.toContract()).setComment(comment),
         )
+
+        is RequestEvent.Commented -> record.setCommented(
+            ApprovalEvent.Commented.newBuilder().setBy(by.toContract()).setText(text),
+        )
+
+        is RequestEvent.VoteRefused ->
+            record.setVoteRefused(
+                ApprovalEvent.VoteRefused.newBuilder().setBy(by.toContract()).setBecause(because.toContract()),
+            )
+
+        is RequestEvent.Withdrawn -> record.setWithdrawn(ApprovalEvent.Withdrawn.newBuilder().setBy(by.toContract()))
+
+        is RequestEvent.Superseded -> record.setSuperseded(
+            ApprovalEvent.Superseded.newBuilder().setByRequestId(by.value),
+        )
+
+        is RequestEvent.Expired -> record.setExpired(ApprovalEvent.Expired.getDefaultInstance())
+
+        is RequestEvent.Applied -> record.setApplied(
+            ApprovalEvent.Applied.newBuilder().setContentHash(
+                hash,
+            ).also { built -> by?.let { built.setBy(it.toContract()) } },
+        )
+
         is RequestEvent.ApplyFailed -> record.setApplyFailed(
-            ApprovalEvent.ApplyFailed.newBuilder().setReason(reason).also { built -> by?.let { built.setBy(it.toContract()) } },
+            ApprovalEvent.ApplyFailed.newBuilder().setReason(
+                reason,
+            ).also { built -> by?.let { built.setBy(it.toContract()) } },
         )
     }
     return record.build()
@@ -81,15 +116,24 @@ private fun RequestEvent.Requested.requested(): ApprovalEvent.Requested {
 /** Where the act came from, for the events a person causes; null for what the service records itself. */
 private fun RequestEvent.origin(): ApprovalEvent.Origin? = when (this) {
     is RequestEvent.Requested -> origin
+
     is RequestEvent.Approved -> origin
+
     is RequestEvent.Rejected -> origin
+
     is RequestEvent.Commented -> origin
+
     is RequestEvent.VoteRefused -> origin
+
     is RequestEvent.Withdrawn -> origin
+
     is RequestEvent.Applied -> origin
+
     is RequestEvent.ApplyFailed -> origin
+
     is RequestEvent.AutoApproved, is RequestEvent.AwaitingApproval, is RequestEvent.ApprovalGiven, is RequestEvent.Superseded,
-    is RequestEvent.Expired -> null
+    is RequestEvent.Expired,
+    -> null
 }?.takeIf { it != Origin.NONE }?.let {
     ApprovalEvent.Origin.newBuilder().setSession(it.session).setAddress(it.address).setUserAgent(it.userAgent).build()
 }

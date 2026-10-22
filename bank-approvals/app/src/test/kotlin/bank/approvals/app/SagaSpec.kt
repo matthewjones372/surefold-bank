@@ -6,8 +6,8 @@ import bank.approvals.api.CommentBody
 import bank.approvals.api.NewRequest
 import bank.approvals.api.RequestView
 import bank.approvals.api.Requester
-import bank.approvals.api.approve
 import bank.approvals.api.applied
+import bank.approvals.api.approve
 import bank.approvals.api.ask
 import bank.approvals.api.comment
 import bank.approvals.api.health
@@ -17,8 +17,8 @@ import io.github.matthewjones372.lark.app.use
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.test.ApiClient
-import io.github.matthewjones372.pelican.test.signedInAs
 import io.github.matthewjones372.pelican.test.shouldBeOk
+import io.github.matthewjones372.pelican.test.signedInAs
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainAll
@@ -30,10 +30,20 @@ import org.junit.jupiter.api.Test
 class SagaSpec {
 
     private fun change(subject: String, kind: String = "test.change", facts: Map<String, String> = emptyMap()) =
-        NewRequest(kind, subject, "a rule, version 2", before = "amount is at least 1000", after = "amount is at least 500", facts = facts)
+        NewRequest(
+            kind,
+            subject,
+            "a rule, version 2",
+            before = "amount is at least 1000",
+            after = "amount is at least 500",
+            facts = facts,
+        )
 
-    private fun ApiClient.asked(subject: String, kind: String = "test.change", facts: Map<String, String> = emptyMap()): RequestView =
-        outcome(ask, change(subject, kind, facts)).shouldBeOk()
+    private fun ApiClient.asked(
+        subject: String,
+        kind: String = "test.change",
+        facts: Map<String, String> = emptyMap(),
+    ): RequestView = outcome(ask, change(subject, kind, facts)).shouldBeOk()
 
     private fun ApiClient.approved(view: RequestView): Outcome<*, RequestView> =
         outcome(approve, In2(view.id, ApproveBody(view.hash)))
@@ -64,7 +74,12 @@ class SagaSpec {
                 withClue("request ${view.id} approved again once its node has gone") {
                     eventually { bob.approved(view) is Outcome.Ok } shouldBe true
                 }
-                eventually { service.outcome(applied, In2(view.id, AppliedBody(view.hash))) is Outcome.Ok } shouldBe true
+                eventually {
+                    service.outcome(
+                        applied,
+                        In2(view.id, AppliedBody(view.hash)),
+                    ) is Outcome.Ok
+                } shouldBe true
                 // Said twice, applied once.
                 service.outcome(applied, In2(view.id, AppliedBody(view.hash))).shouldBeOk()
             }
@@ -75,7 +90,12 @@ class SagaSpec {
                 withClue(now.timeline.joinToString { it.what }) {
                     now.state shouldBe "applied"
                     now.timeline.count { it.what == "applied" } shouldBe 1
-                    now.timeline.map { it.what } shouldContainAll listOf("requested", "commented", "approved", "approval-given")
+                    now.timeline.map { it.what } shouldContainAll listOf(
+                        "requested",
+                        "commented",
+                        "approved",
+                        "approval-given",
+                    )
                     now.approvedBy.map { it.subject } shouldBe listOf("ada", "bob")
                 }
             }
@@ -130,7 +150,10 @@ class SagaSpec {
     fun `facts meeting the policy's condition are approved with nobody looking, and still asked to apply`() {
         val cluster = TestCluster(1)
         cluster.node(0).use { node: TestNode ->
-            val view = node.calling("rae", "engineers").asked("test/rename", kind = "test.auto", facts = mapOf("change" to "describe-only"))
+            val view = node.calling(
+                "rae",
+                "engineers",
+            ).asked("test/rename", kind = "test.auto", facts = mapOf("change" to "describe-only"))
 
             view.state shouldBe "approved"
             view.approvedAutomatically shouldBe mapOf("change" to "describe-only")

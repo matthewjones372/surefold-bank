@@ -28,22 +28,51 @@ interface Audit {
 /** Request [request]'s event [event], its [sequence]th, of [kind] about [subject], as the auditor reads it. */
 fun auditEntry(request: String, sequence: Long, kind: String, subject: String, event: RequestEvent): AuditEntry {
     fun entry(what: String, who: Person?, text: String?, hash: String? = null, origin: Origin? = null) = AuditEntry(
-        request, sequence, event.at.toString(), kind, subject, what, who?.let { PersonView(it.subject, it.name) }, text, hash,
+        request, sequence, event.at.toString(), kind, subject, what,
+        who?.let {
+            PersonView(
+                it.subject,
+                it.name,
+            )
+        },
+        text, hash,
         origin?.takeIf { it != Origin.NONE }?.let { OriginView(it.session, it.address, it.userAgent) },
     )
     return when (event) {
-        is RequestEvent.Requested -> entry("requested", event.asked.requester, event.asked.proposal.title, event.asked.hash, event.origin)
+        is RequestEvent.Requested -> entry(
+            "requested",
+            event.asked.requester,
+            event.asked.proposal.title,
+            event.asked.hash,
+            event.origin,
+        )
+
         is RequestEvent.AutoApproved -> entry("approved-automatically", null, event.condition.facts.toString())
-        is RequestEvent.AwaitingApproval -> entry("awaiting-approval", null, "${event.needed} of ${event.approvers.sorted()}")
+
+        is RequestEvent.AwaitingApproval -> entry(
+            "awaiting-approval",
+            null,
+            "${event.needed} of ${event.approvers.sorted()}",
+        )
+
         is RequestEvent.Approved -> entry("approved", event.by, event.comment, event.hash, event.origin)
+
         is RequestEvent.ApprovalGiven -> entry("approval-given", null, event.approvers.joinToString())
+
         is RequestEvent.Rejected -> entry("rejected", event.by, event.comment, origin = event.origin)
+
         is RequestEvent.Commented -> entry("commented", event.by, event.text, origin = event.origin)
+
         is RequestEvent.VoteRefused -> entry("vote-refused", event.by, event.because.name, origin = event.origin)
+
         is RequestEvent.Withdrawn -> entry("withdrawn", event.by, null, origin = event.origin)
+
         is RequestEvent.Superseded -> entry("superseded", null, event.by.value)
+
         is RequestEvent.Expired -> entry("expired", null, null)
+
         is RequestEvent.Applied -> entry("applied", event.by, null, event.hash.ifEmpty { null }, event.origin)
+
         is RequestEvent.ApplyFailed -> entry("apply-failed", event.by, event.reason, origin = event.origin)
     }
 }

@@ -1,13 +1,13 @@
 package bank.approvals.app
 
-import bank.approvals.api.Signing
 import bank.approvals.api.Rules
+import bank.approvals.api.Signing
 import io.github.matthewjones372.pelican.Authenticator
 import io.github.matthewjones372.pelican.Credentials
 import io.github.matthewjones372.pelican.Identity
-import io.github.matthewjones372.pelican.Unauthenticated
 import io.github.matthewjones372.pelican.PageGuard
 import io.github.matthewjones372.pelican.ServerEndpoint
+import io.github.matthewjones372.pelican.Unauthenticated
 import io.github.matthewjones372.pelican.oidc.oidc
 import io.github.matthewjones372.pelican.oidc.signIn
 import org.slf4j.LoggerFactory
@@ -38,12 +38,17 @@ fun signing(settings: IdentitySettings): Signing {
  * client, as that service in `services`. Pocket ID's client-credentials tokens name the client as their audience and
  * carry no groups, so the client is what says it is an owning service.
  */
-class ServiceClients(private val people: Authenticator, private val services: Map<String, Authenticator>) : Authenticator {
+class ServiceClients(private val people: Authenticator, private val services: Map<String, Authenticator>) :
+    Authenticator {
     override fun authenticate(credentials: Credentials): Identity? = try {
         people.authenticate(credentials)
     } catch (refused: Unauthenticated) {
         services.firstNotNullOfOrNull { (client, verifier) ->
-            runCatching { verifier.authenticate(credentials) }.getOrNull()?.let { Identity(client, client, setOf(Rules.SERVICES), claims = it.claims) }
+            runCatching {
+                verifier.authenticate(
+                    credentials,
+                )
+            }.getOrNull()?.let { Identity(client, client, setOf(Rules.SERVICES), claims = it.claims) }
         } ?: throw refused
     }
 }

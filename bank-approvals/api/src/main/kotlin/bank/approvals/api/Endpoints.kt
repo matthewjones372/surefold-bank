@@ -4,8 +4,8 @@ import io.github.matthewjones372.pelican.div
 import io.github.matthewjones372.pelican.endpoint
 import io.github.matthewjones372.pelican.errorJson
 import io.github.matthewjones372.pelican.jsonBody
-import io.github.matthewjones372.pelican.orFail
 import io.github.matthewjones372.pelican.optional
+import io.github.matthewjones372.pelican.orFail
 import io.github.matthewjones372.pelican.pathParam
 import io.github.matthewjones372.pelican.queryParam
 
@@ -156,7 +156,8 @@ val applied = endpoint(requestId, jsonBody<AppliedBody>()) {
     post("requests" / requestId / "applied")
     authenticatedBy(caller)
     header(userAgent, forwardedFor)
-    summary = "The owning service applied the content with this hash, which must be the content approved: the end of the request"
+    summary =
+        "The owning service applied the content with this hash, which must be the content approved: the end of the request"
     json<RequestView>().orFail(notFound, refused, forbidden, unavailable)
 }
 
@@ -193,7 +194,10 @@ data class Broken(val request: String, val sequence: Long, val why: String)
 /** What walking every chain found: how much was checked, and the first broken event of each chain that breaks. */
 data class Verification(val requests: Int, val events: Int, val digests: Int, val broken: List<Broken>)
 
-val personQuery = queryParam<String>("person", description = "Only what this subject asked for, voted on or said").optional()
+val personQuery = queryParam<String>(
+    "person",
+    description = "Only what this subject asked for, voted on or said",
+).optional()
 val subjectQuery = queryParam<String>("subject", description = "Only requests about this subject").optional()
 val requestQuery = queryParam<String>("request", description = "Only this request").optional()
 val fromQuery = queryParam<String>("from", description = "From this day (UTC), as 2026-10-01").optional()

@@ -30,7 +30,11 @@ class LogJsonSpec {
         val context = LoggerFactory.getILoggerFactory() as LoggerContext
         fun configure(name: String) {
             context.reset()
-            JoranConfigurator().apply { setContext(context) }.doConfigure(requireNotNull(javaClass.classLoader.getResource(name)))
+            JoranConfigurator().apply {
+                setContext(
+                    context,
+                )
+            }.doConfigure(requireNotNull(javaClass.classLoader.getResource(name)))
         }
         val out = ByteArrayOutputStream()
         val before = System.out
@@ -50,7 +54,10 @@ class LogJsonSpec {
         val lines = written {
             TestCluster(1).node(0).use { node: TestNode ->
                 node.calling("rae", "engineers")
-                    .outcome(ask, NewRequest("test.change", "test/logged-$run", "a rule", before = "1000", after = "500"))
+                    .outcome(
+                        ask,
+                        NewRequest("test.change", "test/logged-$run", "a rule", before = "1000", after = "500"),
+                    )
                     .shouldBeOk()
                 logAnnotated("trace_id" to "4bf92f3577b34da6a3ce929d0e0e4736", "request_id" to "r-$run") {
                     logWarn("a line about one request")

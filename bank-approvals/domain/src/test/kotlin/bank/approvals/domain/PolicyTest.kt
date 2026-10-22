@@ -8,7 +8,12 @@ import org.junit.jupiter.api.Test
 class PolicyTest {
 
     private val lowerOnly = Condition(mapOf("direction" to "lower"))
-    private val limits = Policy("bank.account-limit", approvers = setOf("ops"), needed = 1, autoApprove = listOf(lowerOnly))
+    private val limits = Policy(
+        "bank.account-limit",
+        approvers = setOf("ops"),
+        needed = 1,
+        autoApprove = listOf(lowerOnly),
+    )
 
     @Test
     fun `a condition matches facts that hold every one of its keys, extra facts or not`() {

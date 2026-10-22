@@ -51,12 +51,16 @@ class JdbcAccessLog(private val data: DataSource) : AccessLog {
         } catch (failed: java.sql.SQLException) {
             // The answer has gone already; a look not recorded is counted and alerted on, never silent.
             counter("bank.access.unrecorded").increment()
-            logWarn("a look by ${look.who.actor ?: look.who.subject} at ${look.endpoint} was not recorded: ${failed.message}")
+            logWarn(
+                "a look by ${look.who.actor ?: look.who.subject} at ${look.endpoint} was not recorded: ${failed.message}",
+            )
         }
     }
 
     override fun looksAt(account: String, limit: Int): List<Logged> = data.connection.use { connection ->
-        connection.prepareStatement("select * from access_log where account_id = ? order by id desc limit ?").use { query ->
+        connection.prepareStatement(
+            "select * from access_log where account_id = ? order by id desc limit ?",
+        ).use { query ->
             query.setString(1, account)
             query.setInt(2, limit)
             query.executeQuery().use { rows -> generateSequence { if (rows.next()) rows.logged() else null }.toList() }
@@ -75,11 +79,15 @@ class JdbcAccessLog(private val data: DataSource) : AccessLog {
                 "select * from access_log where published_at is null order by id limit ? for update skip locked",
             ).use { query ->
                 query.setInt(1, most)
-                query.executeQuery().use { rows -> generateSequence { if (rows.next()) rows.logged() else null }.toList() }
+                query.executeQuery().use { rows ->
+                    generateSequence { if (rows.next()) rows.logged() else null }.toList()
+                }
             }
             if (due.isNotEmpty()) {
                 publish(due)
-                connection.prepareStatement("update access_log set published_at = now() where id = any(?)").use { mark ->
+                connection.prepareStatement(
+                    "update access_log set published_at = now() where id = any(?)",
+                ).use { mark ->
                     mark.setArray(1, connection.createArrayOf("bigint", due.map { it.id }.toTypedArray()))
                     mark.executeUpdate()
                 }
@@ -101,8 +109,14 @@ class JdbcAccessLog(private val data: DataSource) : AccessLog {
         return Logged(
             getLong("id"),
             Look(
-                getTimestamp("at").toInstant(), who, getString("endpoint"), getString("account_id"), getInt("status"),
-                getString("address"), getString("user_agent"), getString("grant_id"),
+                getTimestamp("at").toInstant(),
+                who,
+                getString("endpoint"),
+                getString("account_id"),
+                getInt("status"),
+                getString("address"),
+                getString("user_agent"),
+                getString("grant_id"),
             ),
         )
     }
@@ -126,20 +140,24 @@ fun Logged.toEvent(): AccessEvent = AccessEvent.newBuilder().also { event ->
 }.build()
 
 /** The outbox: every [every], this node publishes what no node has yet, a batch at a time, while it runs. */
-fun accessPublisher(log: JdbcAccessLog, publisher: Publisher, backend: StreamBackend, every: Duration = 1.seconds): Running<Nothing, Long> =
-    Stream.tick(every, Unit)
-        .map { _ ->
-            log.publishSome(BATCH) { due ->
-                val sent = due.map { logged ->
-                    val key = logged.look.account ?: logged.look.who.subject
-                    publisher.publish(Outbound(EventStream.ACCESS.topic, key, logged.toEvent()))
-                }
-                CompletableFuture.allOf(*sent.toTypedArray()).join()
-                counter("bank.access.published").increment(due.size.toDouble())
-            }.toLong()
-        }
-        .restartOnDefect(Schedule.spaced(every))
-        .runFold(0L) { published, now -> published + now }
-        .start(backend)
+fun accessPublisher(
+    log: JdbcAccessLog,
+    publisher: Publisher,
+    backend: StreamBackend,
+    every: Duration = 1.seconds,
+): Running<Nothing, Long> = Stream.tick(every, Unit)
+    .map { _ ->
+        log.publishSome(BATCH) { due ->
+            val sent = due.map { logged ->
+                val key = logged.look.account ?: logged.look.who.subject
+                publisher.publish(Outbound(EventStream.ACCESS.topic, key, logged.toEvent()))
+            }
+            CompletableFuture.allOf(*sent.toTypedArray()).join()
+            counter("bank.access.published").increment(due.size.toDouble())
+        }.toLong()
+    }
+    .restartOnDefect(Schedule.spaced(every))
+    .runFold(0L) { published, now -> published + now }
+    .start(backend)
 
 private const val BATCH = 500

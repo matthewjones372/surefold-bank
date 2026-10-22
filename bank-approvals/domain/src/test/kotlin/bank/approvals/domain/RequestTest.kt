@@ -27,20 +27,32 @@ class RequestTest {
         version = "policies@abc123",
         byKind = mapOf(
             "checks.rule-version" to Policy(
-                "checks.rule-version", approvers = setOf("risk"), needed = 2, expiresAfter = Duration.ofDays(7),
-                autoApprove = listOf(Condition(mapOf("change" to "switch-off", "severity" to "low")), Condition(mapOf("change" to "describe-only"))),
+                "checks.rule-version",
+                approvers = setOf("risk"),
+                needed = 2,
+                expiresAfter = Duration.ofDays(7),
+                autoApprove = listOf(
+                    Condition(mapOf("change" to "switch-off", "severity" to "low")),
+                    Condition(mapOf("change" to "describe-only")),
+                ),
             ),
         ),
     )
 
     private val tighten = Proposal(
-        kind = "checks.rule-version", subject = "checks/rule/large-transfer", title = "large-transfer, version 4",
-        before = "amount is at least 1000", after = "amount is at least 500",
+        kind = "checks.rule-version",
+        subject = "checks/rule/large-transfer",
+        title = "large-transfer, version 4",
+        before = "amount is at least 1000",
+        after = "amount is at least 500",
         facts = mapOf("change" to "tighten", "severity" to "high"),
     )
 
     /** The history so far, and the request it makes; each step decided and applied, as the entity will. */
-    private class Saga(var request: Request = Request.Unasked, val history: MutableList<RequestEvent> = mutableListOf()) {
+    private class Saga(
+        var request: Request = Request.Unasked,
+        val history: MutableList<RequestEvent> = mutableListOf(),
+    ) {
         fun run(command: RequestCommand): Either<Refusal, List<RequestEvent>> =
             decide(request, command).onRight { events ->
                 history += events
@@ -72,7 +84,10 @@ class RequestTest {
 
     @Test
     fun `a failed apply is recorded, the request stays agreed, and the next attempt applies it`() {
-        val saga = asked().apply { approve(ada, 1); approve(bob, 2) }
+        val saga = asked().apply {
+            approve(ada, 1)
+            approve(bob, 2)
+        }
 
         saga.run(RequestCommand.MarkApplyFailed("the check's database was down", at(3))).shouldBeRight()
         saga.request.shouldBeInstanceOf<Request.Agreed>()
@@ -82,7 +97,10 @@ class RequestTest {
 
     @Test
     fun `applied said twice is applied once`() {
-        val saga = asked().apply { approve(ada, 1); approve(bob, 2) }
+        val saga = asked().apply {
+            approve(ada, 1)
+            approve(bob, 2)
+        }
         saga.run(RequestCommand.MarkApplied(tighten.contentHash, at(3))).shouldBeRight()
 
         saga.run(RequestCommand.MarkApplied(tighten.contentHash, at(4))).shouldBeRight().shouldBeEmpty()
@@ -91,7 +109,10 @@ class RequestTest {
 
     @Test
     fun `applied of content other than what was approved is refused, before and after the real one`() {
-        val saga = asked().apply { approve(ada, 1); approve(bob, 2) }
+        val saga = asked().apply {
+            approve(ada, 1)
+            approve(bob, 2)
+        }
         val swapped = tighten.copy(after = "amount is at least 5").contentHash
 
         saga.run(RequestCommand.MarkApplied(swapped, at(3))).shouldBeLeft(Refusal.NotWhatWasApproved)
@@ -107,7 +128,11 @@ class RequestTest {
     @Test
     fun `every act by a person keeps where it came from, a refused vote's included`() {
         val desk = Origin("session-1", "192.0.2.20", "Firefox")
-        val saga = Saga().apply { run(RequestCommand.Ask(RequestId("req-1"), tighten, rae, policies, t0, desk)).shouldBeRight() }
+        val saga = Saga().apply {
+            run(
+                RequestCommand.Ask(RequestId("req-1"), tighten, rae, policies, t0, desk),
+            ).shouldBeRight()
+        }
 
         saga.run(RequestCommand.Approve(rae, tighten.contentHash, at = at(1), origin = desk)).shouldBeRight()
         saga.run(RequestCommand.Comment(ada, "why?", at(2), desk)).shouldBeRight()
@@ -121,7 +146,9 @@ class RequestTest {
 
     @Test
     fun `facts meeting a policy's condition are approved automatically, and still recorded as a request`() {
-        val switchOff = tighten.copy(facts = mapOf("change" to "switch-off", "severity" to "low", "rule" to "small-atm"))
+        val switchOff = tighten.copy(
+            facts = mapOf("change" to "switch-off", "severity" to "low", "rule" to "small-atm"),
+        )
         val saga = asked(switchOff)
 
         val auto = saga.history[1].shouldBeInstanceOf<RequestEvent.AutoApproved>()
@@ -178,7 +205,10 @@ class RequestTest {
 
     @Test
     fun `nobody may withdraw it once it is approved`() {
-        val saga = asked().apply { approve(ada, 1); approve(bob, 2) }
+        val saga = asked().apply {
+            approve(ada, 1)
+            approve(bob, 2)
+        }
 
         saga.run(RequestCommand.Withdraw(rae, at(3))).shouldBeLeft(Refusal.NotWaiting)
     }
@@ -202,7 +232,10 @@ class RequestTest {
 
     @Test
     fun `an expiry timer that fires after the end finds nothing to do`() {
-        val saga = asked().apply { approve(ada, 1); approve(bob, 2) }
+        val saga = asked().apply {
+            approve(ada, 1)
+            approve(bob, 2)
+        }
 
         saga.run(RequestCommand.Expire(t0.plus(Duration.ofDays(8)))).shouldBeRight().shouldBeEmpty()
     }
@@ -226,7 +259,10 @@ class RequestTest {
 
     @Test
     fun `a second approval from one person is refused, and counts once`() {
-        val saga = asked().apply { approve(ada, 1); approve(ada, 2) }
+        val saga = asked().apply {
+            approve(ada, 1)
+            approve(ada, 2)
+        }
 
         saga.refusedAs(RefusedBecause.AlreadyApproved)
         saga.request.shouldBeInstanceOf<Request.Waiting>().approvedBy shouldBe listOf(ada)
@@ -241,7 +277,10 @@ class RequestTest {
 
     @Test
     fun `a vote after the end is refused`() {
-        val saga = asked().apply { approve(ada, 1); approve(bob, 2) }
+        val saga = asked().apply {
+            approve(ada, 1)
+            approve(bob, 2)
+        }
 
         saga.approve(cy, 3)
         saga.refusedAs(RefusedBecause.Ended)
@@ -286,8 +325,13 @@ class RequestTest {
     fun `the history replays to the same request`() {
         val saga = asked().apply {
             run(RequestCommand.Comment(ada, "a question", at(1)))
-            approve(ada, 2); approve(ada, 3); approve(bob, 4)
-            run(RequestCommand.MarkApplyFailed("down", at(5))); run(RequestCommand.MarkApplied(tighten.contentHash, at(6)))
+            approve(ada, 2)
+            approve(ada, 3)
+            approve(bob, 4)
+            run(
+                RequestCommand.MarkApplyFailed("down", at(5)),
+            )
+            run(RequestCommand.MarkApplied(tighten.contentHash, at(6)))
         }
 
         replay(saga.history) shouldBe saga.request

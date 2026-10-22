@@ -33,8 +33,14 @@ fun subject(subject: String): Behaviour<SubjectMessage, Remembered<Live>, Journa
         command = { _, state, message ->
             when (message) {
                 is Claim ->
-                    if (state.request == message.request) none().then { _ -> message.reply("") }
-                    else persist(SubjectChange.Claimed(message.request)).then { _ -> message.reply(state.request?.value.orEmpty()) }
+                    if (state.request == message.request) {
+                        none().then { _ -> message.reply("") }
+                    } else {
+                        persist(
+                            SubjectChange.Claimed(message.request),
+                        ).then { _ -> message.reply(state.request?.value.orEmpty()) }
+                    }
+
                 is Release ->
                     if (state.request == message.request) persist(SubjectChange.Released(message.request)) else none()
             }

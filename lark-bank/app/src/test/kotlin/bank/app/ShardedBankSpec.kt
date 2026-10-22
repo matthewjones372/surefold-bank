@@ -5,7 +5,6 @@ import bank.domain.AccountId
 import bank.domain.TransferError
 import bank.domain.TransferId
 import bank.domain.Unavailable
-import bank.protocol.AccountMessage
 import bank.protocol.TransferAsk
 import bank.protocol.TransferMessage
 import bank.protocol.TransferRequest

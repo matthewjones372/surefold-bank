@@ -45,7 +45,11 @@ class ExemplarsSpec {
             )
             metrics.headers().firstValue("Content-Type").orElse("") shouldStartWith "application/openmetrics-text"
             metrics.body().trimEnd() shouldEndWith "# EOF"
-            val latencies = metrics.body().lines().filter { it.startsWith("http_server_request_duration_seconds_bucket") }
+            val latencies = metrics.body().lines().filter {
+                it.startsWith(
+                    "http_server_request_duration_seconds_bucket",
+                )
+            }
             latencies.filter { "trace_id=\"$sampled\"" in it }.shouldNotBeEmpty()
             latencies.filter { "trace_id=\"$unsampled\"" in it }.shouldBeEmpty()
         }

@@ -63,7 +63,9 @@ class AccessLogSpec {
                 assertThat(page.locator("#looks")).containsText("viewed the statement", patiently)
                 assertThat(page.locator("#looks")).containsText("viewed the account", patiently)
                 // Names are for the auditor: Ada sees the role.
-                withClue("Ada's page names nobody") { page.locator("#looks").innerText().contains("bob") shouldBe false }
+                withClue(
+                    "Ada's page names nobody",
+                ) { page.locator("#looks").innerText().contains("bob") shouldBe false }
             }
 
             val published = TestKafka.read<AccessEvent>("bank.access-events", setOf(account)) { seen ->
@@ -90,14 +92,19 @@ class AccessLogSpec {
 
                 val auditor = client.calling("aud", "auditor")
                 eventually("the refusals recorded") {
-                    auditor.outcome(accountLooks, account).shouldBeOk().mapNotNull { it.who }.containsAll(listOf("eve", "sam"))
+                    auditor.outcome(
+                        accountLooks,
+                        account,
+                    ).shouldBeOk().mapNotNull { it.who }.containsAll(listOf("eve", "sam"))
                 }
                 val seen = auditor.outcome(accountLooks, account).shouldBeOk()
                 seen.filter { it.who == "eve" || it.who == "sam" }.forEach { it.status shouldBe 404 }
                 seen.mapNotNull { it.who } shouldNotContain "ada"
 
                 // Ada is told of looks that saw something, not of attempts that saw nothing.
-                client.calling("ada").outcome(accountLooks, account).shouldBeOk().filter { it.role != "Auditor" }.shouldBeEmpty()
+                client.calling(
+                    "ada",
+                ).outcome(accountLooks, account).shouldBeOk().filter { it.role != "Auditor" }.shouldBeEmpty()
                 client.calling("eve").response(accountLooks, account).status shouldBe 404
             }
         }
