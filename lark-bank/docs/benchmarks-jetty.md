@@ -249,6 +249,151 @@ on both builds and lower on Jetty by 50–100 MiB in most runs, inside the up to
 between runs of one build. Screened transfers as shipped have a higher p99 on Jetty in three of its four runs, 2.89–4.36 s
 against 1.93–4.21 s, which more runs would settle.
 
+## The load spread over every node
+
+The same harness on main before and after #55, both on the Jetty bank above:
+
+- **Before**: `c9cc57c9f185c00851074a097a0b225ddf3a85c8` (main with #54). The load sends every request to bank-1 and calls as `ops`, so each request
+  is also a recorded look, a row and a Kafka record (bank spec 0021).
+- **After**: `c7fea003749d101992425a4734bcc27eb493f9c0` (main with #55). The load sends each request to one of the three nodes at random (`BASE_URLS`),
+  and calls as the accounts' owner; `ops` only sends payrolls and reads the ledger. The summary counts how each transfer
+  was answered: `Completed`, or `Debited` or `Pending` when the bank's 1 s `transferWait` ran out first.
+
+The bank's code is the same on both: with whitespace, trailing commas, braces and import order set aside, every file
+under `src/main` but `Load.kt` reads the same, and `application.conf` only adds `TRANSFER_WAIT`, left at 1 s. lark
+`e2710b5` and pelican `53efbe3` on both. So what differs is how the load calls the bank.
+
+Same machine and method as above, every scenario on a fresh cluster, each twice and `transfers` at 400/s three times,
+one side and then the other. The answered counts include the load's 10 s warm-up.
+
+### Summary
+
+| Scenario | Failed, before | Failed, after | p50, before | p50, after | p99, before | p99, after | Larger than the noise? |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `spread` at 400/s | 0, 0 | 0, 0 | 3.5, 3.6 ms | 4.0, 3.8 ms | 63, 81 ms | 127, 54 ms | no |
+| `hot` at 600/s | 0, 0 | 0, 0 | 4.7, 4.8 ms | 4.1, 3.9 ms | 39, 66 ms | 42, 34 ms | p50 lower on after, by under 1 ms |
+| `transfers` at 200/s | 0, 0 | 0, 0 | 32, 32 ms | 55, 49 ms | 419, 287 ms | 789, 579 ms | yes: slower on after |
+| `transfers` at 400/s | 0, 0, 0 | 0, 0, 0 | 250, 163, 199 ms | 363, 263, 508 ms | 2.48, 1.70, 1.59 s | 2.06, 2.23, 2.25 s | p50 slower on after; p95 and p99 overlap |
+| `payroll` of 100 at 2/s | 0, 0 | 0, 0 | 4.9, 4.3 ms | 7.4, 7.9 ms | 20, 16 ms | 29, 31 ms | yes: slower on after |
+| `payroll` of 100 at 20/s | 1,165, 1,160 | 315, 359 | timeout | 18.9, 22.5 s | timeout | timeout | yes: after answers about 860 of 1,200, before about 40 |
+
+Every run conserved the ledger. On after, the highest rate at which `transfers` runs clean (under 1 in 1,000 failed and
+a p99 under 1 s) is about 200 a second: both runs at 200/s were clean, one of two at 225/s, neither at 250/s. No run
+failed a transfer at any rate up to 400/s; what passes 1 s first is the tail, as the share answered before completing
+grows from 2–3% at 200/s to 26–38% at 400/s.
+
+### Results
+
+#### spread, 400/s
+
+| | Before, run 1 | Before, run 2 | After, run 1 | After, run 2 |
+|---|---:|---:|---:|---:|
+| Failed, of | 0 of 24,000 | 0 of 24,000 | 0 of 24,000 | 0 of 24,000 |
+| Service time p50 | 3.5 ms | 3.6 ms | 4.0 ms | 3.8 ms |
+| p95 | 20 ms | 25 ms | 39 ms | 20 ms |
+| p99 | 63 ms | 81 ms | 127 ms | 54 ms |
+| max | 145 ms | 184 ms | 348 ms | 213 ms |
+| Proofload: kept its schedule | no | no | no | no |
+| Ledger conserved | yes | yes | yes | yes |
+| Peak RSS, bank-1 / 2 / 3 (MiB) | 1047 / 820 / 939 | 1037 / 973 / 992 | 1022 / 1069 / 1102 | 1050 / 930 / 1068 |
+
+#### hot, 600/s at one account
+
+| | Before, run 1 | Before, run 2 | After, run 1 | After, run 2 |
+|---|---:|---:|---:|---:|
+| Failed, of | 0 of 36,000 | 0 of 36,000 | 0 of 36,000 | 0 of 36,000 |
+| Service time p50 | 4.7 ms | 4.8 ms | 4.1 ms | 3.9 ms |
+| p95 | 18 ms | 24 ms | 17 ms | 15 ms |
+| p99 | 39 ms | 66 ms | 42 ms | 34 ms |
+| max | 105 ms | 159 ms | 139 ms | 137 ms |
+| Proofload: kept its schedule | no | no | no | no |
+| Ledger conserved | yes | yes | yes | yes |
+| Peak RSS, bank-1 / 2 / 3 (MiB) | 1019 / 608 / 1032 | 1058 / 534 / 1054 | 1025 / 929 / 1053 | 1037 / 1043 / 1091 |
+
+#### transfers, 200/s
+
+| | Before, run 1 | Before, run 2 | After, run 1 | After, run 2 |
+|---|---:|---:|---:|---:|
+| Failed, of | 0 of 12,000 | 0 of 12,000 | 0 of 12,000 | 0 of 12,000 |
+| Service time p50 | 32 ms | 32 ms | 55 ms | 49 ms |
+| p95 | 208 ms | 166 ms | 447 ms | 302 ms |
+| p99 | 419 ms | 287 ms | 789 ms | 579 ms |
+| max | 700 ms | 600 ms | 1.53 s | 1.17 s |
+| Proofload: kept its schedule | yes | no | yes | yes |
+| Ledger conserved | yes | yes | yes | yes |
+| Answered completed / debited / pending | — | — | 13,706 / 240 / 52 (2% not completed) | 13,584 / 321 / 90 (3% not completed) |
+| Peak RSS, bank-1 / 2 / 3 (MiB) | 1042 / 995 / 1029 | 1071 / 1037 / 988 | 1112 / 1109 / 1073 | 1089 / 1066 / 1074 |
+
+#### transfers, 400/s
+
+| | Before, run 1 | Before, run 2 | Before, run 3 | After, run 1 | After, run 2 | After, run 3 |
+|---|---:|---:|---:|---:|---:|---:|
+| Failed, of | 0 of 24,000 | 0 of 24,000 | 0 of 24,000 | 0 of 24,000 | 0 of 24,000 | 0 of 24,000 |
+| Service time p50 | 250 ms | 163 ms | 199 ms | 363 ms | 263 ms | 508 ms |
+| p95 | 1.80 s | 1.31 s | 1.26 s | 1.67 s | 1.69 s | 1.81 s |
+| p99 | 2.48 s | 1.70 s | 1.59 s | 2.06 s | 2.23 s | 2.25 s |
+| max | 4.03 s | 2.43 s | 2.42 s | 2.99 s | 3.59 s | 3.44 s |
+| Proofload: kept its schedule | yes | yes | yes | yes | yes | yes |
+| Ledger conserved | yes | yes | yes | yes | yes | yes |
+| Answered completed / debited / pending | — | — | — | 19,346 / 4,417 / 4,227 (31% not completed) | 20,718 / 3,977 / 3,295 (26% not completed) | 17,315 / 5,795 / 4,884 (38% not completed) |
+| Peak RSS, bank-1 / 2 / 3 (MiB) | 1049 / 1097 / 1080 | 1039 / 1089 / 1059 | 1100 / 1102 / 1123 | 1089 / 1055 / 1056 | 1139 / 1111 / 1021 | 1024 / 1048 / 1078 |
+
+#### payroll of 100, 2/s
+
+| | Before, run 1 | Before, run 2 | After, run 1 | After, run 2 |
+|---|---:|---:|---:|---:|
+| Failed, of | 0 of 120 | 0 of 120 | 0 of 120 | 0 of 120 |
+| Service time p50 | 4.9 ms | 4.3 ms | 7.4 ms | 7.9 ms |
+| p95 | 11 ms | 10 ms | 21 ms | 22 ms |
+| p99 | 20 ms | 16 ms | 29 ms | 31 ms |
+| max | 27 ms | 20 ms | 40 ms | 32 ms |
+| Proofload: kept its schedule | no | no | no | no |
+| Ledger conserved | yes | yes | yes | yes |
+| Peak RSS, bank-1 / 2 / 3 (MiB) | 1096 / 609 / 740 | 1109 / 701 / 751 | 1106 / 1052 / 1034 | 1065 / 1054 / 1048 |
+
+#### payroll of 100, 20/s
+
+| | Before, run 1 | Before, run 2 | After, run 1 | After, run 2 |
+|---|---:|---:|---:|---:|
+| Failed, of | 1,165 of 1,200 | 1,160 of 1,200 | 315 of 1,200 | 359 of 1,200 |
+| Service time p50 | 30.10 s | 30.10 s | 18.90 s | 22.50 s |
+| p95 | 30.10 s | 30.10 s | 30.10 s | 30.10 s |
+| p99 | 30.10 s | 30.10 s | 30.30 s | 30.20 s |
+| max | 30.10 s | 30.10 s | 30.50 s | 30.30 s |
+| Proofload: kept its schedule | yes | yes | yes | yes |
+| Ledger conserved | yes | yes | yes | yes |
+| Peak RSS, bank-1 / 2 / 3 (MiB) | 1123 / 1061 / 1012 | 1095 / 876 / 1055 | 1084 / 1195 / 1126 | 1101 / 1144 / 1156 |
+
+#### transfers on the spread load, by rate
+
+| Rate | Failed | p50 | p95 | p99 | max | Answered completed / debited / pending | Clean |
+|---:|---:|---:|---:|---:|---:|---|---|
+| 200/s | 0 | 55 ms | 447 ms | 789 ms | 1.53 s | 13,706 / 240 / 52 (2% not completed) | yes |
+| 200/s | 0 | 49 ms | 302 ms | 579 ms | 1.17 s | 13,584 / 321 / 90 (3% not completed) | yes |
+| 225/s | 0 | 72 ms | 440 ms | 709 ms | 1.38 s | 15,026 / 588 / 131 (5% not completed) | yes |
+| 225/s | 0 | 76 ms | 638 ms | 1.09 s | 1.64 s | 14,734 / 700 / 312 (6% not completed) | no, p99 over 1 s |
+| 250/s | 0 | 90 ms | 692 ms | 1.12 s | 1.79 s | 16,422 / 795 / 281 (6% not completed) | no, p99 over 1 s |
+| 250/s | 0 | 102 ms | 893 ms | 1.32 s | 1.83 s | 16,138 / 1,085 / 274 (8% not completed) | no, p99 over 1 s |
+| 300/s | 0 | 129 ms | 986 ms | 1.41 s | 2.40 s | 18,852 / 1,204 / 937 (10% not completed) | no, p99 over 1 s |
+| 300/s | 0 | 141 ms | 1.27 s | 1.61 s | 2.43 s | 18,739 / 1,565 / 687 (11% not completed) | no, p99 over 1 s |
+| 400/s | 0 | 363 ms | 1.67 s | 2.06 s | 2.99 s | 19,346 / 4,417 / 4,227 (31% not completed) | no, p99 over 1 s |
+| 400/s | 0 | 263 ms | 1.69 s | 2.23 s | 3.59 s | 20,718 / 3,977 / 3,295 (26% not completed) | no, p99 over 1 s |
+| 400/s | 0 | 508 ms | 1.81 s | 2.25 s | 3.44 s | 17,315 / 5,795 / 4,884 (38% not completed) | no, p99 over 1 s |
+
+### What is larger than the noise
+
+- **Transfers are slower on the spread load at 200/s**, p50 49–55 ms against 32 ms and p99 579–789 ms against
+  287–419 ms, and at 400/s on p50, 263–508 ms against 163–250 ms. At 400/s the p95 and p99 overlap.
+- **Payroll at 2/s is slower**, p50 7.4–7.9 ms against 4.3–4.9 ms (120 requests a run).
+- **Payroll at 20/s is answered**: 841 and 885 of 1,200 against 35 and 40. Both still lose requests to the load
+  client's 30 s timeout.
+- **Memory follows the load**: bank-2, which the before load never calls, peaks at 534–701 MiB under `hot` and
+  `payroll` at 2/s before and 929–1,054 MiB after.
+
+`spread`, and `hot` apart from its p50, are within the noise. The bank under before is the bank measured in the
+sections above, and its `transfers` at 400/s here (p99 1.59–2.48 s) is slower than the same build there (1.11–1.50 s):
+runs hours apart on this host, with restarts between, differ by more than runs within one sitting, so compare within a section.
+
 ## petshop
 
 petshop at `c50e3e02459c628558cba324221c90a043c6414c`, on the same machine after the bank's runs, with JDK 25.
