@@ -85,6 +85,10 @@ dependencies {
 
 tasks.withType<Test> {
     maxHeapSize = "2g"
+    // The cluster specs spend their time starting nodes, containers and Chromium, one class after another (bank spec
+    // 0028). Test classes run in several JVMs at once: each has its own Postgres container and picks free ports, so
+    // they share nothing. Half the cores, at most three, so each JVM's 2 GB heap and containers fit a CI runner.
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceIn(1, 3)
 }
 
 // The bank runs on Jetty: a dependency that brings Pekko or Scala back fails `check`.
