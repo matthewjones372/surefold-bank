@@ -80,7 +80,8 @@ private const val SCREEN = "screen"
  * state, so a saga recovered on another node carries on from where its last event left it. One recovered before its
  * credit was written debits again, which the account answers as applied (spec 0031). The replies waiting for it to
  * settle are this incarnation's only: after a move they are gone, and the caller's own timeout answers it as still
- * pending.
+ * pending. A transfer's id is new when its saga first starts, so it starts assuming new and reads its journal only
+ * once a first command shows otherwise (spec 0031, lark spec 0198).
  */
 fun transfer(
     id: TransferId,
@@ -230,10 +231,7 @@ fun transfer(
                         val refusal = message.answer.leftOrNull()
                         when (val event = moving.after(message.step, refusal, now())) {
                             null -> none()
-
-                            else -> {
-                                took(event, moving, ctx)
-                            }
+                            else -> took(event, moving, ctx)
                         }
                     }
                 }
@@ -271,8 +269,6 @@ fun transfer(
             }
         },
         event = Transfer::evolve,
-        // A transfer's id is new when its saga first starts, so its journal is not read until a first command shows
-        // otherwise (bank spec 0031, lark spec 0198).
         start = Start.assumingNew,
     ).onRecovered { ctx, recovered -> ctx.started(recovered.value) }
 }
