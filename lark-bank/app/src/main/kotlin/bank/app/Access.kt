@@ -1,8 +1,5 @@
 package bank.app
 
-import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
 import bank.api.Caller
 import bank.api.Grants
 import bank.events.v1.ApprovalEvent
@@ -10,6 +7,11 @@ import bank.events.v1.ApprovalEvent.EventCase
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.matthewjones372.lark.Schedule
 import io.github.matthewjones372.lark.counter
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.fold
+import io.github.matthewjones372.lark.fail.left
+import io.github.matthewjones372.lark.fail.nonFatalOrThrow
+import io.github.matthewjones372.lark.fail.right
 import io.github.matthewjones372.lark.increment
 import io.github.matthewjones372.lark.kafka.Kafka
 import io.github.matthewjones372.lark.kafka.Topic
@@ -35,6 +37,7 @@ import java.net.http.HttpResponse
 import java.sql.Timestamp
 import java.time.Duration
 import java.time.Instant
+import java.time.format.DateTimeParseException
 import javax.sql.DataSource
 import kotlin.time.Duration.Companion.seconds
 
@@ -85,7 +88,7 @@ data class Ask(val person: String, val access: Access, val lasting: Duration) {
             val facts = requested.factsMap
             val asker = requested.requester
             val written = facts["for"]
-            val lasting = if (written == null) USUAL_GRANT else Either.catch { Duration.parse(written) }.getOrNull()
+            val lasting = if (written == null) USUAL_GRANT else parsedOrNull(written)
             val access = when (facts["access"]) {
                 "view" -> facts["account"]?.takeIf(String::isNotBlank)?.let(Access::View)
                     ?: return "a grant to view names the account it is for".left()
@@ -103,6 +106,12 @@ data class Ask(val person: String, val access: Access, val lasting: Duration) {
                 lasting > LONGEST_GRANT -> "a grant lasts at most $LONGEST_GRANT".left()
                 else -> Ask(asker.subject, access, lasting).right()
             }
+        }
+
+        private fun parsedOrNull(written: String): Duration? = try {
+            Duration.parse(written)
+        } catch (_: DateTimeParseException) {
+            null
         }
     }
 }
@@ -387,13 +396,14 @@ fun grantsHeard(kafka: KafkaSettings, keeper: GrantKeeper, backend: StreamBacken
             // In the trace the event was written in (spec 0024), so telling Approvals it applied continues it.
             record.within {
                 // A record nobody can read is skipped, not read again forever; one that fails to apply is retried.
-                Either.catch { unframed(record.value()) }.fold(
+                runCatching { unframed(record.value()) }.fold(
+                    keeper::heard,
                     { unreadable ->
+                        unreadable.nonFatalOrThrow()
                         logWarn(
                             "skipping ${ApprovalTopic.NAME} offset ${record.offset()}: ${unreadable.message}",
                         )
                     },
-                    keeper::heard,
                 )
             }
         }

@@ -33,7 +33,7 @@ account's currency, at the places the bank's registry gives it, so pounds to the
 
 | Module | Holds |
 |---|---|
-| `domain` | accounts, money in currencies, the transfer saga as a pure state machine (Arrow only) |
+| `domain` | accounts, money in currencies, the transfer saga as a pure state machine (lark's `Either` only) |
 | `protocol` | the wire shapes, mapped to and from the domain by [kimney](https://github.com/matthewjones372/kimney), and the published contract's mapping |
 | `events` | the Protobuf contract on Kafka, published as `lark-bank-events` |
 | `api` | the endpoints, their declared refusals, the handlers (Pelican) |

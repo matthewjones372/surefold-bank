@@ -14,12 +14,12 @@ import bank.approvals.api.health
 import bank.approvals.api.read
 import bank.approvals.domain.RequestId
 import io.github.matthewjones372.lark.app.use
+import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.shouldBeOk
 import io.github.matthewjones372.pelican.test.signedInAs
-import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual

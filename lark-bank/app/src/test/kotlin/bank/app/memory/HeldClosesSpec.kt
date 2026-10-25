@@ -21,9 +21,9 @@ import io.github.matthewjones372.lark.actor.Reply
 import io.github.matthewjones372.lark.actor.TestActors
 import io.github.matthewjones372.lark.actor.events
 import io.github.matthewjones372.lark.actor.testActors
+import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.lark.clock
 import io.github.matthewjones372.lark.fixedClock
-import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

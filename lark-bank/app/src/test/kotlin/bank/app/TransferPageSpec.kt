@@ -4,7 +4,7 @@ import bank.domain.AccountId
 import com.microsoft.playwright.Route
 import com.microsoft.playwright.assertions.LocatorAssertions
 import com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat
-import io.kotest.assertions.arrow.core.shouldBeRight
+import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 

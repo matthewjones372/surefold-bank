@@ -1,6 +1,5 @@
 package bank.app
 
-import arrow.core.Either
 import bank.api.screening.Amount
 import bank.api.screening.ProposedTransfer
 import bank.api.screening.ScreeningClient
@@ -9,6 +8,7 @@ import bank.domain.ScreeningOutcome
 import bank.domain.Step
 import bank.domain.TransferId
 import bank.domain.WhenUnanswered
+import io.github.matthewjones372.lark.fail.Either
 import io.github.matthewjones372.lark.timed
 import io.github.matthewjones372.pelican.ClientRequest
 import io.github.matthewjones372.pelican.ClientTransport

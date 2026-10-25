@@ -1,12 +1,12 @@
 package bank.api
 
-import arrow.core.Either
 import bank.domain.AccountError
 import bank.domain.Currencies
 import bank.domain.Currency
 import bank.domain.Listed
 import bank.domain.Money
 import bank.domain.Unavailable
+import io.github.matthewjones372.lark.fail.Either
 import io.github.matthewjones372.pelican.Outcome
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe

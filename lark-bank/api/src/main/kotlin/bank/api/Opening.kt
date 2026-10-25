@@ -1,11 +1,12 @@
 package bank.api
 
-import arrow.core.Either
-import arrow.core.raise.either
 import bank.domain.AccountError
 import bank.domain.Currencies
 import bank.domain.Money
 import bank.domain.Unavailable
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.attempt
+import io.github.matthewjones372.lark.fail.bind
 
 // Opening an account with its daily limit, and the refusals that limit adds (bank spec 0027).
 
@@ -18,7 +19,7 @@ internal fun capped(refused: AccountError.DailyLimitExceeded) = DailyLimitExceed
 )
 
 /** An opening's initial amount and daily limit, both read in the account's currency (bank spec 0027). */
-internal fun Currencies.opening(body: OpenAccount): Either<InvalidAmount, Pair<Money, Money?>> = either {
+internal fun Currencies.opening(body: OpenAccount): Either<InvalidAmount, Pair<Money, Money?>> = attempt {
     amount(Amount(body.initial, body.currency)).bind() to
         body.dailyLimit?.let { amount(Amount(it, body.currency)).bind() }
 }

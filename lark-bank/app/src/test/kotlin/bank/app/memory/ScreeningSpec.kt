@@ -1,8 +1,5 @@
 package bank.app.memory
 
-import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
 import bank.app.AccountsById
 import bank.app.NoDecision
 import bank.app.Screener
@@ -39,6 +36,9 @@ import io.github.matthewjones372.lark.actor.TestActors
 import io.github.matthewjones372.lark.actor.events
 import io.github.matthewjones372.lark.actor.testActors
 import io.github.matthewjones372.lark.clock
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.left
+import io.github.matthewjones372.lark.fail.right
 import io.github.matthewjones372.lark.fixedClock
 import io.github.matthewjones372.lark.metrics
 import io.kotest.matchers.collections.shouldHaveSize

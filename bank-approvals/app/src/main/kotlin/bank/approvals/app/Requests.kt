@@ -1,6 +1,5 @@
 package bank.approvals.app
 
-import arrow.core.Either
 import bank.approvals.domain.Refusal
 import bank.approvals.domain.Request
 import bank.approvals.domain.RequestCommand
@@ -31,6 +30,8 @@ import io.github.matthewjones372.lark.actor.onStart
 import io.github.matthewjones372.lark.actor.persistent
 import io.github.matthewjones372.lark.clock
 import io.github.matthewjones372.lark.counter
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.fold
 import io.github.matthewjones372.lark.increment
 import io.github.matthewjones372.lark.logWarn
 import java.time.Instant

@@ -1,6 +1,5 @@
 package bank.app
 
-import arrow.core.Either
 import bank.api.Busy
 import bank.api.Healthy
 import bank.api.PayrollAccepted
@@ -63,6 +62,8 @@ import io.github.matthewjones372.lark.cluster.sharding
 import io.github.matthewjones372.lark.cluster.singleton
 import io.github.matthewjones372.lark.cluster.spread
 import io.github.matthewjones372.lark.cluster.topic
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.onLeft
 import io.github.matthewjones372.lark.logInfo
 import io.github.matthewjones372.lark.stream.Running
 import io.github.matthewjones372.lark.stream.StreamBackend

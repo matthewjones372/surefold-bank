@@ -1,7 +1,5 @@
 package bank.app
 
-import arrow.core.Either
-import arrow.core.left
 import bank.domain.AccountCommand
 import bank.domain.AccountError
 import bank.domain.AccountId
@@ -22,6 +20,10 @@ import bank.protocol.TransferRequest
 import io.github.matthewjones372.lark.actor.ActorRef
 import io.github.matthewjones372.lark.actor.AskFailure
 import io.github.matthewjones372.lark.actor.ask
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.fold
+import io.github.matthewjones372.lark.fail.left
+import io.github.matthewjones372.lark.fail.mapLeft
 import io.github.matthewjones372.lark.timed
 import kotlin.time.Duration
 

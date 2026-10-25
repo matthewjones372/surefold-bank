@@ -1,6 +1,5 @@
 package bank.protocol
 
-import arrow.core.Either
 import bank.domain.Account
 import bank.domain.AccountCommand
 import bank.domain.AccountError
@@ -23,6 +22,7 @@ import io.github.matthewjones372.lark.actor.remote.MessageCodec
 import io.github.matthewjones372.lark.actor.remote.Refs
 import io.github.matthewjones372.lark.actor.remote.decode
 import io.github.matthewjones372.lark.actor.remote.encode
+import io.github.matthewjones372.lark.fail.Either
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 

@@ -1,6 +1,5 @@
 package bank.app
 
-import arrow.core.Either
 import bank.domain.AccountCommand
 import bank.domain.AccountId
 import bank.domain.Step
@@ -41,6 +40,8 @@ import io.github.matthewjones372.lark.actor.Remembered
 import io.github.matthewjones372.lark.actor.Reply
 import io.github.matthewjones372.lark.actor.persistent
 import io.github.matthewjones372.lark.counter
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.fold
 import io.github.matthewjones372.lark.increment
 import io.github.matthewjones372.lark.logDebug
 import io.github.matthewjones372.lark.otel.tracedSpan

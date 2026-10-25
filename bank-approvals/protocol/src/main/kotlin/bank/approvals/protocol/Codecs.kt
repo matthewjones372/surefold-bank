@@ -1,6 +1,5 @@
 package bank.approvals.protocol
 
-import arrow.core.Either
 import bank.approvals.domain.Chain
 import bank.approvals.domain.Refusal
 import bank.approvals.domain.RequestEvent
@@ -18,6 +17,8 @@ import io.github.matthewjones372.lark.actor.remote.WireIn
 import io.github.matthewjones372.lark.actor.remote.WireOut
 import io.github.matthewjones372.lark.actor.remote.kotlinx.Kotlinx
 import io.github.matthewjones372.lark.actor.versioned
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.fold
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.protobuf.ProtoBuf
 import bank.approvals.protocol.wire.Act as WireAct

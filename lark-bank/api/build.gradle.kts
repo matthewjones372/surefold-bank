@@ -5,8 +5,6 @@ dependencies {
     api("io.github.matthewjones372:pelican-jetty:$pelicanVersion")
     api("io.github.matthewjones372:pelican-jackson:$pelicanVersion")
     api("io.github.matthewjones372:pelican-jetty-docs:$pelicanVersion")
-    // Either into Outcome: the domain answers in Arrow, and an endpoint with one declared failure converts in one call.
-    api("io.github.matthewjones372:pelican-arrow:$pelicanVersion")
     // One filter: a request counter and a duration timer per endpoint, tagged by its template, never its ids.
     api("io.github.matthewjones372:pelican-metrics:$pelicanVersion")
     // And a server span per request, continuing the caller's trace (bank spec 0024).

@@ -1,6 +1,5 @@
 package bank.approvals.protocol
 
-import arrow.core.Either
 import bank.approvals.domain.Origin
 import bank.approvals.domain.Person
 import bank.approvals.domain.Policies
@@ -11,6 +10,7 @@ import bank.approvals.domain.RequestCommand
 import bank.approvals.domain.RequestEvent
 import bank.approvals.domain.RequestId
 import io.github.matthewjones372.lark.actor.Reply
+import io.github.matthewjones372.lark.fail.Either
 import java.time.Instant
 
 /** What a request answers: its whole history, which the asker replays, or why it could not take what it was asked. */

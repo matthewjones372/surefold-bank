@@ -1,7 +1,5 @@
 package bank.approvals.app
 
-import arrow.core.Either
-import arrow.core.left
 import bank.approvals.api.Approvals
 import bank.approvals.api.Unanswered
 import bank.approvals.domain.Origin
@@ -19,6 +17,13 @@ import bank.approvals.protocol.SubjectMessage
 import io.github.matthewjones372.lark.actor.ActorRef
 import io.github.matthewjones372.lark.actor.AskFailure
 import io.github.matthewjones372.lark.actor.ask
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.fold
+import io.github.matthewjones372.lark.fail.left
+import io.github.matthewjones372.lark.fail.map
+import io.github.matthewjones372.lark.fail.mapLeft
+import io.github.matthewjones372.lark.fail.onLeft
+import io.github.matthewjones372.lark.fail.onRight
 import io.github.matthewjones372.lark.logWarn
 import java.util.UUID
 import kotlin.time.Duration

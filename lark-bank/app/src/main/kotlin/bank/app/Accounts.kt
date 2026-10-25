@@ -1,6 +1,5 @@
 package bank.app
 
-import arrow.core.Either
 import bank.domain.Account
 import bank.domain.AccountCommand
 import bank.domain.AccountEvent
@@ -27,6 +26,8 @@ import io.github.matthewjones372.lark.actor.onStart
 import io.github.matthewjones372.lark.actor.persistent
 import io.github.matthewjones372.lark.clock
 import io.github.matthewjones372.lark.counter
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.fold
 import io.github.matthewjones372.lark.increment
 import io.github.matthewjones372.lark.otel.tracedSpan
 import io.opentelemetry.api.OpenTelemetry
