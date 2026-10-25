@@ -24,6 +24,8 @@ import bank.protocol.TransferRequest
 import io.github.matthewjones372.lark.actor.ActorRef
 import io.github.matthewjones372.lark.actor.Address
 import io.github.matthewjones372.lark.actor.Faults
+import io.github.matthewjones372.lark.actor.InMemoryJournal
+import io.github.matthewjones372.lark.actor.Journal
 import io.github.matthewjones372.lark.actor.JournalConflict
 import io.github.matthewjones372.lark.actor.Ordering
 import io.github.matthewjones372.lark.actor.PersistenceId
@@ -63,17 +65,19 @@ fun inMemory(
 
 /**
  * As [inMemory], answering what [block] does: for a spec that runs many and looks at each. With [closeAfter], each
- * account holds a settled transfer's close for its next write, as a node does (bank spec 0031).
+ * account holds a settled transfer's close for its next write, as a node does (bank spec 0031). [journal] is where
+ * every actor's events go.
  */
 fun <A> inMemoryOf(
     legTimeout: Duration = 1.seconds,
     order: Ordering = Ordering.Told,
     faults: Faults = Faults(),
     closeAfter: Duration? = null,
+    journal: Journal = InMemoryJournal(),
     block: InMemoryBank.() -> A,
 ): A = // Events are stamped from lark's clock, bound here for the test's thread.
     clock.locally(fixedClock(NOON)) {
-        testActors(clock = fixedClock(NOON), order = order, faults = faults) {
+        testActors(clock = fixedClock(NOON), journal = journal, order = order, faults = faults) {
             InMemoryBank(this, legTimeout, Actors(this, legTimeout, closeAfter)).block()
         }
     }

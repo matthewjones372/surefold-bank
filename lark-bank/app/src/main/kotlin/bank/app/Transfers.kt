@@ -38,6 +38,7 @@ import io.github.matthewjones372.lark.actor.Next
 import io.github.matthewjones372.lark.actor.PersistenceId
 import io.github.matthewjones372.lark.actor.Remembered
 import io.github.matthewjones372.lark.actor.Reply
+import io.github.matthewjones372.lark.actor.Start
 import io.github.matthewjones372.lark.actor.persistent
 import io.github.matthewjones372.lark.counter
 import io.github.matthewjones372.lark.fail.Either
@@ -270,6 +271,9 @@ fun transfer(
             }
         },
         event = Transfer::evolve,
+        // A transfer's id is new when its saga first starts, so its journal is not read until a first command shows
+        // otherwise (bank spec 0031, lark spec 0198).
+        start = Start.assumingNew,
     ).onRecovered { ctx, recovered -> ctx.started(recovered.value) }
 }
 

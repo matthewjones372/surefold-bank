@@ -15,10 +15,10 @@
     "lark": {
       "flake": false,
       "locked": {
-        "lastModified": 1792831771,
-        "narHash": "sha256-zbZBDtuvq8vn2S1JoN2KbnKRAMNZC4T8iBhBfiJBnxA=",
+        "lastModified": 1792969573,
+        "narHash": "sha256-KDAvTGEFvqz3d4ZmG1kgHpRrJm0ODrxct8SYa0e3SdQ=",
         "ref": "refs/heads/main",
-        "rev": "200206eae2229fa7408f245831050c89d4b7a7ed",
+        "rev": "03a9dd2a1223f5c0ad47cf7752e2574d1cfaf582",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/matthewjones372/lark"
