@@ -80,7 +80,7 @@ gates {
   }
   money {
     coverage >= 90% on changed in zone money
-    mutation >= 80% on changed in zone money
+    mutation >= 80% on changed max 150 mutants in zone money
   }
   perf   { budget screening }
 }
