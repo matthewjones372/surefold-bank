@@ -1,6 +1,5 @@
 package bank.app
 
-import arrow.core.Either
 import bank.domain.AccountId
 import bank.domain.TransferError
 import bank.domain.TransferId
@@ -10,7 +9,8 @@ import bank.protocol.TransferMessage
 import bank.protocol.TransferRequest
 import io.github.matthewjones372.lark.actor.ActorRef
 import io.github.matthewjones372.lark.actor.Address
-import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.github.matthewjones372.lark.assert.shouldBeLeft
+import io.github.matthewjones372.lark.fail.Either
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds

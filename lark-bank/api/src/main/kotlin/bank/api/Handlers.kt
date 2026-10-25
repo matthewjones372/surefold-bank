@@ -1,7 +1,5 @@
 package bank.api
 
-import arrow.core.Either
-import arrow.core.flatMap
 import bank.domain.AccountError
 import bank.domain.AccountError.LegRefused
 import bank.domain.AccountId
@@ -12,10 +10,15 @@ import bank.domain.Money
 import bank.domain.TransferError
 import bank.domain.TransferId
 import bank.domain.Unavailable
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.flatMap
+import io.github.matthewjones372.lark.fail.fold
+import io.github.matthewjones372.lark.fail.map
+import io.github.matthewjones372.lark.fail.mapLeft
+import io.github.matthewjones372.lark.fail.onRight
 import io.github.matthewjones372.pelican.ApiException
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.api
-import io.github.matthewjones372.pelican.arrow.toOutcome
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.jetty.bytesNow
 import io.github.matthewjones372.pelican.jetty.handledNow

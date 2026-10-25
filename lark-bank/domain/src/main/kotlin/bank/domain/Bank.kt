@@ -1,6 +1,6 @@
 package bank.domain
 
-import arrow.core.Either
+import io.github.matthewjones372.lark.fail.Either
 
 /** The bank as the HTTP layer sees it. The app answers it with sharded actors; a test with a map. */
 interface Bank {

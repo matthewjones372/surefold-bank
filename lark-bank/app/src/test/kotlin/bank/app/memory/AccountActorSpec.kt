@@ -1,6 +1,5 @@
 package bank.app.memory
 
-import arrow.core.Either
 import bank.app.account
 import bank.app.gbp
 import bank.domain.AccountCommand
@@ -27,6 +26,7 @@ import io.github.matthewjones372.lark.actor.TestActors
 import io.github.matthewjones372.lark.actor.events
 import io.github.matthewjones372.lark.actor.testActors
 import io.github.matthewjones372.lark.clock
+import io.github.matthewjones372.lark.fail.Either
 import io.github.matthewjones372.lark.fixedClock
 import io.github.matthewjones372.lark.metrics
 import io.kotest.matchers.shouldBe

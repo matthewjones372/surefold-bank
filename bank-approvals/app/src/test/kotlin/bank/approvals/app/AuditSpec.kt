@@ -21,12 +21,12 @@ import bank.approvals.protocol.RequestEvents
 import bank.approvals.protocol.chained
 import bank.events.v1.ApprovalEvent.EventCase
 import io.github.matthewjones372.lark.app.use
+import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.In5
 import io.github.matthewjones372.pelican.In6
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.shouldBeOk
-import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly

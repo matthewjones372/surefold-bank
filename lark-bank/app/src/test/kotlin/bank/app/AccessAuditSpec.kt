@@ -6,10 +6,10 @@ import bank.api.accountViewers
 import bank.api.personSees
 import bank.api.statement
 import bank.domain.AccountId
+import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.pelican.In3
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.test.apiClient
-import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

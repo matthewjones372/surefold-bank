@@ -7,8 +7,8 @@ bank-approvals is built the way lark-bank is, on Lark and Pelican.
   pull request. What comes after it is specced in `specs/`, from 0001.
 - **A gap is a spec upstream.** When Lark, Pelican or lark-bank's packages lack something, draft the spec there, and
   name it under **Depends on** with the workaround in use until it lands.
-- **The domain is pure.** `domain/` depends on Arrow and the JDK, nothing else. Every rule of approval is a test there,
-  with no actor, journal or clock: the time is an argument.
+- **The domain is pure.** `domain/` depends on the JDK and lark's core, for its `Either`, nothing else. Every rule of
+  approval is a test there, with no actor, journal or clock: the time is an argument.
 - **The record is the point.** Every act is an event, and nothing is edited or deleted. A vote the rules turn away is
   an event too, `VoteRefused`, never a silent no.
 - **Errors a caller was promised are values.** `Either` in the ports, and `orFail` on the endpoints. Never

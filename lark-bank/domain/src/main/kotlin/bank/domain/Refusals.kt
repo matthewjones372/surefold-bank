@@ -1,8 +1,8 @@
 package bank.domain
 
-import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.left
+import io.github.matthewjones372.lark.fail.right
 
 // A transfer leg's refusal, kept so a retry of it is refused alike (bank spec 0030).
 

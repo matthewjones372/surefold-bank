@@ -3,8 +3,8 @@ package bank.app
 import bank.domain.AccountId
 import bank.domain.TransferId
 import io.github.matthewjones372.lark.app.use
+import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.lark.parMap
-import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

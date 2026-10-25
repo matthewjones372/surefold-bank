@@ -8,7 +8,7 @@ import bank.domain.AccountId
 import bank.domain.Money
 import bank.domain.TransferId
 import bank.domain.TransferStatus
-import io.kotest.assertions.arrow.core.shouldBeRight
+import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf

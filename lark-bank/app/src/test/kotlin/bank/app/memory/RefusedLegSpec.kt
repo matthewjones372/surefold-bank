@@ -5,7 +5,7 @@ import bank.domain.AccountCommand
 import bank.domain.AccountId
 import bank.domain.TransferId
 import bank.domain.TransferStatus
-import io.kotest.assertions.arrow.core.shouldBeRight
+import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 

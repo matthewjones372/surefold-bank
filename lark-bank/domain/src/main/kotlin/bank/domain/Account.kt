@@ -1,8 +1,8 @@
 package bank.domain
 
-import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.left
+import io.github.matthewjones372.lark.fail.right
 
 /** What an account is asked to do. [reference] is the caller's idempotency key: the same one twice changes nothing. */
 sealed interface AccountCommand {

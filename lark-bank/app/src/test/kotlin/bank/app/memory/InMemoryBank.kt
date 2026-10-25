@@ -34,9 +34,9 @@ import io.github.matthewjones372.lark.actor.TestActors
 import io.github.matthewjones372.lark.actor.TraceEntry
 import io.github.matthewjones372.lark.actor.events
 import io.github.matthewjones372.lark.actor.testActors
+import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.lark.clock
 import io.github.matthewjones372.lark.fixedClock
-import io.kotest.assertions.arrow.core.shouldBeRight
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds

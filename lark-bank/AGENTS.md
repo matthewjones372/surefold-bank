@@ -5,8 +5,8 @@ The bank is built the way Lark and Pelican are.
 - **Specs come first.** Nothing is built without a committed spec in `specs/`; see `specs/README.md`.
 - **A gap is a spec upstream.** When Lark or Pelican lacks something the bank needs, draft the spec in that
   repository, and name it under the bank spec's **Depends on** with the workaround in use until it lands.
-- **The domain is pure.** `domain/` depends on Arrow and nothing else. Every rule about money is a test there,
-  with no actor, journal or clock.
+- **The domain is pure.** `domain/` depends on lark's core, for its `Either`, and nothing else. Every rule about money
+  is a test there, with no actor, journal or clock.
 - **Errors a caller was promised are values.** `Either` in the ports, and `orFail` on the endpoints. Never
   `runCatching`, and never an `else` on a `when` over a sealed type.
 - **Comments say why, in a line or two.** No restating the code, and no history.

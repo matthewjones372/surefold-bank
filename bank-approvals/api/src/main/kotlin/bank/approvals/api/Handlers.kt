@@ -1,7 +1,5 @@
 package bank.approvals.api
 
-import arrow.core.Either
-import arrow.core.flatMap
 import bank.approvals.domain.Asked
 import bank.approvals.domain.Ending
 import bank.approvals.domain.Origin
@@ -14,6 +12,10 @@ import bank.approvals.domain.RequestId
 import bank.approvals.domain.replay
 import bank.approvals.protocol.Act
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.flatMap
+import io.github.matthewjones372.lark.fail.fold
+import io.github.matthewjones372.lark.fail.map
 import io.github.matthewjones372.pelican.Authenticator
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.PageGuard

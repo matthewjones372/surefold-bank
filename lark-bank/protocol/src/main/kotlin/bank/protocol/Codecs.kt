@@ -1,6 +1,5 @@
 package bank.protocol
 
-import arrow.core.Either
 import bank.domain.Account
 import bank.domain.AccountEvent
 import bank.domain.TransferEvent
@@ -16,6 +15,8 @@ import io.github.matthewjones372.lark.actor.remote.delivery
 import io.github.matthewjones372.lark.actor.remote.kotlinx.Kotlinx
 import io.github.matthewjones372.lark.actor.versioned
 import io.github.matthewjones372.lark.actor.versionedState
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.fold
 import kotlinx.serialization.SerializationException
 import bank.protocol.wire.Account as WireAccount
 import bank.protocol.wire.AccountCommand as WireAccountCommand

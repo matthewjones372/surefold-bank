@@ -1,8 +1,5 @@
 package bank.protocol
 
-import arrow.core.Either
-import arrow.core.raise.either
-import arrow.core.raise.ensureNotNull
 import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.Currencies
@@ -26,6 +23,13 @@ import bank.events.v1.Screened
 import bank.events.v1.SourceDebited
 import bank.events.v1.SourceRefunded
 import bank.events.v1.Withdrawn
+import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.lark.fail.Fail
+import io.github.matthewjones372.lark.fail.attempt
+import io.github.matthewjones372.lark.fail.bind
+import io.github.matthewjones372.lark.fail.ensureNotNull
+import io.github.matthewjones372.lark.fail.fail
+import io.github.matthewjones372.lark.fail.mapLeft
 import bank.events.v1.AccountEvent as AccountRecord
 import bank.events.v1.AccountEvent.EventCase as AccountCase
 import bank.events.v1.Money as MoneyRecord
@@ -127,7 +131,7 @@ sealed interface ContractError {
     data class Unreadable(override val message: String) : ContractError
 }
 
-fun AccountRecord.fromContract(currencies: Currencies): Either<ContractError, FromContract<AccountEvent>> = either {
+fun AccountRecord.fromContract(currencies: Currencies): Either<ContractError, FromContract<AccountEvent>> = attempt {
     val event = when (eventCase) {
         AccountCase.OPENED -> AccountEvent.Opened(
             opened.owner,
@@ -176,7 +180,7 @@ fun AccountRecord.fromContract(currencies: Currencies): Either<ContractError, Fr
     FromContract(accountId, sequence, ensureNotNull(event) { ContractError.Unknown(accountId, sequence) })
 }
 
-fun TransferRecord.fromContract(currencies: Currencies): Either<ContractError, FromContract<TransferEvent>> = either {
+fun TransferRecord.fromContract(currencies: Currencies): Either<ContractError, FromContract<TransferEvent>> = attempt {
     val event = when (eventCase) {
         TransferCase.REQUESTED ->
             TransferEvent.Requested(
@@ -203,14 +207,15 @@ fun TransferRecord.fromContract(currencies: Currencies): Either<ContractError, F
     FromContract(transferId, sequence, ensureNotNull(event) { ContractError.Unknown(transferId, sequence) })
 }
 
-private fun arrow.core.raise.Raise<ContractError>.screened(record: Screened, atMillis: Long): TransferEvent.Screened {
+context(_: Fail<ContractError>)
+private fun screened(record: Screened, atMillis: Long): TransferEvent.Screened {
     val outcome = when (record.outcome) {
         ScreeningOutcomeRecord.SCREENING_OUTCOME_APPROVED -> ScreeningOutcome.Approved
 
         ScreeningOutcomeRecord.SCREENING_OUTCOME_DECLINED -> ScreeningOutcome.Declined
 
         ScreeningOutcomeRecord.SCREENING_OUTCOME_UNSPECIFIED, ScreeningOutcomeRecord.UNRECOGNIZED, null ->
-            raise(ContractError.Unreadable("a screening decision with no outcome it can read"))
+            fail(ContractError.Unreadable("a screening decision with no outcome it can read"))
     }
     return TransferEvent.Screened(
         outcome,
@@ -222,7 +227,8 @@ private fun arrow.core.raise.Raise<ContractError>.screened(record: Screened, atM
     )
 }
 
-private fun arrow.core.raise.Raise<ContractError>.money(record: MoneyRecord, currencies: Currencies): Money {
+context(_: Fail<ContractError>)
+private fun money(record: MoneyRecord, currencies: Currencies): Money {
     val currency = currencies.of(record.currency).mapLeft { ContractError.Unreadable(it.message) }.bind()
     return Money.parse(record.amount, currency).mapLeft { ContractError.Unreadable(it.message) }.bind()
 }
