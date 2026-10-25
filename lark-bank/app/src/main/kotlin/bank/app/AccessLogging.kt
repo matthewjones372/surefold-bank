@@ -17,43 +17,92 @@ import io.github.matthewjones372.lark.stream.restartOnDefect
 import io.github.matthewjones372.lark.stream.runFold
 import io.github.matthewjones372.lark.stream.start
 import io.github.matthewjones372.lark.stream.tick
+import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.Timestamp
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-/** The access log in the read models' database (bank spec 0021). */
-class JdbcAccessLog(private val data: DataSource) : AccessLog {
+/**
+ * The access log in the read models' database (bank spec 0021). A look is handed to one writer per node, which writes
+ * what has come within [window] of the first, or [most] of them, in one insert (bank spec 0032), so a staff page's
+ * requests share their commits. A look still never waits for its write; one held when the node is killed is lost, as
+ * one being written beside its request was before.
+ */
+class JdbcAccessLog(
+    private val data: DataSource,
+    private val window: Duration = 100.milliseconds,
+    private val most: Int = 500,
+) : AccessLog,
+    AutoCloseable {
+    private val due = LinkedBlockingQueue<Look>()
+
+    @Volatile private var open = true
+    private val writer = Thread.ofVirtual().name("access-log").start(::writing)
+
     override fun record(look: Look) {
-        try {
-            data.connection.use { connection ->
-                connection.prepareStatement(
-                    "insert into access_log (at, subject, name, groups, actor, endpoint, account_id, status, address, user_agent, grant_id) " +
-                        "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                ).use { insert ->
-                    insert.setTimestamp(1, Timestamp.from(look.at))
-                    insert.setString(2, look.who.subject)
-                    insert.setString(3, look.who.name)
-                    insert.setArray(4, connection.createArrayOf("text", look.who.groups.sorted().toTypedArray()))
-                    insert.setString(5, look.who.actor)
-                    insert.setString(6, look.endpoint)
-                    insert.setString(7, look.account)
-                    insert.setInt(8, look.status)
-                    insert.setString(9, look.address)
-                    insert.setString(10, look.userAgent)
-                    insert.setString(11, look.grant)
-                    insert.executeUpdate()
-                }
+        due.put(look)
+    }
+
+    /** Writes what is held, then stops. */
+    override fun close() {
+        open = false
+        writer.join()
+    }
+
+    private fun writing() {
+        while (open || due.isNotEmpty()) {
+            val first = due.poll(window.inWholeNanoseconds, TimeUnit.NANOSECONDS) ?: continue
+            val batch = mutableListOf(first)
+            val until = System.nanoTime() + window.inWholeNanoseconds
+            while (batch.size < most) {
+                batch += due.poll(until - System.nanoTime(), TimeUnit.NANOSECONDS) ?: break
             }
-            counter("bank.access.recorded").increment()
+            write(batch)
+        }
+    }
+
+    private fun write(looks: List<Look>) {
+        try {
+            data.connection.use { connection -> connection.insert(looks) }
+            counter("bank.access.recorded").increment(looks.size.toDouble())
         } catch (failed: java.sql.SQLException) {
-            // The answer has gone already; a look not recorded is counted and alerted on, never silent.
-            counter("bank.access.unrecorded").increment()
+            // The answers have gone already; looks not recorded are counted and alerted on, never silent.
+            counter("bank.access.unrecorded").increment(looks.size.toDouble())
+            val first = looks.first()
             logWarn(
-                "a look by ${look.who.actor ?: look.who.subject} at ${look.endpoint} was not recorded: ${failed.message}",
+                "${looks.size} looks, the first by ${first.who.actor ?: first.who.subject} at ${first.endpoint}, " +
+                    "were not recorded: ${failed.message}",
             )
+        }
+    }
+
+    private fun Connection.insert(looks: List<Look>) {
+        val rows = looks.joinToString(", ") { "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" }
+        prepareStatement(
+            "insert into access_log (at, subject, name, groups, actor, endpoint, account_id, status, address, " +
+                "user_agent, grant_id) values $rows",
+        ).use { insert ->
+            looks.forEachIndexed { row, look ->
+                var column = row * COLUMNS
+                insert.setTimestamp(++column, Timestamp.from(look.at))
+                insert.setString(++column, look.who.subject)
+                insert.setString(++column, look.who.name)
+                insert.setArray(++column, createArrayOf("text", look.who.groups.sorted().toTypedArray()))
+                insert.setString(++column, look.who.actor)
+                insert.setString(++column, look.endpoint)
+                insert.setString(++column, look.account)
+                insert.setInt(++column, look.status)
+                insert.setString(++column, look.address)
+                insert.setString(++column, look.userAgent)
+                insert.setString(++column, look.grant)
+            }
+            insert.executeUpdate()
         }
     }
 
@@ -161,3 +210,6 @@ fun accessPublisher(
     .start(backend)
 
 private const val BATCH = 500
+
+/** An access_log row's columns, as the insert sets them. */
+private const val COLUMNS = 11

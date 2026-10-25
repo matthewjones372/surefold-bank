@@ -174,7 +174,7 @@ val storage: Module =
             }
         } +
         single { data: DataSource, _: Migrated -> JdbcGrants(data) } +
-        single { data: DataSource, _: Migrated -> JdbcAccessLog(data) }
+        single { data: DataSource, _: Migrated -> install({ JdbcAccessLog(data) }) { log, _ -> log.close() } }
 
 // ---- telemetry ----
 
