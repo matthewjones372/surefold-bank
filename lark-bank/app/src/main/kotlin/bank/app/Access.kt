@@ -10,7 +10,6 @@ import io.github.matthewjones372.lark.counter
 import io.github.matthewjones372.lark.fail.Either
 import io.github.matthewjones372.lark.fail.fold
 import io.github.matthewjones372.lark.fail.left
-import io.github.matthewjones372.lark.fail.nonFatalOrThrow
 import io.github.matthewjones372.lark.fail.right
 import io.github.matthewjones372.lark.increment
 import io.github.matthewjones372.lark.kafka.Kafka
@@ -367,6 +366,9 @@ class GrantKeeper(private val grants: JdbcGrants, private val owner: Owner) {
     }
 }
 
+private fun skipping(offset: Long, unreadable: Exception) =
+    logWarn("skipping ${ApprovalTopic.NAME} offset $offset: ${unreadable.message}")
+
 /** An Apicurio-framed record's message: a zero, the schema's content id, the message's indexes, then the message. */
 fun unframed(bytes: ByteArray): ApprovalEvent {
     require(bytes.size >= HEADER && bytes[0] == 0.toByte()) { "not a framed record" }
@@ -396,15 +398,14 @@ fun grantsHeard(kafka: KafkaSettings, keeper: GrantKeeper, backend: StreamBacken
             // In the trace the event was written in (spec 0024), so telling Approvals it applied continues it.
             record.within {
                 // A record nobody can read is skipped, not read again forever; one that fails to apply is retried.
-                runCatching { unframed(record.value()) }.fold(
-                    keeper::heard,
-                    { unreadable ->
-                        unreadable.nonFatalOrThrow()
-                        logWarn(
-                            "skipping ${ApprovalTopic.NAME} offset ${record.offset()}: ${unreadable.message}",
-                        )
-                    },
-                )
+                val approval = try {
+                    unframed(record.value())
+                } catch (unreadable: IllegalArgumentException) {
+                    null.also { skipping(record.offset(), unreadable) }
+                } catch (unreadable: IOException) {
+                    null.also { skipping(record.offset(), unreadable) }
+                }
+                if (approval != null) keeper.heard(approval)
             }
         }
         .restartOnDefect(Schedule.spaced(2.seconds))
