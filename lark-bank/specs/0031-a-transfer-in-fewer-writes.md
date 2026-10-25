@@ -79,7 +79,7 @@ and loses spec 0001's single place that says where a transfer has got to. Recomm
       debit again. `SourceDebited` is still read from old journals.
       Done when: the saga's property tests (spec 0028) pass with a crash between the debit and the credit, and the
       ledger is conserved.
-- [ ] **`legs-closed-batched`**: an account writes `LegsClosed` with its next batch.
+- [x] **`legs-closed-batched`**: an account writes `LegsClosed` with its next batch.
       Done when: `ApiSpec` and the chaos run still conserve the ledger, and the appends a transfer counts (from
       `bank.transfer.steps` and the journal's own count) drop to 4 on the path.
 - [ ] **`fresh-entity`**: a new transfer starts without a journal read, once lark has it.

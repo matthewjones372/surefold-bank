@@ -73,7 +73,7 @@ Nothing. `GroupCommit` already takes both numbers.
       a restart.
 - [x] **`ledger-totals-per-partition`**: a migration adds `partition` to the key; reads sum it.
       Done when: the ledger endpoint answers the same as before on `ApiSpec`'s data.
-- [ ] **`access-log-batched`**: one writer per node, batched.
+- [x] **`access-log-batched`**: one writer per node, batched.
       Done when: `AccessLogSpec` passes, and a staff page's 1,000 requests make at most 20 inserts.
 - [ ] **`ramp`**: the ramp script, run once for the defaults and once for each changed setting.
       Done when: the README's load table gives the knee for each.
