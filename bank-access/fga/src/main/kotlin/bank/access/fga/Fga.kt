@@ -26,9 +26,9 @@ data class Tuple(val user: String, val relation: String, val obj: String, val ex
 class FgaUnavailable(message: String, cause: Throwable? = null) : IOException(message, cause)
 
 /**
- * OpenFGA's HTTP API at [url], as the estate speaks it (lark-bank spec 0022): the store named [store], its newest model,
+ * OpenFGA's HTTP API at [url], as the estate speaks it (surefold-bank spec 0022): the store named [store], its newest model,
  * and a preshared [token] for whoever is calling. Every call blocks for at most [timeout]. [carried] gives the headers a
- * call takes from the calling thread, a trace's `traceparent` among them (lark-bank spec 0024), so OpenFGA's own spans
+ * call takes from the calling thread, a trace's `traceparent` among them (surefold-bank spec 0024), so OpenFGA's own spans
  * are in the caller's trace; this module asks for no tracing library to give them.
  */
 class Fga(

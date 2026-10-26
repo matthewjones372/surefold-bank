@@ -39,7 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 
-/** One Postgres for the test JVM, and an empty database in it per cluster, as lark-bank's tests have. */
+/** One Postgres for the test JVM, and an empty database in it per cluster, as surefold-bank's tests have. */
 object TestPostgres {
     private val server: PostgreSQLContainer by lazy {
         PostgreSQLContainer(
@@ -65,7 +65,7 @@ object TestPostgres {
         "jdbc:postgresql://${server.host}:${server.getMappedPort(5432)}/$database?user=postgres&password=postgres"
 }
 
-/** The bank's test identity provider (lark-bank spec 0021): tokens verified by each node over HTTP, as Pocket ID's are. */
+/** The bank's test identity provider (surefold-bank spec 0021): tokens verified by each node over HTTP, as Pocket ID's are. */
 object TestIdentity {
     val issuer: TestIssuer by lazy { TestIssuer() }
 
@@ -90,13 +90,13 @@ object TestKafka {
     val registry: String get() = "http://${apicurio.host}:${apicurio.getMappedPort(8080)}/apis/registry/v3"
 
     /**
-     * Every record on the topic so far whose key is one of [keys], read as lark-bank-events' README tells a consumer
+     * Every record on the topic so far whose key is one of [keys], read as surefold-bank-events' README tells a consumer
      * to, by Apicurio's own deserializer, in order, until [until] holds of them or [seconds] pass.
      */
     fun read(keys: Set<String>, seconds: Long = 60, until: (List<ApprovalEvent>) -> Boolean): List<ApprovalEvent> =
         records(keys, seconds) { seen -> until(seen.map { it.value() }) }.map { it.value() }
 
-    /** As [read], each record whole: its headers are what a consumer continues a trace from (lark-bank spec 0024). */
+    /** As [read], each record whole: its headers are what a consumer continues a trace from (surefold-bank spec 0024). */
     fun records(
         keys: Set<String>,
         seconds: Long = 60,

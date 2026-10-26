@@ -12,7 +12,7 @@ import zio.test.*
 import java.io.{ByteArrayOutputStream, PrintStream}
 
 /**
- * lark-bank spec 0023's `log-json`: every line bank-checks writes is one JSON
+ * surefold-bank spec 0023's `log-json`: every line bank-checks writes is one JSON
  * object, with the estate's field names.
  */
 object LogJsonSpec extends ZIOSpecDefault:

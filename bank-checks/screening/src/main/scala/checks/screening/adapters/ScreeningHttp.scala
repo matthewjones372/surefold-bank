@@ -7,7 +7,7 @@ import zio.http.*
 import zio.http.endpoint.Endpoint
 import zio.schema.{DeriveSchema, Schema}
 
-// Screening's open host service: the bank's `POST /screen`, in its words (lark-bank's bank.api.Screening).
+// Screening's open host service: the bank's `POST /screen`, in its words (surefold-bank's bank.api.Screening).
 final case class Amount(value: String, currency: String)
 object Amount:
   given Schema[Amount] = DeriveSchema.gen

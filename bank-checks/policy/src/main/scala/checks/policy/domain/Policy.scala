@@ -36,7 +36,7 @@ object Draft:
     else
       RuleJson.load(draft.document, draft.subject.schema).left.map(errors => PolicyError.Invalid(errors.map(_.message)))
 
-// Whether a version waits on others before it is in force (lark-bank spec 0019). One stored while approvals are off
+// Whether a version waits on others before it is in force (surefold-bank spec 0019). One stored while approvals are off
 // needs nobody; one asked for is in force once Approvals gives it, and never if its request ends another way.
 enum Approval:
   case NotNeeded

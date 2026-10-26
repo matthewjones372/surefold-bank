@@ -1,6 +1,6 @@
 # Working in this repo
 
-bank-access is built the way the rest of the estate is. Its spec is lark-bank's 0022; nothing is built here that
+bank-access is built the way the rest of the estate is. Its spec is surefold-bank's 0022; nothing is built here that
 it does not name.
 
 - **The model's tests are its specification.** A relation added or changed comes with the cases that pin it: who it
@@ -11,5 +11,5 @@ it does not name.
 - **Docs say what is, not how it got here.** The README and `docs/` describe the current state: what it does, how
   to run it, what it carries now. No history: no earlier runs, fixed gaps, dated logs or PR trails; measurements are
   the latest only. Why belongs in the spec, what changed in the commit. Diagrams are mermaid fences, checked to draw
-  before committing. lark-bank's `docs/services.md` describes this service: keep it true.
+  before committing. surefold-bank's `docs/services.md` describes this service: keep it true.
 - **Verify before saying done**, and quote the result.

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-How to work in bank-checks: the checks outside lark-bank (bank spec 0018), built as starwars-api is.
+How to work in bank-checks: the checks outside surefold-bank (bank spec 0018), built as starwars-api is.
 
 ## The contexts
 
@@ -15,7 +15,7 @@ Four bounded contexts, one sbt module each, meeting only through named contracts
 
 `bank-events` is the anti-corruption layer between the bank's events and Monitoring, and between Approvals' events and
 Policy: the only module that sees a generated class. With approvals on, a version that would change what is in force
-is asked about in Approvals (lark-bank spec 0019) and waits; it is in force once Approvals gives it, for the content
+is asked about in Approvals (surefold-bank spec 0019) and waits; it is in force once Approvals gives it, for the content
 the check asked about, and never if its request ends another way. `admin` is the admin API and the wizard; `app` wires everything into one process.
 
 The build draws the context map: `screening` and `monitoring` depend on `policy` and never on each other, and
@@ -60,12 +60,12 @@ with the test that fails without it. Postgres and Kafka tests run in containers.
 ## Build
 
 `nix develop -c sbt compile test scalafmtCheckAll` must pass before anything merges. It needs `verdict` published
-locally (`sbt publishLocal` in verdict) and `lark-bank-events` in mavenLocal (`./gradlew :events:publishToMavenLocal`
-in lark-bank). Versions live in `project/Dependencies.scala`, never inline in `build.sbt`.
+locally (`sbt publishLocal` in verdict) and `surefold-bank-events` in mavenLocal (`./gradlew :events:publishToMavenLocal`
+in surefold-bank). Versions live in `project/Dependencies.scala`, never inline in `build.sbt`.
 
 ## Docs
 
 - **Docs say what is, not how it got here.** The README and `docs/` describe the current state: what it does, how
   to run it, what it carries now. No history: no earlier runs, fixed gaps, dated logs or PR trails; measurements are
   the latest only. Why belongs in the spec, what changed in the commit. Diagrams are mermaid fences, checked to draw
-  before committing. lark-bank's `docs/services.md` describes this service: keep it true.
+  before committing. surefold-bank's `docs/services.md` describes this service: keep it true.

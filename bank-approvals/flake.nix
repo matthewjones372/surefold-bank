@@ -1,4 +1,4 @@
-# What CI builds bank-approvals in (lark-bank spec 0017).
+# What CI builds bank-approvals in (surefold-bank spec 0017).
 # `nix develop .#ci -c ./gradlew build`.
 {
   description = "bank-approvals";
@@ -15,7 +15,7 @@
         ci = pkgs.mkShellNoCC {
           packages = [ pkgs.jdk25_headless pkgs.git pkgs.skopeo ];
           JAVA_HOME = "${pkgs.jdk25_headless}/lib/openjdk";
-          # The pages' Playwright tests, when they come (approvals-pages): the same revision as lark-bank's.
+          # The pages' Playwright tests, when they come (approvals-pages): the same revision as surefold-bank's.
           PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
           FONTCONFIG_FILE = pkgs.makeFontsConf { fontDirectories = [ pkgs.dejavu_fonts ]; };
         };

@@ -5,7 +5,7 @@ import io.github.matthewjones372.surefold.fail.left
 import io.github.matthewjones372.surefold.fail.right
 import java.time.Instant
 
-// A request for approval as a saga (lark-bank spec 0019): each step an event, the next read off the state. Every act
+// A request for approval as a saga (surefold-bank spec 0019): each step an event, the next read off the state. Every act
 // is an event, a vote the rules turn away included, so the history is the record and nothing is ever edited.
 
 /** What was asked, fixed when it was asked: what every later vote and act is checked against. */
@@ -21,7 +21,7 @@ data class Asked(
 }
 
 /**
- * Where an act came from (lark-bank spec 0019): the signed-in session, the address the ingress forwarded, and the user
+ * Where an act came from (surefold-bank spec 0019): the signed-in session, the address the ingress forwarded, and the user
  * agent, as the request carried them. The time is never the caller's: every event's is the server's.
  */
 data class Origin(val session: String, val address: String, val userAgent: String) {

@@ -9,7 +9,7 @@ dependencies {
     api(project(":domain"))
     api("io.github.matthewjones372:surefold-actor-remote-kotlinx:$surefoldVersion")
     // A request's events as owning services read them (bank.approval-events), mapped from the domain in Contract.kt.
-    api("io.github.matthewjones372:lark-bank-events:$bankVersion")
+    api("io.github.matthewjones372:surefold-bank-events:$bankVersion")
 
     // Only for asking a sealed type for all of its cases.
     testImplementation(kotlin("reflect"))

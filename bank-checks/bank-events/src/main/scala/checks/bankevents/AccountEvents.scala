@@ -25,7 +25,7 @@ object AccountEvents:
   def seen(event: AccountEvent): Seen =
     Seen(event.getAccountId, event.getSequence, event.getAtMillis, Movements.from(event))
 
-  // As lark-bank-events' README tells a consumer to read the bank's records.
+  // As surefold-bank-events' README tells a consumer to read the bank's records.
   private def values(config: AccountEventsConfig): Task[Deserializer[Any, AccountEvent]] =
     val properties = Map[String, AnyRef](
       "apicurio.registry.url"                             -> config.registry,
@@ -44,7 +44,7 @@ object AccountEvents:
   // At least once: each partition in order, an offset committed only once its event is kept and its flags acked.
   val run: ZIO[AccountEventsConfig & Consumer & Monitoring, Throwable, Unit] = runWith(OpenTelemetry.noop())
 
-  // As run, each event published in a trace checked in it (lark-bank spec 0024).
+  // As run, each event published in a trace checked in it (surefold-bank spec 0024).
   def runWith(telemetry: OpenTelemetry): ZIO[AccountEventsConfig & Consumer & Monitoring, Throwable, Unit] =
     for
       config  <- ZIO.service[AccountEventsConfig]

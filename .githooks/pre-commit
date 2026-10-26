@@ -16,7 +16,7 @@ snapshot() {
 
 before=$(snapshot)
 # Each service is its own Gradle build; only the ones with staged Kotlin run.
-for build in lark-bank bank-approvals bank-access; do
+for build in bank bank-approvals bank-access; do
     grep -q "^$build/" <<< "$staged" || continue
     (cd "$build" && ./gradlew --quiet detekt -Pdetekt.autoCorrect=true >/dev/null 2>&1) || true
 done

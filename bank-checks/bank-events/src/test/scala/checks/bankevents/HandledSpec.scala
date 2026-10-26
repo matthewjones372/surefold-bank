@@ -14,7 +14,7 @@ import zio.test.*
 import scala.jdk.CollectionConverters.*
 
 /**
- * lark-bank spec 0024's `trace-events`, monitoring's half: an event published
+ * surefold-bank spec 0024's `trace-events`, monitoring's half: an event published
  * in a trace is checked in it.
  */
 object HandledSpec extends ZIOSpecDefault:

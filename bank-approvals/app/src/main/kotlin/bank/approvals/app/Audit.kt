@@ -35,7 +35,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /*
- * The audit (lark-bank spec 0019), read from the journal itself: every request's chain walked and checked, each day's
+ * The audit (surefold-bank spec 0019), read from the journal itself: every request's chain walked and checked, each day's
  * chain heads hashed into a digest kept in its own table, and the auditor's entries. Approvals holds a few events per
  * change, so each answer walks them all; a read model when that stops being cheap.
  */

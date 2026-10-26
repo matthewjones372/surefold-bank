@@ -1,4 +1,4 @@
--- Admins sign in through the identity provider now (lark-bank spec 0019): sessions opened with a password end here.
+-- Admins sign in through the identity provider now (surefold-bank spec 0019): sessions opened with a password end here.
 DELETE FROM session;
 
 CREATE TABLE sign_in (

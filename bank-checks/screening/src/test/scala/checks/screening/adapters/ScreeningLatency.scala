@@ -22,7 +22,7 @@ object ScreeningLatency extends ZIOAppDefault:
       List(LiveRule("large-transfer", 3, Severity.High, 0, Rule.Gte(FieldPath.unsafe("amount"), 1000)))
     )
 
-  // As lark-bank's generated ScreeningClient writes it.
+  // As surefold-bank's generated ScreeningClient writes it.
   private def body(transfer: String, amount: String) =
     s"""{"transfer":"$transfer","from":"acc-1","to":"acc-2","amount":{"value":"$amount","currency":"GBP"},"requestedAtMillis":1700000000000}"""
 

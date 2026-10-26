@@ -4,7 +4,7 @@ Applied in review, to the diff. Each rule names what to flag and what the fix is
 
 ## Mappings go through kimney where the build applies it
 
-In a module that applies kimney's plugin (lark-bank's `protocol` today), flag a mapping between a domain type and
+In a module that applies kimney's plugin (surefold-bank's `protocol` today), flag a mapping between a domain type and
 a DTO or wire type (`toDto`, `toWire`, `toDomain`) that calls the target's constructor field by field. The fix is
 `transformInto()`, or `into<_, B>()` with `withFieldComputed`, `withFieldConst` or `withTransformer` for the fields
 that differ. A comment claiming kimney cannot express the mapping is itself a finding until the override chain has

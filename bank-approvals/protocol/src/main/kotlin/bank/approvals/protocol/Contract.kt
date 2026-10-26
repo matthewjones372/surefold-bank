@@ -8,8 +8,8 @@ import bank.approvals.domain.RequestId
 import bank.events.v1.ApprovalEvent
 
 /*
- * A request's events as the contract owning services read (lark-bank spec 0019, `bank.approval-events` in
- * lark-bank-events): each domain event to its Protobuf message. The journal's own encoding (Codecs.kt) changes on its
+ * A request's events as the contract owning services read (surefold-bank spec 0019, `bank.approval-events` in
+ * surefold-bank-events): each domain event to its Protobuf message. The journal's own encoding (Codecs.kt) changes on its
  * own; this one only ever grows.
  */
 

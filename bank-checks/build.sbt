@@ -2,7 +2,7 @@ ThisBuild / organization := "io.github.matthewjones372"
 ThisBuild / scalaVersion := "3.8.4"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 
-// lark-bank-events from lark-bank's publishToMavenLocal; verdict from its publishLocal.
+// surefold-bank-events from surefold-bank's publishToMavenLocal; verdict from its publishLocal.
 ThisBuild / resolvers += Resolver.mavenLocal
 
 ThisBuild / testFrameworks    := Seq(TestFramework("zio.test.sbt.ZTestFramework"))

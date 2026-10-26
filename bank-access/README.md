@@ -1,6 +1,6 @@
 # bank-access
 
-Who may do what across the Lark Bank estate, in one place (lark-bank spec 0022): an OpenFGA model, the relationships
+Who may do what across the Surefold Bank estate, in one place (surefold-bank spec 0022): an OpenFGA model, the relationships
 derived from events, approvals and Pocket ID's groups, and the client each service asks.
 
 | | |
@@ -26,7 +26,7 @@ Every relationship in the store, derived from something already recorded (`sync/
 `Opened` on `bank.account-events`; support's grants from `bank.approval-events`, written on `Applied` with the expiry
 the bank gave them; Pocket ID's group members, read each minute and diffed. `FROM_START=true` reads the account events
 again from offset zero, which is how an emptied store is rebuilt; the approval events are always read from the start.
-An account event published inside a trace is written in a span of it, its `traceparent` sent on to OpenFGA (lark-bank
+An account event published inside a trace is written in a span of it, its `traceparent` sent on to OpenFGA (surefold-bank
 spec 0024); `OTEL_EXPORTER_OTLP_ENDPOINT` is where those spans go, none leaving without it or with
 `TELEMETRY_ENABLED=false`, and `TRACES_SAMPLED` the share of traces it starts that it keeps, 0.1 by default.
 

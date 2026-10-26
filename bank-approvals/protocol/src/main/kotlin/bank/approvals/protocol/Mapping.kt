@@ -22,7 +22,7 @@ import bank.approvals.protocol.wire.Proposal as WireProposal
 import bank.approvals.protocol.wire.RequestEvent as WireEvent
 
 // Every crossing between the domain and its wire shapes, by hand: each field is named once each way, so a field
-// added to one side and not the other is a compile error here, as kimney would make it in lark-bank.
+// added to one side and not the other is a compile error here, as kimney would make it in surefold-bank.
 
 internal fun Person.toWire() = WirePerson(subject, name, groups.sorted())
 

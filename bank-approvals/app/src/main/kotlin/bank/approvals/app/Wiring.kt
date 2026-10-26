@@ -62,7 +62,7 @@ import io.github.matthewjones372.surefold.stream.Actors as StreamActors
 // ---- storage ----
 
 /**
- * Liquibase's lines into the log, as JSON like every other (lark-bank spec 0023): its own through java.util.logging,
+ * Liquibase's lines into the log, as JSON like every other (surefold-bank spec 0023): its own through java.util.logging,
  * bridged to SLF4J, and what it would print to stdout ("Running Changeset", the summary) through that log instead. Its
  * scope is kept per thread and handed to the threads started after, so this runs as this file's modules are defined,
  * before any node is built.
@@ -134,7 +134,7 @@ private val clustered: Module =
 /** The journal set on the flock: what the entities wait for, and what the publishers follow. */
 class JournalReady(val journal: JdbcJournal)
 
-// ---- every event published (lark-bank spec 0019) ----
+// ---- every event published (surefold-bank spec 0019) ----
 
 /** The publishers started, spread over the nodes: what the web waits for, so a request's events reach Kafka. */
 object Published
@@ -142,7 +142,7 @@ object Published
 /** The owning service asked again on Kafka. */
 
 /**
- * The SDK Approvals' spans are made through (lark-bank spec 0024): W3C's `traceparent` in and out, sampled where a
+ * The SDK Approvals' spans are made through (surefold-bank spec 0024): W3C's `traceparent` in and out, sampled where a
  * request enters at [TelemetrySettings.sampled] and as its parent was otherwise, batched to Tempo when enabled.
  */
 private fun telemetry(settings: TelemetrySettings, web: WebSettings): OpenTelemetrySdk {
@@ -256,7 +256,7 @@ private val web: Module =
             }
         }
 
-// ---- the audit (lark-bank spec 0019) ----
+// ---- the audit (surefold-bank spec 0019) ----
 
 /** The nightly digest started, once in the cluster: what the web waits for. */
 object Digesting

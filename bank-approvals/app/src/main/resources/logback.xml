@@ -1,5 +1,5 @@
 <configuration>
-  <!-- One JSON object per line (lark-bank spec 0023), the estate's field names: what Fluent Bit ships and Loki reads. Surefold's
+  <!-- One JSON object per line (surefold-bank spec 0023), the estate's field names: what Fluent Bit ships and Loki reads. Surefold's
        annotations and each library's MDC are fields of their own. LOG_FORMAT=plain is the old line, for a terminal. -->
   <appender name="json" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="net.logstash.logback.encoder.LogstashEncoder">

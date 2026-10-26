@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 --changeset approvals:audit
--- Every night, the head of every request's chain changed that day, hashed into one digest (lark-bank spec 0019). In
+-- Every night, the head of every request's chain changed that day, hashed into one digest (surefold-bank spec 0019). In
 -- this database, so the backups' WAL copy carries it offsite; a journal rewritten with its links recomputed no longer
 -- matches the heads recorded here.
 create table approval_digest (

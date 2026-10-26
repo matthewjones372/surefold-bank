@@ -1,11 +1,11 @@
-// Surefold and Pelican from checkouts rather than published snapshots, as lark-bank does: set larkSource and
+// Surefold and Pelican from checkouts rather than published snapshots, as surefold-bank does: set surefoldSource and
 // pelicanSource (in ~/.gradle/gradle.properties, or -P) to the checkouts' paths. Unset, mavenLocal's snapshots are
 // used.
-val larkSource: String? = providers.gradleProperty("larkSource").orNull
+val surefoldSource: String? = providers.gradleProperty("surefoldSource").orNull
 val pelicanSource: String? = providers.gradleProperty("pelicanSource").orNull
 
 pluginManagement {
-    providers.gradleProperty("larkSource").orNull?.let { includeBuild(it) }
+    providers.gradleProperty("surefoldSource").orNull?.let { includeBuild(it) }
     repositories {
         mavenLocal()
         mavenCentral()
@@ -21,7 +21,7 @@ plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 
 rootProject.name = "bank-approvals"
 
-larkSource?.let { includeBuild(it) }
+surefoldSource?.let { includeBuild(it) }
 pelicanSource?.let { includeBuild(it) }
 
 include("domain")

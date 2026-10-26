@@ -1,6 +1,6 @@
 # bank-approvals — repository layout (draft)
 
-Spec 0019 in lark-bank is the brief. This is the shape of the repository it builds, laid out as lark-bank is (Kotlin on
+Spec 0019 in surefold-bank is the brief. This is the shape of the repository it builds, laid out as surefold-bank is (Kotlin on
 Surefold and Pelican, Gradle, Nix) so a reader of one can find their way in the other.
 
 ```
@@ -8,8 +8,8 @@ bank-approvals/
 ├── AGENTS.md                  how to work here: specs first, one stack entry per PR, the build's gates
 ├── CLAUDE.md                  points at AGENTS.md
 ├── README.md                  what it is, how to run it, the audit's guarantees in a page
-├── flake.nix / flake.lock     JDK 25, Gradle, buf, Chromium for Playwright (as lark-bank's)
-├── settings.gradle.kts        the modules below; larkSource / pelicanSource composite builds, as lark-bank's
+├── flake.nix / flake.lock     JDK 25, Gradle, buf, Chromium for Playwright (as surefold-bank's)
+├── settings.gradle.kts        the modules below; surefoldSource / pelicanSource composite builds, as surefold-bank's
 ├── gradle.properties          surefoldVersion, pelicanVersion, bankEventsVersion
 ├── build.gradle.kts           Kotlin, detekt, the layering check (domain depends on nothing)
 │
@@ -56,7 +56,7 @@ bank-approvals/
 │                              Flux as a ConfigMap
 │
 ├── Dockerfile                 the image, the policies inside it: a change to them is a pull request and a new image
-│                              (its manifests are lark-bank's deploy/k8s/approvals.yaml, beside the bank's and the
+│                              (its manifests are surefold-bank's deploy/k8s/approvals.yaml, beside the bank's and the
 │                              check's)
 │
 ├── specs/                     this service's own specs from here on: README.md, TEMPLATE.md, 0001-…
@@ -67,29 +67,29 @@ bank-approvals/
 
 | From | What | How |
 |---|---|---|
-| Surefold | entities, journal, timers, Kafka, cluster | mavenLocal snapshot, or `-PlarkSource` |
+| Surefold | entities, journal, timers, Kafka, cluster | mavenLocal snapshot, or `-PsurefoldSource` |
 | Pelican | endpoints, pages, pelican-oidc, pelican-test | mavenLocal snapshot, or `-PpelicanSource` |
-| lark-bank | `lark-bank-events`, which gains `bank.approval-events` (approvals-published) | `publishToMavenLocal` |
-| lark-bank | the test issuer (bank spec 0021), for tests and compose | published as `lark-bank-issuer` beside the events |
+| surefold-bank | `surefold-bank-events`, which gains `bank.approval-events` (approvals-published) | `publishToMavenLocal` |
+| surefold-bank | the test issuer (bank spec 0021), for tests and compose | published as `surefold-bank-issuer` beside the events |
 
-The approval events are defined in lark-bank's `events` module, not here: every consumer (the check, the bank, an
+The approval events are defined in surefold-bank's `events` module, not here: every consumer (the check, the bank, an
 auditor's copy) already reads the published language from that one package, and `buf breaking` guards it there.
 
 ## Where each stack entry lands
 
 | Stack entry (spec 0019) | Repository | Modules |
 |---|---|---|
-| `identity` | lark-bank | `deploy/k8s` (Pocket ID) |
+| `identity` | surefold-bank | `deploy/k8s` (Pocket ID) |
 | `approvals-domain` | bank-approvals | `domain` |
 | `approvals-saga` | bank-approvals | `protocol`, `api`, `app` (entity, timers, policies) |
 | `approvals-audit` | bank-approvals | `domain/Chain.kt`, `app/Audit.kt`, the audit endpoints |
-| `approvals-published` | lark-bank, then bank-approvals | `events` (schema), `app/Publishing.kt` |
+| `approvals-published` | surefold-bank, then bank-approvals | `events` (schema), `app/Publishing.kt` |
 | `approvals-pages` | bank-approvals | `api/src/main/resources/ui` |
 | `checks-oidc`, `checks-asks` | bank-checks | its `access` and `policy` contexts |
 
 ## Open for you
 
-1. **Its own specs, or lark-bank's?** Recommended: spec 0019 stays in lark-bank as the brief; the repository's
+1. **Its own specs, or surefold-bank's?** Recommended: spec 0019 stays in surefold-bank as the brief; the repository's
    `specs/` starts at 0001 for what comes after, as bank-checks did.
-2. **Publish the test issuer** from lark-bank as `lark-bank-issuer`? Recommended: yes, beside `lark-bank-events`, so
+2. **Publish the test issuer** from surefold-bank as `surefold-bank-issuer`? Recommended: yes, beside `surefold-bank-events`, so
    bank-approvals and bank-checks sign in through the same test provider in their tests.

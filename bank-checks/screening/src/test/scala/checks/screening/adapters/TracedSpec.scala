@@ -14,7 +14,7 @@ import zio.test.*
 import scala.jdk.CollectionConverters.*
 
 /**
- * lark-bank spec 0024's `trace-calls`, the check's half: screening continues
+ * surefold-bank spec 0024's `trace-calls`, the check's half: screening continues
  * the caller's trace.
  */
 object TracedSpec extends ZIOSpecDefault:

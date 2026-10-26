@@ -40,7 +40,7 @@ object AccountEventsSpec extends ZIOSpecDefault:
   private def resource(path: String) =
     ZIO.attemptBlocking(scala.io.Source.fromResource(path).mkString)
 
-  // The bank's own registration, as lark-bank does it at start: money first, account events referring to it.
+  // The bank's own registration, as surefold-bank does it at start: money first, account events referring to it.
   private def registerAsTheBank(registry: Apicurio) =
     for
       money   <- resource("bank/events/v1/money.proto").flatMap(registry.register("bank.events.v1.money", _))

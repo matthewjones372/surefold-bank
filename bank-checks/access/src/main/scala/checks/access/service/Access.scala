@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets.US_ASCII
 import java.security.{MessageDigest, SecureRandom}
 import java.util.Base64
 
-// Admins are whoever the identity provider puts in one of `admins` (lark-bank spec 0019): Pocket ID at home.
+// Admins are whoever the identity provider puts in one of `admins` (surefold-bank spec 0019): Pocket ID at home.
 final case class AccessConfig(admins: Set[String], sessionFor: Duration, signInWithin: Duration)
 
 trait IdentityProvider:

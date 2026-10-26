@@ -5,7 +5,7 @@ import zio.test.*
 
 import java.nio.file.{Files, Path}
 
-// The document the check serves, committed so lark-bank can hold its client to it (bank spec 0018).
+// The document the check serves, committed so surefold-bank can hold its client to it (bank spec 0018).
 object OpenApiSpec extends ZIOSpecDefault:
   private val committed = Path.of("..").toAbsolutePath.normalize.resolve("openapi.json")
 

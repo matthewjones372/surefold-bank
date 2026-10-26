@@ -1,20 +1,20 @@
-# The model's specification (lark-bank spec 0022's access-model): each relation, as the estate relies on it. A grant is
+# The model's specification (surefold-bank spec 0022's access-model): each relation, as the estate relies on it. A grant is
 # written with its expiry; each check says what time it is, as access-client does.
 name: bank-access
 model_file: ./model.fga
 
 tuples:
   # The bank, and who runs and audits it, from Pocket ID's groups.
-  - { user: group:ops#member, relation: ops, object: bank:lark }
-  - { user: group:auditor#member, relation: auditor, object: bank:lark }
+  - { user: group:ops#member, relation: ops, object: bank:surefold }
+  - { user: group:auditor#member, relation: auditor, object: bank:surefold }
   - { user: person:olga, relation: member, object: group:ops }
   - { user: person:aud, relation: member, object: group:auditor }
   - { user: person:rae, relation: member, object: group:risk }
   - { user: person:sam, relation: member, object: group:support }
   # Ada's account, opened by her.
-  - { user: bank:lark, relation: bank, object: account:acc-1 }
+  - { user: bank:surefold, relation: bank, object: account:acc-1 }
   - { user: person:ada, relation: owner, object: account:acc-1 }
-  - { user: bank:lark, relation: bank, object: account:acc-2 }
+  - { user: bank:surefold, relation: bank, object: account:acc-2 }
   - { user: person:eve, relation: owner, object: account:acc-2 }
   # Bob, in support, may see acc-1 until 17:00, and act as Ada until 16:30: two approvals in bank-approvals.
   - user: person:bob
@@ -26,7 +26,7 @@ tuples:
     object: person:ada
     condition: { name: not_expired, context: { expires: "2026-10-02T16:30:00Z" } }
   # A rule bank-checks keeps: risk writes it, risk approves it.
-  - { user: bank:lark, relation: bank, object: rule:large-transfer }
+  - { user: bank:surefold, relation: bank, object: rule:large-transfer }
   - { user: group:risk#member, relation: author, object: rule:large-transfer }
   - { user: group:risk#member, relation: approver, object: rule:large-transfer }
 

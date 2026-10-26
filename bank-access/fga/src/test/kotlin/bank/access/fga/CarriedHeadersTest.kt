@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 
-/** lark-bank spec 0024: a call to OpenFGA sends what its caller carries, so OpenFGA's spans join its trace. */
+/** surefold-bank spec 0024: a call to OpenFGA sends what its caller carries, so OpenFGA's spans join its trace. */
 class CarriedHeadersTest {
     @Test
     fun `every call sends the headers the caller carries, the store's lookup included`() {

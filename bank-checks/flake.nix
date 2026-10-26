@@ -1,5 +1,5 @@
 {
-  description = "bank-checks: screening, monitoring and the rules wizard for lark-bank (bank spec 0018)";
+  description = "bank-checks: screening, monitoring and the rules wizard for surefold-bank (bank spec 0018)";
 
   inputs.nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.xz";
 

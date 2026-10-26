@@ -16,7 +16,7 @@ import zio.test.*
 import scala.jdk.CollectionConverters.*
 
 object WizardSpec extends ZIOSpecDefault:
-  // The bank's test identity provider: its sign-in page believes whoever you say you are (lark-bank spec 0021).
+  // The bank's test identity provider: its sign-in page believes whoever you say you are (surefold-bank spec 0021).
   private val issuer = ZLayer.scoped(ZIO.fromAutoCloseable(ZIO.attempt(TestIssuer(0, "127.0.0.1", null, null))))
 
   // A port known up front: the provider sends people back to the callback it was told.
@@ -50,7 +50,7 @@ object WizardSpec extends ZIOSpecDefault:
         .flatMap(_.body.asString)
     )
 
-  // Headless Nix Chromium, as lark-bank's page tests drive it.
+  // Headless Nix Chromium, as surefold-bank's page tests drive it.
   private def inBrowser[A](block: Page => A): Task[A] = ZIO.attemptBlocking {
     val env = Map("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD" -> "1") ++ sys.env
       .get("PLAYWRIGHT_BROWSERS_PATH")

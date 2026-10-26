@@ -1,22 +1,22 @@
 // Drafted by `gauntlet init` from the jvm and scala pack defaults and this repository's layout,
 // then set up with its owner: zones, layers, coverage, lint and mutation.
-gauntlet "tweet-street"
-use jvm in "bank-access", "bank-approvals", "lark-bank", "lark-bank/events", scala in "bank-checks"
+gauntlet "surefold-bank"
+use jvm in "bank-access", "bank-approvals", "bank", "bank/events", scala in "bank-checks"
 mode shadow // advisory, at the owner's request: report only, never block. `mode enforce` blocks again.
 owners @matthewjones372
 
 protect {
-  tests    "bank-access/**/src/test/**", "bank-approvals/**/src/test/**", "bank-checks/**/src/test/**", "lark-bank/**/src/test/**"
-  fixtures "bank-access/**/src/test/resources/**", "bank-access/**/src/testFixtures/**", "bank-approvals/**/src/test/resources/**", "bank-checks/**/src/test/resources/**", "lark-bank/**/src/test/resources/**"
-  config   "bank-access/*.gradle.kts", "bank-access/**/*.gradle.kts", "bank-access/gradle/**", "bank-approvals/*.gradle.kts", "bank-approvals/**/*.gradle.kts", "bank-approvals/gradle/**", "bank-checks/*.sbt", "bank-checks/project/**", "lark-bank/*.gradle.kts", "lark-bank/**/*.gradle.kts", "lark-bank/gradle/**", "lark-bank/events/*.gradle.kts", ".github/workflows/**"
+  tests    "bank-access/**/src/test/**", "bank-approvals/**/src/test/**", "bank-checks/**/src/test/**", "bank/**/src/test/**"
+  fixtures "bank-access/**/src/test/resources/**", "bank-access/**/src/testFixtures/**", "bank-approvals/**/src/test/resources/**", "bank-checks/**/src/test/resources/**", "bank/**/src/test/resources/**"
+  config   "bank-access/*.gradle.kts", "bank-access/**/*.gradle.kts", "bank-access/gradle/**", "bank-approvals/*.gradle.kts", "bank-approvals/**/*.gradle.kts", "bank-approvals/gradle/**", "bank-checks/*.sbt", "bank-checks/project/**", "bank/*.gradle.kts", "bank/**/*.gradle.kts", "bank/gradle/**", "bank/events/*.gradle.kts", ".github/workflows/**"
            "**/gradle.properties", "bank-checks/.scalafmt.conf", "bank-checks/stryker4s.conf"
 }
 
 // The ledger: Money, accounts, transfers and the read models that hold balances, and the checks that judge them.
 zone money {
-  paths "lark-bank/domain/src/main/**"
-        "lark-bank/app/src/main/**/Transfers.kt", "lark-bank/app/src/main/**/ShardedBank.kt", "lark-bank/app/src/main/**/Accounts.kt"
-        "lark-bank/app/src/main/**/Projections.kt", "lark-bank/app/src/main/**/ReadModels.kt"
+  paths "bank/domain/src/main/**"
+        "bank/app/src/main/**/Transfers.kt", "bank/app/src/main/**/ShardedBank.kt", "bank/app/src/main/**/Accounts.kt"
+        "bank/app/src/main/**/Projections.kt", "bank/app/src/main/**/ReadModels.kt"
         "bank-checks/policy/src/main/**/domain/**", "bank-checks/screening/src/main/**/domain/**"
         "bank-checks/bank-events/src/main/**"
   owner @matthewjones372
@@ -25,29 +25,29 @@ zone money {
 
 // Who may do what: callers, identity, OIDC, the FGA model and its sync, sessions, and the config that holds secrets.
 zone auth {
-  paths "lark-bank/api/src/main/**/Caller.kt", "lark-bank/api/src/main/**/Looks.kt"
-        "lark-bank/app/src/main/**/Identity.kt", "lark-bank/app/src/main/**/Access.kt", "lark-bank/app/src/main/**/AccessLogging.kt"
-        "lark-bank/app/src/main/**/Auditing.kt", "lark-bank/app/src/main/**/Shadowing.kt"
+  paths "bank/api/src/main/**/Caller.kt", "bank/api/src/main/**/Looks.kt"
+        "bank/app/src/main/**/Identity.kt", "bank/app/src/main/**/Access.kt", "bank/app/src/main/**/AccessLogging.kt"
+        "bank/app/src/main/**/Auditing.kt", "bank/app/src/main/**/Shadowing.kt"
         "bank-approvals/api/src/main/**/Caller.kt", "bank-approvals/app/src/main/**/Identity.kt", "bank-approvals/policies/**"
         "bank-access/model/**", "bank-access/*/src/main/**"
         "bank-checks/access/src/main/**", "bank-checks/platform/src/main/**/KafkaSignIn.scala"
-        "**/src/main/resources/application.conf", "lark-bank/deploy/**"
+        "**/src/main/resources/application.conf", "bank/deploy/**"
   owner @matthewjones372
 }
 
 // What other systems and the journal depend on: events, the journal schema, HTTP surfaces and the generated client.
 zone contracts {
-  paths "lark-bank/events/src/main/proto/**", "lark-bank/events/buf.yaml"
-        "lark-bank/protocol/schema/**"
+  paths "bank/events/src/main/proto/**", "bank/events/buf.yaml"
+        "bank/protocol/schema/**"
         "bank-checks/openapi.json", "bank-checks/buf.yaml", "bank-checks/monitoring/src/main/resources/checks/flags/**"
-        "lark-bank/api/src/main/**/Endpoints.kt", "bank-approvals/api/src/main/**/Endpoints.kt"
-        "lark-bank/api/src/main/**/screening/**"
+        "bank/api/src/main/**/Endpoints.kt", "bank-approvals/api/src/main/**/Endpoints.kt"
+        "bank/api/src/main/**/screening/**"
   owner @matthewjones372
 }
 
 // Schemas and migrations, including the tables that hold personal data (access_log, audit_export).
 zone data {
-  paths "lark-bank/app/src/main/resources/db/**"
+  paths "bank/app/src/main/resources/db/**"
         "bank-approvals/app/src/main/resources/db/**"
         "bank-checks/*/src/main/resources/db/**"
   owner @matthewjones372

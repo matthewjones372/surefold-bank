@@ -45,8 +45,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /*
- * Every request's events on Kafka (lark-bank spec 0019), in the bank's published language (spec 0015): the schema in
- * lark-bank-events, registered in Apicurio under FULL_TRANSITIVE, and each record framed as Apicurio's and Confluent's
+ * Every request's events on Kafka (surefold-bank spec 0019), in the bank's published language (spec 0015): the schema in
+ * surefold-bank-events, registered in Apicurio under FULL_TRANSITIVE, and each record framed as Apicurio's and Confluent's
  * deserializers read it. A projection follows the journal and publishes each event once it is written; the owning
  * service applies on `ApprovalGiven` or `AutoApproved`.
  */
@@ -55,7 +55,7 @@ import kotlin.time.Duration.Companion.seconds
 object ApprovalTopic {
     const val NAME = "bank.approval-events"
 
-    /** The schema's file in lark-bank-events, whose first message is the topic's. */
+    /** The schema's file in surefold-bank-events, whose first message is the topic's. */
     const val SCHEMA = "bank/events/v1/approval.proto"
 
     /** Fixed from the start and never changed: a change moves keys between partitions and breaks their order. */
@@ -76,7 +76,7 @@ object ApprovalTopic {
 class ApprovalEvents(private val producer: Producer<String, ByteArray>, private val contentId: Int) : AutoCloseable {
     /**
      * Completes once the brokers have it for good (acks=all). [carried] goes as headers: the trace the event was
-     * written in, so whoever handles it continues that trace (lark-bank spec 0024).
+     * written in, so whoever handles it continues that trace (surefold-bank spec 0024).
      */
     fun publish(event: ApprovalEvent, carried: Map<String, String> = emptyMap()): CompletableFuture<Unit> =
         producer.send(

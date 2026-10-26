@@ -11,7 +11,7 @@ plugins {
     kotlin("jvm") version "2.4.20" apply false
     id("org.jetbrains.kotlinx.kover") version "0.9.11" apply false
     id("dev.detekt") version "2.0.0-alpha.6" apply false
-    // protocol/'s wire shapes are @Serializable data classes, as lark-bank's are.
+    // protocol/'s wire shapes are @Serializable data classes, as surefold-bank's are.
     kotlin("plugin.serialization") version "2.4.20" apply false
 }
 
@@ -31,7 +31,7 @@ subprojects {
 
     repositories {
         mavenCentral()
-        // Surefold, Pelican and lark-bank's packages are installed locally as snapshots; see gradle.properties.
+        // Surefold, Pelican and surefold-bank's packages are installed locally as snapshots; see gradle.properties.
         mavenLocal()
     }
 
