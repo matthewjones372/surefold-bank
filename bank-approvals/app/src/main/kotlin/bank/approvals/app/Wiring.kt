@@ -85,19 +85,8 @@ private fun pool(settings: DatabaseSettings): HikariDataSource = HikariDataSourc
     },
 )
 
-/**
- * A database from before the library was renamed Surefold has its journal's tables named `lark_*`: renamed to
- * surefold's, so the changelog that follows finds them rather than making empty ones beside them. On any other
- * database this does nothing; `db/lark-tables.sql` says how.
- */
-internal fun renameLarkTables(data: DataSource) = data.connection.use { connection ->
-    val rename = checkNotNull(Entities::class.java.getResource("/db/lark-tables.sql")).readText()
-    connection.createStatement().use { it.execute(rename) }
-}
-
 private val storage: Module =
-    singleOf({ settings: DatabaseSettings -> pool(settings).also(::renameLarkTables) }, { pool -> pool.close() })
-        .boundTo<DataSource>() +
+    singleOf({ settings: DatabaseSettings -> pool(settings) }, { pool -> pool.close() }).boundTo<DataSource>() +
         migrations("db/changelog.xml")
 
 // ---- the cluster and its entities ----
