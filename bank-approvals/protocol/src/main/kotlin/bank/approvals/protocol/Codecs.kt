@@ -9,22 +9,22 @@ import bank.approvals.protocol.wire.History
 import bank.approvals.protocol.wire.Linked
 import bank.approvals.protocol.wire.Refused
 import bank.approvals.protocol.wire.SubjectEvent
-import io.github.matthewjones372.lark.actor.EventCodec
-import io.github.matthewjones372.lark.actor.remote.Codecs
-import io.github.matthewjones372.lark.actor.remote.MessageCodec
-import io.github.matthewjones372.lark.actor.remote.WireException
-import io.github.matthewjones372.lark.actor.remote.WireIn
-import io.github.matthewjones372.lark.actor.remote.WireOut
-import io.github.matthewjones372.lark.actor.remote.kotlinx.Kotlinx
-import io.github.matthewjones372.lark.actor.versioned
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.fold
+import io.github.matthewjones372.surefold.actor.EventCodec
+import io.github.matthewjones372.surefold.actor.remote.Codecs
+import io.github.matthewjones372.surefold.actor.remote.MessageCodec
+import io.github.matthewjones372.surefold.actor.remote.WireException
+import io.github.matthewjones372.surefold.actor.remote.WireIn
+import io.github.matthewjones372.surefold.actor.remote.WireOut
+import io.github.matthewjones372.surefold.actor.remote.kotlinx.Kotlinx
+import io.github.matthewjones372.surefold.actor.versioned
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.fold
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.protobuf.ProtoBuf
 import bank.approvals.protocol.wire.Act as WireAct
 import bank.approvals.protocol.wire.RequestEvent as WireEvent
 
-// The tag tables (lark spec 0093): a tag is part of what is stored and sent, so it is never reused or renumbered.
+// The tag tables (surefold spec 0093): a tag is part of what is stored and sent, so it is never reused or renumbered.
 
 private val requestEvents = Kotlinx.oneOf<WireEvent> {
     name = "RequestEvent"
@@ -73,7 +73,7 @@ val approvalsProto: String get() = Kotlinx.proto("approvals.v1", requestEvents, 
 
 // ---- the journal ----
 
-/** Version of every event written today (lark spec 0091): a changed shape is version 2 with an upgrade from 1. */
+/** Version of every event written today (surefold spec 0091): a changed shape is version 2 with an upgrade from 1. */
 const val JOURNAL_VERSION = 1
 
 /** One event's bytes as the history's chain hashes them: the wire shape, unversioned. */

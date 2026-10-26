@@ -19,10 +19,10 @@ everything that is its own, with no global database and no WAN round trip on an 
 
 - **An account's home is in its id:** `north-acc-1`, `south-acc-7`. It is fixed at opening, as a sort code
   fixes a branch, so no lookup is needed to find it. Opening an id whose region the bank does not know is refused.
-- **Each region is a whole bank:** its own Lark cluster, its own Postgres (journal, read models, offsets), and
+- **Each region is a whole bank:** its own Surefold cluster, its own Postgres (journal, read models, offsets), and
   its own Kafka topic. `bank.region = "north"`, and `bank.regions.south.join = …` names the other.
 - **Routing:** a request for an account at home is served as today. One for the other region's account is asked
-  of that region's entity through a federation (Lark 0103), and answered as if local. Clients should call an
+  of that region's entity through a federation (Surefold 0103), and answered as if local. Clients should call an
   account's home region, which makes that path rare.
 - **Transfers:** the saga runs in the source account's region, and the transfer id carries it: `north-t-…`. The
   debit is local. The credit to a `south-` account crosses through the federation. If south is unreachable, the
@@ -46,12 +46,12 @@ everything that is its own, with no global database and no WAN round trip on an 
 Homing each account keeps the single-writer rule that makes the ledger simple. It is how real banks split
 branches and entities, and it turns datacentre replication into ordinary sagas that already survive a partner
 being away. The alternative, a globally consistent database under one journal, puts a WAN consensus round trip on
-every write, and still needs one writer per account. A stretched Lark cluster would need a third site to break
+every write, and still needs one writer per account. A stretched Surefold cluster would need a third site to break
 ties.
 
 ## Depends on
 
-Lark 0103 (entities in another cluster). Until it lands there is no workaround worth building: HTTP between the
+Surefold 0103 (entities in another cluster). Until it lands there is no workaround worth building: HTTP between the
 regions would duplicate what the federation does.
 
 ## Stack

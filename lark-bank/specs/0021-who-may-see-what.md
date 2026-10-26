@@ -317,8 +317,8 @@ Answered 2026-09-30, each taking its recommendation:
 - **ACLs are literal topics and groups**, not `bank.*` as the shape says: `bank.approval-events` is Approvals', and a
   prefix would let the bank write it. The bank writes its three topics and reads approvals; the checks read accounts'
   events and approvals and write `checks.flags`; Approvals writes its own.
-- **kafka-clients 3.9.2 in the bank and Approvals**, over Lark's 3.8: 3.8's SCRAM sign-in asks `Subject.getSubject`,
-  which JDK 25 refuses, so every sign-in failed. Lark's own pin should move too.
+- **kafka-clients 3.9.2 in the bank and Approvals**, over Surefold's 3.8: 3.8's SCRAM sign-in asks `Subject.getSubject`,
+  which JDK 25 refuses, so every sign-in failed. Surefold's own pin should move too.
 - **NetworkPolicies are for traffic in only.** Who may call each pod is the fence; traffic out is left open, since a
   pod's calls out land on a pod whose policy decides. Home only: kind's CNI does not enforce them.
 - **Grafana at home only.** Kind and compose keep their anonymous Grafana; home's signs in through Pocket ID, refuses

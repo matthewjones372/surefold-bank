@@ -32,10 +32,10 @@ anyone on the request may *comment*. A request ends *applied*, *rejected*, *with
 one approved but not yet applied is *approved*.
 
 **A service of its own**, `bank-approvals`, in a repository of its own, deployed beside the bank and the check with
-its own database on `bank-db-0`. Built as the bank is: Kotlin on Lark and Pelican.
+its own database on `bank-db-0`. Built as the bank is: Kotlin on Surefold and Pelican.
 
-**A request is a saga**, as a transfer is (spec 0001): a Lark persistent entity per request id, each step an event in
-Lark's journal, the next step read off its state, so a request recovered on another node carries on from its last
+**A request is a saga**, as a transfer is (spec 0001): a Surefold persistent entity per request id, each step an event in
+Surefold's journal, the next step read off its state, so a request recovered on another node carries on from its last
 event, and its history is the record.
 
 ```
@@ -184,7 +184,7 @@ check): simpler for one kind, and the second kind is where it costs twice.
 - **Pocket ID at home**, for OIDC: the first entry of this stack. Tests use a fixed issuer of their own.
 - A Pelican piece for OIDC sign-in (the authorization-code flow, sessions, and a verified identity on each request) if
   Pelican has none: a spec there, with the service's own filter as the workaround until it lands.
-- Nothing in Lark or Pelican: a persistent entity, Pelican endpoints and pages, and the Kafka publisher all exist.
+- Nothing in Surefold or Pelican: a persistent entity, Pelican endpoints and pages, and the Kafka publisher all exist.
 
 ## Stack
 
@@ -228,7 +228,7 @@ In `bank-approvals`:
       differently under the same id is refused; a vote on content other than what was asked is refused as well, as
       `NotWhatWasAsked`; applied said twice is applied once; the chain names the first event edited, dropped or
       reordered, even one forged with a freshly computed link.
-- [x] **`approvals-saga`** — a request as a Lark entity, its events versioned; the API to request, approve, reject,
+- [x] **`approvals-saga`** — a request as a Surefold entity, its events versioned; the API to request, approve, reject,
       comment, withdraw and read; policies from `policies.yaml`; expiry, and asking the owner to apply, by timer.
       Done when: against Postgres, a request approved on one node after the entity moved to another ends applied once,
       with every vote and comment in its history, and one whose owner does not answer is asked again until it does.
@@ -343,7 +343,7 @@ Answered 2026-09-30:
 3. **How does the owning service hear the answer?** Kafka, `bank.approval-events`, in the published language.
 4. **How tamper-evident?** A hash chain per request and a nightly digest shipped offsite, verified on demand and
    monthly beside the restore drill.
-5. **Built on?** Kotlin on Lark and Pelican, as the bank is: requests as persistent entities in Lark's journal.
+5. **Built on?** Kotlin on Surefold and Pelican, as the bank is: requests as persistent entities in Surefold's journal.
 6. **Which identity provider?** Pocket ID.
 7. **The request's flow?** A saga of its own: it waits for approvals, then tells the owning service and waits until
    the change is applied, so the record ends with the change in force, not only agreed to.

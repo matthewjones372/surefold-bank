@@ -11,33 +11,33 @@ import bank.approvals.protocol.SubjectMessage
 import bank.approvals.protocol.SubjectMessages
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import io.github.matthewjones372.lark.actor.ActorRef
-import io.github.matthewjones372.lark.actor.journal
-import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcJournal
-import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcOffsets
-import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcSnapshots
-import io.github.matthewjones372.lark.actor.projection.Projection
-import io.github.matthewjones372.lark.actor.snapshots
-import io.github.matthewjones372.lark.app.LarkApp
-import io.github.matthewjones372.lark.app.Module
-import io.github.matthewjones372.lark.app.actor.Actors
-import io.github.matthewjones372.lark.app.actor.actors
-import io.github.matthewjones372.lark.app.boundTo
-import io.github.matthewjones372.lark.app.cluster.cluster
-import io.github.matthewjones372.lark.app.liquibase.Migrated
-import io.github.matthewjones372.lark.app.liquibase.migrations
-import io.github.matthewjones372.lark.app.single
-import io.github.matthewjones372.lark.app.singleOf
-import io.github.matthewjones372.lark.cluster.Cluster
-import io.github.matthewjones372.lark.cluster.Sharded
-import io.github.matthewjones372.lark.cluster.sharding
-import io.github.matthewjones372.lark.cluster.spread
-import io.github.matthewjones372.lark.logInfo
-import io.github.matthewjones372.lark.stream.start
 import io.github.matthewjones372.pelican.Api
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.jetty.docs.startWithDocs
 import io.github.matthewjones372.pelican.openapi.docs
+import io.github.matthewjones372.surefold.actor.ActorRef
+import io.github.matthewjones372.surefold.actor.journal
+import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcJournal
+import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcOffsets
+import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcSnapshots
+import io.github.matthewjones372.surefold.actor.projection.Projection
+import io.github.matthewjones372.surefold.actor.snapshots
+import io.github.matthewjones372.surefold.app.Module
+import io.github.matthewjones372.surefold.app.SurefoldApp
+import io.github.matthewjones372.surefold.app.actor.Actors
+import io.github.matthewjones372.surefold.app.actor.actors
+import io.github.matthewjones372.surefold.app.boundTo
+import io.github.matthewjones372.surefold.app.cluster.cluster
+import io.github.matthewjones372.surefold.app.liquibase.Migrated
+import io.github.matthewjones372.surefold.app.liquibase.migrations
+import io.github.matthewjones372.surefold.app.single
+import io.github.matthewjones372.surefold.app.singleOf
+import io.github.matthewjones372.surefold.cluster.Cluster
+import io.github.matthewjones372.surefold.cluster.Sharded
+import io.github.matthewjones372.surefold.cluster.sharding
+import io.github.matthewjones372.surefold.cluster.spread
+import io.github.matthewjones372.surefold.logInfo
+import io.github.matthewjones372.surefold.stream.start
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -57,7 +57,7 @@ import liquibase.ui.LoggerUIService
 import org.slf4j.bridge.SLF4JBridgeHandler
 import java.nio.file.Path
 import javax.sql.DataSource
-import io.github.matthewjones372.lark.stream.Actors as StreamActors
+import io.github.matthewjones372.surefold.stream.Actors as StreamActors
 
 // ---- storage ----
 
@@ -199,7 +199,8 @@ private val publishing: Module =
                 val backend = StreamActors(this)
                 val heads = RequestHeads(ready.journal)
                 val offsets = JdbcOffsets(data)
-                // Each a share of the requests, by slice, placed on a node and moved with its offset when that node goes.
+                // Each a share of the requests, by slice, placed on a node and moved with its offset when that node
+                // goes.
                 cluster.spread(ApprovalTopic.PUBLISHED, settings.publishers) { share ->
                     Projection.worker {
                         publishedRequests(
@@ -279,6 +280,6 @@ fun approvalsModule(owners: Module = kafkaOwners): Module =
     settings + storage + publishing + owners + clustered + auditing + web
 
 /** The application as a value: the build reads the graph from here, and `main` runs it. */
-object BankApprovals : LarkApp<PelicanServer>() {
+object BankApprovals : SurefoldApp<PelicanServer>() {
     override val module: Module = approvalsModule()
 }

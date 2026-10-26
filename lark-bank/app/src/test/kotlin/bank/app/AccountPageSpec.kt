@@ -4,7 +4,7 @@ import bank.domain.AccountId
 import com.microsoft.playwright.Route
 import com.microsoft.playwright.assertions.LocatorAssertions
 import com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat
-import io.github.matthewjones372.lark.assert.shouldBeRight
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger

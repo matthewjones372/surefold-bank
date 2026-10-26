@@ -5,18 +5,18 @@ import bank.domain.AccountEvent
 import bank.domain.TransferEvent
 import bank.protocol.wire.GetBalance
 import bank.protocol.wire.NodeSnapshot
-import io.github.matthewjones372.lark.actor.EventCodec
-import io.github.matthewjones372.lark.actor.StateCodec
-import io.github.matthewjones372.lark.actor.remote.MessageCodec
-import io.github.matthewjones372.lark.actor.remote.WireException
-import io.github.matthewjones372.lark.actor.remote.WireIn
-import io.github.matthewjones372.lark.actor.remote.WireOut
-import io.github.matthewjones372.lark.actor.remote.delivery
-import io.github.matthewjones372.lark.actor.remote.kotlinx.Kotlinx
-import io.github.matthewjones372.lark.actor.versioned
-import io.github.matthewjones372.lark.actor.versionedState
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.fold
+import io.github.matthewjones372.surefold.actor.EventCodec
+import io.github.matthewjones372.surefold.actor.StateCodec
+import io.github.matthewjones372.surefold.actor.remote.MessageCodec
+import io.github.matthewjones372.surefold.actor.remote.WireException
+import io.github.matthewjones372.surefold.actor.remote.WireIn
+import io.github.matthewjones372.surefold.actor.remote.WireOut
+import io.github.matthewjones372.surefold.actor.remote.delivery
+import io.github.matthewjones372.surefold.actor.remote.kotlinx.Kotlinx
+import io.github.matthewjones372.surefold.actor.versioned
+import io.github.matthewjones372.surefold.actor.versionedState
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.fold
 import kotlinx.serialization.SerializationException
 import bank.protocol.wire.Account as WireAccount
 import bank.protocol.wire.AccountCommand as WireAccountCommand
@@ -29,7 +29,7 @@ import bank.protocol.wire.TransferEvent as WireTransferEvent
 import bank.protocol.wire.TransferRequest as WireTransferRequest
 import bank.protocol.wire.TransferView as WireTransferView
 
-// The tag tables (lark spec 0093): a tag is part of what is stored and sent, so it is never reused or renumbered.
+// The tag tables (surefold spec 0093): a tag is part of what is stored and sent, so it is never reused or renumbered.
 
 private val accountEvents = Kotlinx.oneOf<WireAccountEvent> {
     name = "AccountEvent"
@@ -142,7 +142,7 @@ private object TransferEventBody : EventCodec<TransferEvent> {
 }
 
 /*
- * The journal's codecs are versioned (lark spec 0091): each event and snapshot is written marked with its version,
+ * The journal's codecs are versioned (surefold spec 0091): each event and snapshot is written marked with its version,
  * and one written before the bank versioned them, unmarked, is read as version 1. Changing a shape is version 2 with
  * an upgrade from 1, and older versions are never edited; docs/runbook.md says how to roll one out.
  */

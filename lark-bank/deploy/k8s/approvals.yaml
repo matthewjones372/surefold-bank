@@ -1,5 +1,5 @@
 # Approvals (bank spec 0019), from bank-approvals/ in tweet-street: requests for changes that more than one person
-# agrees to, the checks' rule versions first. A Lark cluster of its own, joined through the pods API as the bank's is,
+# agrees to, the checks' rule versions first. A Surefold cluster of its own, joined through the pods API as the bank's is,
 # its journal in a database of its own on bank-db-0, its events on bank.approval-events.
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
@@ -19,7 +19,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata: { name: bank-approvals-cluster }
 subjects: [ { kind: ServiceAccount, name: bank-approvals } ]
-roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: lark-cluster }
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: surefold-cluster }
 ---
 # The key every node seals page sessions with: a development one here, SOPS's at home.
 apiVersion: v1

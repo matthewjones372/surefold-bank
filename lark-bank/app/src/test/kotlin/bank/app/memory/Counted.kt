@@ -1,15 +1,15 @@
 package bank.app.memory
 
-import io.github.matthewjones372.lark.Counter
-import io.github.matthewjones372.lark.Gauge
-import io.github.matthewjones372.lark.Histogram
-import io.github.matthewjones372.lark.Metrics
+import io.github.matthewjones372.surefold.Counter
+import io.github.matthewjones372.surefold.Gauge
+import io.github.matthewjones372.surefold.Histogram
+import io.github.matthewjones372.surefold.Metrics
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.DoubleAdder
 
 /**
- * Lark's metrics kept in memory, for a spec to read what the bank counted, bound for the test's thread: a step run on
- * another thread, such as the one screening answers on, counts elsewhere.
+ * Surefold's metrics kept in memory, for a spec to read what the bank counted, bound for the test's thread: a step run
+ * on another thread, such as the one screening answers on, counts elsewhere.
  */
 class Counted : Metrics {
     private val counts = ConcurrentHashMap<Pair<String, Map<String, String>>, DoubleAdder>()

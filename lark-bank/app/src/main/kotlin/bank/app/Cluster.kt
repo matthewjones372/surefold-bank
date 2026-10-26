@@ -2,19 +2,19 @@ package bank.app
 
 import bank.api.ClusterView
 import bank.api.Member
-import io.github.matthewjones372.lark.actor.ActorRef
-import io.github.matthewjones372.lark.actor.Behaviour
-import io.github.matthewjones372.lark.actor.Reply
-import io.github.matthewjones372.lark.actor.Signal
-import io.github.matthewjones372.lark.actor.ask
-import io.github.matthewjones372.lark.actor.become
-import io.github.matthewjones372.lark.actor.remote.Codecs
-import io.github.matthewjones372.lark.actor.remote.MessageCodec
-import io.github.matthewjones372.lark.actor.remote.Node
-import io.github.matthewjones372.lark.actor.remote.WireIn
-import io.github.matthewjones372.lark.actor.remote.WireOut
-import io.github.matthewjones372.lark.actor.stay
-import io.github.matthewjones372.lark.cluster.Cluster
+import io.github.matthewjones372.surefold.actor.ActorRef
+import io.github.matthewjones372.surefold.actor.Behaviour
+import io.github.matthewjones372.surefold.actor.Reply
+import io.github.matthewjones372.surefold.actor.Signal
+import io.github.matthewjones372.surefold.actor.ask
+import io.github.matthewjones372.surefold.actor.become
+import io.github.matthewjones372.surefold.actor.remote.Codecs
+import io.github.matthewjones372.surefold.actor.remote.MessageCodec
+import io.github.matthewjones372.surefold.actor.remote.Node
+import io.github.matthewjones372.surefold.actor.remote.WireIn
+import io.github.matthewjones372.surefold.actor.remote.WireOut
+import io.github.matthewjones372.surefold.actor.stay
+import io.github.matthewjones372.surefold.cluster.Cluster
 import kotlin.time.Duration.Companion.seconds
 
 /** Where the singleton runs, and with it the sweeper, asked of it wherever it is. */

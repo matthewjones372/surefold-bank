@@ -5,9 +5,9 @@ import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.joran.JoranConfigurator
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.matthewjones372.lark.assert.shouldBeRight
-import io.github.matthewjones372.lark.logAnnotated
-import io.github.matthewjones372.lark.logWarn
+import io.github.matthewjones372.surefold.assert.shouldBeRight
+import io.github.matthewjones372.surefold.logAnnotated
+import io.github.matthewjones372.surefold.logWarn
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
@@ -66,7 +66,7 @@ class LogJsonSpec {
                 ).statusCode()
                 get("/accounts/$acc", "ada") shouldBe 200
                 get("/accounts/$acc", "eve") shouldBe 404
-                // Lark's annotations, as a span's ids are put on its lines, become fields of their own.
+                // Surefold's annotations, as a span's ids are put on its lines, become fields of their own.
                 logAnnotated("trace_id" to "4bf92f3577b34da6a3ce929d0e0e4736", "transfer_id" to "t-$run") {
                     logWarn("a line inside a transfer's span")
                 }

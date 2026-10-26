@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lark-bank spec 0022's access-server in Docker: OpenFGA on Postgres with preshared keys, as the cluster runs it,
+# Surefold-bank spec 0022's access-server in Docker: OpenFGA on Postgres with preshared keys, as the cluster runs it,
 # the model applied by the image the access-model Job runs, then a relationship written and asked about. Needs the
 # image loaded first: `docker load < $(nix build .#model-image --print-out-paths)`. KEEP=1 leaves it up on :8080.
 set -euo pipefail

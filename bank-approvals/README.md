@@ -5,7 +5,7 @@ spec 0019. A service owning something (the check's rules first) asks for approva
 before and after; named people approve, reject or comment; the service applies it once enough have agreed, and says so.
 Every act is an event in a request's own hash chain, kept for good.
 
-Kotlin on Lark and Pelican, as the bank is. `docs/layout.md` is the repository's shape; `AGENTS.md` how to work here.
+Kotlin on Surefold and Pelican, as the bank is. `docs/layout.md` is the repository's shape; `AGENTS.md` how to work here.
 
 ```bash
 ./gradlew build          # in `nix develop .#ci`, as CI runs it

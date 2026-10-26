@@ -24,54 +24,54 @@ import bank.protocol.TransferMessages
 import bank.protocol.wire.NodeSnapshot
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import io.github.matthewjones372.lark.actor.ActorRef
-import io.github.matthewjones372.lark.actor.Producer
-import io.github.matthewjones372.lark.actor.Prune
-import io.github.matthewjones372.lark.actor.ShardedJournal
-import io.github.matthewjones372.lark.actor.ShardedSnapshots
-import io.github.matthewjones372.lark.actor.behaviour
-import io.github.matthewjones372.lark.actor.every
-import io.github.matthewjones372.lark.actor.journal
-import io.github.matthewjones372.lark.actor.journal.jdbc.GroupCommit
-import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcJournal
-import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcOffsets
-import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcSliceTable
-import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcSnapshots
-import io.github.matthewjones372.lark.actor.projection.Projection
-import io.github.matthewjones372.lark.actor.remote.node
-import io.github.matthewjones372.lark.actor.snapshots
-import io.github.matthewjones372.lark.actor.spawn
-import io.github.matthewjones372.lark.actor.stay
-import io.github.matthewjones372.lark.app.Health
-import io.github.matthewjones372.lark.app.HealthRegistry
-import io.github.matthewjones372.lark.app.LarkApp
-import io.github.matthewjones372.lark.app.Module
-import io.github.matthewjones372.lark.app.actor.Actors
-import io.github.matthewjones372.lark.app.actor.actors
-import io.github.matthewjones372.lark.app.actor.spawn
-import io.github.matthewjones372.lark.app.boundTo
-import io.github.matthewjones372.lark.app.closingOf
-import io.github.matthewjones372.lark.app.cluster.cluster
-import io.github.matthewjones372.lark.app.liquibase.Migrated
-import io.github.matthewjones372.lark.app.liquibase.migrations
-import io.github.matthewjones372.lark.app.single
-import io.github.matthewjones372.lark.app.singleOf
-import io.github.matthewjones372.lark.cluster.Cluster
-import io.github.matthewjones372.lark.cluster.Sharded
-import io.github.matthewjones372.lark.cluster.sharding
-import io.github.matthewjones372.lark.cluster.singleton
-import io.github.matthewjones372.lark.cluster.spread
-import io.github.matthewjones372.lark.cluster.topic
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.onLeft
-import io.github.matthewjones372.lark.logInfo
-import io.github.matthewjones372.lark.stream.Running
-import io.github.matthewjones372.lark.stream.StreamBackend
 import io.github.matthewjones372.pelican.Api
 import io.github.matthewjones372.pelican.client.jetty.JettyHttpTransport
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.jetty.docs.startWithDocs
 import io.github.matthewjones372.pelican.openapi.docs
+import io.github.matthewjones372.surefold.actor.ActorRef
+import io.github.matthewjones372.surefold.actor.Producer
+import io.github.matthewjones372.surefold.actor.Prune
+import io.github.matthewjones372.surefold.actor.ShardedJournal
+import io.github.matthewjones372.surefold.actor.ShardedSnapshots
+import io.github.matthewjones372.surefold.actor.behaviour
+import io.github.matthewjones372.surefold.actor.every
+import io.github.matthewjones372.surefold.actor.journal
+import io.github.matthewjones372.surefold.actor.journal.jdbc.GroupCommit
+import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcJournal
+import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcOffsets
+import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcSliceTable
+import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcSnapshots
+import io.github.matthewjones372.surefold.actor.projection.Projection
+import io.github.matthewjones372.surefold.actor.remote.node
+import io.github.matthewjones372.surefold.actor.snapshots
+import io.github.matthewjones372.surefold.actor.spawn
+import io.github.matthewjones372.surefold.actor.stay
+import io.github.matthewjones372.surefold.app.Health
+import io.github.matthewjones372.surefold.app.HealthRegistry
+import io.github.matthewjones372.surefold.app.Module
+import io.github.matthewjones372.surefold.app.SurefoldApp
+import io.github.matthewjones372.surefold.app.actor.Actors
+import io.github.matthewjones372.surefold.app.actor.actors
+import io.github.matthewjones372.surefold.app.actor.spawn
+import io.github.matthewjones372.surefold.app.boundTo
+import io.github.matthewjones372.surefold.app.closingOf
+import io.github.matthewjones372.surefold.app.cluster.cluster
+import io.github.matthewjones372.surefold.app.liquibase.Migrated
+import io.github.matthewjones372.surefold.app.liquibase.migrations
+import io.github.matthewjones372.surefold.app.single
+import io.github.matthewjones372.surefold.app.singleOf
+import io.github.matthewjones372.surefold.cluster.Cluster
+import io.github.matthewjones372.surefold.cluster.Sharded
+import io.github.matthewjones372.surefold.cluster.sharding
+import io.github.matthewjones372.surefold.cluster.singleton
+import io.github.matthewjones372.surefold.cluster.spread
+import io.github.matthewjones372.surefold.cluster.topic
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.onLeft
+import io.github.matthewjones372.surefold.logInfo
+import io.github.matthewjones372.surefold.stream.Running
+import io.github.matthewjones372.surefold.stream.StreamBackend
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.Meter
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -109,7 +109,7 @@ import liquibase.ui.LoggerUIService
 import org.slf4j.bridge.SLF4JBridgeHandler
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
-import io.github.matthewjones372.lark.stream.Actors as StreamActors
+import io.github.matthewjones372.surefold.stream.Actors as StreamActors
 import io.micrometer.core.instrument.Metrics as MicrometerRegistries
 
 // ---- storage ----
@@ -140,7 +140,10 @@ private fun pool(settings: DatabaseSettings, url: String = settings.url, name: S
         },
     )
 
-/** The journal's databases other than `bank.database`, each migrated to lark's tables before anything writes to it. */
+/**
+ * The journal's databases other than `bank.database`, each migrated to surefold's tables before anything writes to
+ * it.
+ */
 class JournalDatabases(val others: List<Pair<String, HikariDataSource>>) {
     fun close() = others.forEach { (_, pool) -> pool.close() }
 }
@@ -165,8 +168,8 @@ val storage: Module =
         single { settings: DatabaseSettings, journal: JournalSettings ->
             install({ journalDatabases(settings, journal) }) { databases, _ -> databases.close() }
         } +
-        // A currency the accounts hold that the registry no longer lists, or lists with other places, would misread every
-        // amount in it: the node refuses to start instead (bank spec 0011).
+        // A currency the accounts hold that the registry no longer lists, or lists with other places, would misread
+        // every amount in it: the node refuses to start instead (bank spec 0011).
         single { data: DataSource, _: Migrated, currencies: Currencies ->
             JdbcReadModels(data).also {
                 it.heldIn(currencies)
@@ -202,7 +205,7 @@ private fun prometheus(): PrometheusMeterRegistry = PrometheusMeterRegistry(
 }
 
 private val telemetry: Module =
-    // Added to Micrometer's global composite, which is where lark-micrometer writes.
+    // Added to Micrometer's global composite, which is where surefold-micrometer writes.
     singleOf<PrometheusMeterRegistry>(
         { prometheus().also(MicrometerRegistries::addRegistry) },
         { registry ->
@@ -278,8 +281,8 @@ private val clustered: Module =
             // Set on the flock before any entity starts: a persistent entity reads its journal from the flock.
             val databases = listOf(settings.primary to data) + others.others
             actors.within {
-                // Which database owns which slices is a table in the primary (lark spec 0105), written on first start
-                // from the databases configured then. One added later owns nothing until a range is moved to it.
+                // Which database owns which slices is a table in the primary (surefold spec 0105), written on first
+                // start from the databases configured then. One added later owns nothing until a range is moved to it.
                 val slices = JdbcSliceTable(data, databases.map { it.first })
                 val grouped = if (settings.groupCommit) GroupCommit(settings.maxAppends, settings.committers) else null
                 val journals = databases.map { (name, source) -> name to JdbcJournal(source, groupCommit = grouped) }
@@ -289,7 +292,8 @@ private val clustered: Module =
                 Persistence(shared, JdbcOffsets(data), JournalHeads(databases))
             }
         } +
-        // Joined as bank.cluster says, through whichever backend `join` names (lark spec 0096); ready once fully in.
+        // Joined as bank.cluster says, through whichever backend `join` names (surefold spec 0096); ready once fully
+        // in.
         cluster("bank.cluster") +
         closingOf { -> JettyHttpTransport() } +
         single { settings: ScreeningSettings, sdk: OpenTelemetrySdk, transport: JettyHttpTransport ->
@@ -610,6 +614,6 @@ private fun asked(health: HealthRegistry): Healthy = when (val readiness = healt
 val bankModule: Module = settings + telemetry + storage + clustered + theBank + access + web
 
 /** The application as a value: the build reads the graph from here, and `main` runs it. */
-object LarkBank : LarkApp<PelicanServer>() {
+object LarkBank : SurefoldApp<PelicanServer>() {
     override val module: Module = bankModule
 }

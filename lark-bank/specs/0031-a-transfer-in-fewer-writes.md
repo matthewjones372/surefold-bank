@@ -2,7 +2,7 @@
 
 ## Problem
 
-A transfer's rate is set by the journal, not the JVM: lark spec 0108 measured it as "at about eight appends a transfer
+A transfer's rate is set by the journal, not the JVM: surefold spec 0108 measured it as "at about eight appends a transfer
 the journal, not the JVM, set the rate", and spec 0016's profile found Postgres's backends waiting on `WALWrite`.
 Today one transfer, with screening off, costs:
 
@@ -53,7 +53,7 @@ is LegAnswered -> when (val event = moving.after(message.step, refusal, now())) 
 - **`Close` stays a tell,** but the account writes `LegsClosed` with its next command's batch rather than as an append
   of its own, unless nothing follows within its `passivateAfter`.
 - **A transfer drives once on start.** `Nudge` is sent only by a saga recovered unsettled, not by one being made.
-- **A new transfer skips its recovery read** where lark lets an entity say its id is fresh (see Depends on).
+- **A new transfer skips its recovery read** where surefold lets an entity say its id is fresh (see Depends on).
 
 ## Why this shape
 
@@ -64,10 +64,10 @@ and loses spec 0001's single place that says where a transfer has got to. Recomm
 
 ## Depends on
 
-- **Skipping the recovery read** needs lark to start a persistent entity as empty when its caller knows the id is new.
-  That is a lark spec, not yet written. Until it lands the read stays, and the other changes still apply.
-- **Driving once on start** needs the saga's start hook to see the state it recovered, which lark's `onStart` does
-  not pass. Until lark offers that, `Transfers.kt` wraps the persistent behaviour's start through `Behaviour`'s public
+- **Skipping the recovery read** needs surefold to start a persistent entity as empty when its caller knows the id is new.
+  That is a surefold spec, not yet written. Until it lands the read stays, and the other changes still apply.
+- **Driving once on start** needs the saga's start hook to see the state it recovered, which surefold's `onStart` does
+  not pass. Until surefold offers that, `Transfers.kt` wraps the persistent behaviour's start through `Behaviour`'s public
   constructor (`onRecovered`), which takes no batch: fine for the saga, which steps one message at a time.
 - Everything else is the bank's own code.
 
@@ -82,7 +82,7 @@ and loses spec 0001's single place that says where a transfer has got to. Recomm
 - [x] **`legs-closed-batched`**: an account writes `LegsClosed` with its next batch.
       Done when: `ApiSpec` and the chaos run still conserve the ledger, and the appends a transfer counts (from
       `bank.transfer.steps` and the journal's own count) drop to 4 on the path.
-- [ ] **`fresh-entity`**: a new transfer starts without a journal read, once lark has it.
+- [ ] **`fresh-entity`**: a new transfer starts without a journal read, once surefold has it.
       Done when: a transfer makes no `select` on the journal, shown with the journal's query count.
 
 ## Acceptance

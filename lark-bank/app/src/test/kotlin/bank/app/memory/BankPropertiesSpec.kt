@@ -9,8 +9,8 @@ import bank.domain.TransferEvent
 import bank.domain.TransferId
 import bank.domain.TransferStatus
 import bank.domain.evolve
-import io.github.matthewjones372.lark.actor.Faults
-import io.github.matthewjones372.lark.actor.Ordering
+import io.github.matthewjones372.surefold.actor.Faults
+import io.github.matthewjones372.surefold.actor.Ordering
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import kotlin.random.Random

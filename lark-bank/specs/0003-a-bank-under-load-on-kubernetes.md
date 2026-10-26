@@ -3,18 +3,18 @@
 ## Problem
 
 A cluster that has only run in one JVM has not been shown to work. The bank should run as several pods on a
-local Kubernetes, and be driven hard enough to show where Lark's pieces hold and where they stop.
+local Kubernetes, and be driven hard enough to show where Surefold's pieces hold and where they stop.
 
 ## Not doing
 
 - No cloud deployment and no Helm chart: kind, kustomize, and one script.
-- No TLS between nodes by default. `lark-actor-remote`'s `Tls.mutual` can be turned on in config.
+- No TLS between nodes by default. `surefold-actor-remote`'s `Tls.mutual` can be turned on in config.
 
 ## Shape
 
 - **kind**: a three-worker cluster, with Postgres, Kafka (KRaft), Prometheus and Grafana in it, and the bank as
   a `StatefulSet` of three replicas behind a Service.
-- **Discovery and downing**: `lark-cluster-kubernetes`, seeds from the pods API by label, and a `Lease` breaking
+- **Discovery and downing**: `surefold-cluster-kubernetes`, seeds from the pods API by label, and a `Lease` breaking
   an even split. Pods advertise `POD_IP`, and RBAC grants `pods: list` and `leases: get, create, update`.
 - **Stopping**: SIGTERM releases the app graph, the producer drains, the node leaves, and its shards move before
   the pod goes. A node downed by the others exits, so Kubernetes restarts it.
@@ -29,7 +29,7 @@ local Kubernetes, and be driven hard enough to show where Lark's pieces hold and
 | `chaos` | pods deleted and scaled mid-load: nothing lost or doubled, and read models catching up |
 
 - **Grafana**: requests, p99, journal appends, entities per node, projection lag and saga states, from
-  `lark-micrometer` and the bank's own meters.
+  `surefold-micrometer` and the bank's own meters.
 
 ```bash
 ./deploy/kind/up.sh && ./deploy/kind/load.sh transfers
@@ -44,9 +44,9 @@ measures the bank rather than a laptop's port-forward.
 ## Depends on
 
 - **The single-writer ceiling in `hot`.** `persistent` appended once per command, so one account was bound by
-  journal latency. `hot` showed it, and Lark spec 0086 ([lark#226](https://github.com/matthewjones372/lark/pull/226))
+  journal latency. `hot` showed it, and Surefold spec 0086 ([surefold#226](https://github.com/matthewjones372/lark/pull/226))
   batches the commands waiting into one append; the bank's accounts use `batch = 64`.
-- **Lark#231, the side that stays never downs itself.** Until it merges, the bank builds against a snapshot that
+- **Surefold#231, the side that stays never downs itself.** Until it merges, the bank builds against a snapshot that
   carries it.
 
 ## Stack

@@ -325,7 +325,7 @@ message Currency {
   required int32 exponent = 2;
 }
 
-// How lark writes this table (spec 0093): one of these, its field number the class's tag.
+// How surefold writes this table (spec 0093): one of these, its field number the class's tag.
 message AccountEvent {
   oneof value {
     Opened opened = 1;
@@ -339,7 +339,7 @@ message AccountEvent {
   }
 }
 
-// How lark writes this table (spec 0093): one of these, its field number the class's tag.
+// How surefold writes this table (spec 0093): one of these, its field number the class's tag.
 message AccountSnapshot {
   oneof value {
     UnopenedAccount unopened_account = 1;
@@ -348,7 +348,7 @@ message AccountSnapshot {
   }
 }
 
-// How lark writes this table (spec 0093): one of these, its field number the class's tag.
+// How surefold writes this table (spec 0093): one of these, its field number the class's tag.
 message AccountRequest {
   oneof value {
     Open open = 1;
@@ -362,7 +362,7 @@ message AccountRequest {
   }
 }
 
-// How lark writes this table (spec 0093): one of these, its field number the class's tag.
+// How surefold writes this table (spec 0093): one of these, its field number the class's tag.
 message AccountReply {
   oneof value {
     Balance balance = 1;
@@ -377,14 +377,14 @@ message AccountReply {
   }
 }
 
-// How lark writes this table (spec 0093): one of these, its field number the class's tag.
+// How surefold writes this table (spec 0093): one of these, its field number the class's tag.
 message BulkCreditSent {
   oneof value {
     BulkCredit bulk_credit = 1;
   }
 }
 
-// How lark writes this table (spec 0093): one of these, its field number the class's tag.
+// How surefold writes this table (spec 0093): one of these, its field number the class's tag.
 message TransferEvent {
   oneof value {
     Requested requested = 1;
@@ -397,7 +397,7 @@ message TransferEvent {
   }
 }
 
-// How lark writes this table (spec 0093): one of these, its field number the class's tag.
+// How surefold writes this table (spec 0093): one of these, its field number the class's tag.
 message TransferRequest {
   oneof value {
     StartTransfer start_transfer = 1;
@@ -405,7 +405,7 @@ message TransferRequest {
   }
 }
 
-// How lark writes this table (spec 0093): one of these, its field number the class's tag.
+// How surefold writes this table (spec 0093): one of these, its field number the class's tag.
 message TransferReply {
   oneof value {
     TransferView transfer_view = 1;
@@ -417,7 +417,7 @@ message TransferReply {
   }
 }
 
-// How lark writes this table (spec 0093): one of these, its field number the class's tag.
+// How surefold writes this table (spec 0093): one of these, its field number the class's tag.
 message NodeSnapshotOnTopic {
   oneof value {
     NodeSnapshot node_snapshot = 1;

@@ -20,20 +20,20 @@ import bank.approvals.protocol.SubjectMessage
 import bank.approvals.protocol.Wake
 import bank.approvals.protocol.chained
 import bank.approvals.protocol.command
-import io.github.matthewjones372.lark.actor.ActorRef
-import io.github.matthewjones372.lark.actor.Behaviour
-import io.github.matthewjones372.lark.actor.Ctx
-import io.github.matthewjones372.lark.actor.JournalConflict
-import io.github.matthewjones372.lark.actor.PersistenceId
-import io.github.matthewjones372.lark.actor.Remembered
-import io.github.matthewjones372.lark.actor.onStart
-import io.github.matthewjones372.lark.actor.persistent
-import io.github.matthewjones372.lark.clock
-import io.github.matthewjones372.lark.counter
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.fold
-import io.github.matthewjones372.lark.increment
-import io.github.matthewjones372.lark.logWarn
+import io.github.matthewjones372.surefold.actor.ActorRef
+import io.github.matthewjones372.surefold.actor.Behaviour
+import io.github.matthewjones372.surefold.actor.Ctx
+import io.github.matthewjones372.surefold.actor.JournalConflict
+import io.github.matthewjones372.surefold.actor.PersistenceId
+import io.github.matthewjones372.surefold.actor.Remembered
+import io.github.matthewjones372.surefold.actor.onStart
+import io.github.matthewjones372.surefold.actor.persistent
+import io.github.matthewjones372.surefold.clock
+import io.github.matthewjones372.surefold.counter
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.fold
+import io.github.matthewjones372.surefold.increment
+import io.github.matthewjones372.surefold.logWarn
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -60,7 +60,7 @@ fun interface Owners {
     fun askAgain(id: RequestId, history: List<RequestEvent>)
 }
 
-/** The time a request stamps its events with: lark's clock, so a test can hold it still. */
+/** The time a request stamps its events with: surefold's clock, so a test can hold it still. */
 internal fun now(): Instant = clock.get().now()
 
 private const val EXPIRE = "expire"

@@ -9,7 +9,7 @@ build/
 result
 result-*
 
-# CI: Lark and Pelican checked out beside the bank, and the Nix shell kept as a profile (bank spec 0017).
-/lark/
+# CI: Surefold and Pelican checked out beside the bank, and the Nix shell kept as a profile (bank spec 0017).
+/surefold/
 /pelican/
 /.nix-ci*

@@ -17,14 +17,14 @@ import bank.protocol.TransferAnswer
 import bank.protocol.TransferAsk
 import bank.protocol.TransferMessage
 import bank.protocol.TransferRequest
-import io.github.matthewjones372.lark.actor.ActorRef
-import io.github.matthewjones372.lark.actor.AskFailure
-import io.github.matthewjones372.lark.actor.ask
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.fold
-import io.github.matthewjones372.lark.fail.left
-import io.github.matthewjones372.lark.fail.mapLeft
-import io.github.matthewjones372.lark.timed
+import io.github.matthewjones372.surefold.actor.ActorRef
+import io.github.matthewjones372.surefold.actor.AskFailure
+import io.github.matthewjones372.surefold.actor.ask
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.fold
+import io.github.matthewjones372.surefold.fail.left
+import io.github.matthewjones372.surefold.fail.mapLeft
+import io.github.matthewjones372.surefold.timed
 import kotlin.time.Duration
 
 /**

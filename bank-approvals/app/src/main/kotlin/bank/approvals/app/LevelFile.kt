@@ -9,12 +9,12 @@ import kotlin.time.Duration
 
 /**
  * Approvals' log level, read from [file] (lark-bank spec 0026): `INFO` or `DEBUG`, as Estate's debug switch writes it
- * to the `bank-approvals-logging` ConfigMap mounted there. The root and Lark's loggers take it, and so Approvals' own;
- * the libraries quietened in `logback.xml` keep their levels. A file that is missing, or says something that is not a
- * level, changes nothing.
+ * to the `bank-approvals-logging` ConfigMap mounted there. The root and Surefold's loggers take it, and so Approvals'
+ * own; the libraries quietened in `logback.xml` keep their levels. A file that is missing, or says something that is
+ * not a level, changes nothing.
  */
 class LevelFile(private val file: Path) {
-    private val taking = listOf(Logger.ROOT_LOGGER_NAME, "lark").map { LoggerFactory.getLogger(it) as Logger }
+    private val taking = listOf(Logger.ROOT_LOGGER_NAME, "surefold").map { LoggerFactory.getLogger(it) as Logger }
 
     /** Reads the file once, and sets the level it names; the level now, or null if the file said none. */
     fun read(): Level? {

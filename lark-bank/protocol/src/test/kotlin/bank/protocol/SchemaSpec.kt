@@ -25,7 +25,8 @@ class SchemaSpec {
 
     @Test
     fun `what the journal holds, protoc's classes read once past its version mark`() {
-        // The journal marks each event with its version (lark spec 0091); bank.proto describes what follows the mark.
+        // The journal marks each event with its version (surefold spec 0091); bank.proto describes what follows the
+        // mark.
         val bytes = AccountEventBody.encode(AccountEvent.Withdrawn(gbp(500), "w-1", 3))
         val withdrawn = Bank.AccountEvent.parseFrom(bytes)
         withdrawn.hasWithdrawn() shouldBe true

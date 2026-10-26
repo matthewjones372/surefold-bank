@@ -3,10 +3,10 @@
 { dockerTools, writeShellScriptBin, jdk25_headless, bashInteractive, coreutils, gnused, gnugrep, findutils, cacert, bank }:
 
 let
-  # Lark's slice mover (spec 0105), on the bank's own classpath with its JDBC driver: run it from a bank pod.
-  journalMove = writeShellScriptBin "lark-journal-move" ''
+  # Surefold's slice mover (spec 0105), on the bank's own classpath with its JDBC driver: run it from a bank pod.
+  journalMove = writeShellScriptBin "surefold-journal-move" ''
     exec ${jdk25_headless}/bin/java -cp "${bank}/share/lark-bank/lib/*" \
-      io.github.matthewjones372.lark.actor.journal.jdbc.JournalMoveKt "$@"
+      io.github.matthewjones372.surefold.actor.journal.jdbc.JournalMoveKt "$@"
   '';
 in
 dockerTools.streamLayeredImage {

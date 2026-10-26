@@ -5,8 +5,8 @@ import bank.domain.TransferError
 import bank.domain.TransferId
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.matthewjones372.lark.assert.shouldBeLeft
-import io.github.matthewjones372.lark.assert.shouldBeRight
+import io.github.matthewjones372.surefold.assert.shouldBeLeft
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -54,7 +54,7 @@ class TraceActorsSpec {
         TestCluster(3, extra = config).running { nodes ->
             val first = nodes.first()
             // A message that reaches a shard still being handed to the node that just joined is kept and sent on
-            // later, outside the trace it came in (lark's sharding keeps the message, not what it carried). So the
+            // later, outside the trace it came in (surefold's sharding keeps the message, not what it carried). So the
             // traced requests wait until every shard they touch has settled where it will stay.
             withClue("every node sees three members up") {
                 eventually {

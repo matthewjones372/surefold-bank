@@ -34,7 +34,7 @@ prevents it.
 What must be remembered is bounded by transfers in flight, not by the account's throughput. A merchant taking 600
 transfers a second, each settling in about 20 ms, holds about a dozen open legs. The alternatives are worse:
 - Remembering references for a time window costs memory, and snapshot size, proportional to throughput.
-- A unique index on references in the journal is exact, but is a Lark change to every journal.
+- A unique index on references in the journal is exact, but is a Surefold change to every journal.
 
 The cost here is one more event per account per transfer, written in the same append as the account's other
 commands when it is busy (spec 0086).

@@ -4,8 +4,8 @@ import bank.app.gbp
 import bank.domain.AccountId
 import bank.domain.TransferId
 import bank.domain.TransferStatus
-import io.github.matthewjones372.lark.assert.shouldBeRight
-import io.github.matthewjones372.lark.metrics
+import io.github.matthewjones372.surefold.assert.shouldBeRight
+import io.github.matthewjones372.surefold.metrics
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 

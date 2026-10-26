@@ -2,7 +2,7 @@ package bank.app
 
 import bank.domain.AccountId
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.matthewjones372.lark.assert.shouldBeRight
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe

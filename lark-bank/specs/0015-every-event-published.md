@@ -18,7 +18,7 @@ without Kafka.
 - **Checks the bank defines** (Vault's smart contracts). Deferred to a later spec.
 - **Kafka as the source of truth.** The journal stays in Postgres. Kafka receives each event after it commits: an
   outbox with Kafka as its sink.
-- **A release.** The events package is a snapshot in mavenLocal, as Lark and Pelican are today.
+- **A release.** The events package is a snapshot in mavenLocal, as Surefold and Pelican are today.
 - **Another transport.** Kafka is the one `Publisher`; the interface only keeps the door open.
 
 ## Shape
@@ -95,7 +95,7 @@ README states it.
 
 **A breaking change is a new version, beside the old.** `bank.events.v2` and new topics, published beside `v1` for as
 long as `v1` has consumers. The journal is the truth, so `v2` topics are published from the first event, and a `v2`
-consumer misses no history. The bank's own journal events are versioned separately (Lark 0091) and mapped to the
+consumer misses no history. The bank's own journal events are versioned separately (Surefold 0091) and mapped to the
 contract, so they change without touching it.
 
 **Apicurio holds the schemas at run time.** The bank registers both schemas on start (a no-op when they are already
@@ -136,8 +136,8 @@ all, a feed the bank serves over HTTP or gRPC from the journal, needs no broker,
 
 ## Depends on
 
-Spec 0016 (money as a `BigDecimal`), so `amount` comes straight from the domain. Nothing in Lark or Pelican:
-`lark-kafka` already produces, and the read models already follow the journal by
+Spec 0016 (money as a `BigDecimal`), so `amount` comes straight from the domain. Nothing in Surefold or Pelican:
+`surefold-kafka` already produces, and the read models already follow the journal by
 partition (spec 0014).
 
 ## Stack

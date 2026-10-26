@@ -1,8 +1,8 @@
 package bank.domain
 
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.left
-import io.github.matthewjones372.lark.fail.right
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.left
+import io.github.matthewjones372.surefold.fail.right
 
 /** What an account is asked to do. [reference] is the caller's idempotency key: the same one twice changes nothing. */
 sealed interface AccountCommand {

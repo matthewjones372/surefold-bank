@@ -5,10 +5,10 @@ import bank.domain.Currency
 import bank.domain.Listed
 import bank.domain.WhenUnanswered
 import com.typesafe.config.Config
-import io.github.matthewjones372.lark.app.Module
-import io.github.matthewjones372.lark.app.single
-import io.github.matthewjones372.lark.app.typesafe.config
-import io.github.matthewjones372.lark.app.typesafe.loadedConfig
+import io.github.matthewjones372.surefold.app.Module
+import io.github.matthewjones372.surefold.app.single
+import io.github.matthewjones372.surefold.app.typesafe.config
+import io.github.matthewjones372.surefold.app.typesafe.loadedConfig
 import kotlin.time.Duration
 
 data class WebSettings(val host: String, val port: Int)
@@ -43,10 +43,10 @@ data class ReadModelSettings(
 data class DatabaseSettings(val url: String, val user: String, val password: String, val poolSize: Int)
 
 /**
- * The journal's databases (lark spec 0088): [primary] names `bank.database`, which also keeps the read models, and
+ * The journal's databases (surefold spec 0088): [primary] names `bank.database`, which also keeps the read models, and
  * [others] are the rest by name, with its user, password and pool size. The list is fixed once the bank holds data:
  * each database owns a range of slices worked out from how many there are, so adding one or reordering them moves
- * ids away from their events. With [groupCommit], each database's appends share commits (lark spec 0108): up to
+ * ids away from their events. With [groupCommit], each database's appends share commits (surefold spec 0108): up to
  * [maxAppends] a commit, with up to [committers] commits in flight on each database (bank spec 0032).
  */
 data class JournalSettings(
@@ -110,9 +110,9 @@ data class ScreeningSettings(
 )
 
 /**
- * Who is calling (bank spec 0021): tokens from [issuer] for [audience], and people signing in to the pages as the client
- * [clientId], coming back to [callbackUrl]. [sessionKey] is the 32-byte key every node seals sessions with; empty makes
- * one at start, which signs people out of every other node.
+ * Who is calling (bank spec 0021): tokens from [issuer] for [audience], and people signing in to the pages as the
+ * client [clientId], coming back to [callbackUrl]. [sessionKey] is the 32-byte key every node seals sessions with;
+ * empty makes one at start, which signs people out of every other node.
  */
 data class IdentitySettings(
     val issuer: String,
@@ -150,8 +150,8 @@ data class AccessShadowSettings(
 )
 
 /**
- * Spans exported (bank spec 0024): with [enabled], over OTLP/HTTP to [otlp], `/v1/traces` added; a request the node takes
- * is sampled at [sampled], from 0 to 1, and every hop after follows it. Off, spans are still made, and dropped.
+ * Spans exported (bank spec 0024): with [enabled], over OTLP/HTTP to [otlp], `/v1/traces` added; a request the node
+ * takes is sampled at [sampled], from 0 to 1, and every hop after follows it. Off, spans are still made, and dropped.
  */
 data class TelemetrySettings(val enabled: Boolean, val otlp: String, val sampled: Double)
 

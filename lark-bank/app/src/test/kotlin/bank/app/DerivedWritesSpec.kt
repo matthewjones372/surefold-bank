@@ -3,7 +3,7 @@ package bank.app
 import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.TransferEvent
-import io.github.matthewjones372.lark.app.liquibase.migrate
+import io.github.matthewjones372.surefold.app.liquibase.migrate
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterEach

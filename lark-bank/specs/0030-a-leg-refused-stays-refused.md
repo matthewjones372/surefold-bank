@@ -53,7 +53,7 @@ credit out twice. A refusal costs one journal row, only for a transfer that was 
 
 ## Depends on
 
-Nothing. Lark spec 0128 (merged) is what found it.
+Nothing. Surefold spec 0128 (merged) is what found it.
 
 ## Stack
 

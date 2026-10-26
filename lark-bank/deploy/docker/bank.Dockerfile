@@ -1,4 +1,4 @@
-# The bank, from `./gradlew :app:installDist`: the build runs on the host, where the lark snapshot is installed.
+# The bank, from `./gradlew :app:installDist`: the build runs on the host, where the surefold snapshot is installed.
 FROM public.ecr.aws/docker/library/eclipse-temurin:25-jre
 RUN useradd --system --uid 10001 bank
 COPY app/build/install/app /opt/bank

@@ -5,24 +5,24 @@ import bank.api.OpsNode
 import bank.api.OpsSnapshot
 import bank.domain.Currencies
 import bank.protocol.wire.NodeSnapshot
-import io.github.matthewjones372.lark.Reading
-import io.github.matthewjones372.lark.actor.OffsetStore
-import io.github.matthewjones372.lark.actor.ShardedJournal
-import io.github.matthewjones372.lark.actor.Topic
-import io.github.matthewjones372.lark.cluster.Cluster
-import io.github.matthewjones372.lark.gauge
-import io.github.matthewjones372.lark.logWarn
-import io.github.matthewjones372.lark.readings
-import io.github.matthewjones372.lark.stream.Running
-import io.github.matthewjones372.lark.stream.Stream
-import io.github.matthewjones372.lark.stream.StreamBackend
-import io.github.matthewjones372.lark.stream.map
-import io.github.matthewjones372.lark.stream.mapPar
-import io.github.matthewjones372.lark.stream.restartOnDefect
-import io.github.matthewjones372.lark.stream.runFold
-import io.github.matthewjones372.lark.stream.start
-import io.github.matthewjones372.lark.stream.tick
-import io.github.matthewjones372.lark.stream.toSequence
+import io.github.matthewjones372.surefold.Reading
+import io.github.matthewjones372.surefold.actor.OffsetStore
+import io.github.matthewjones372.surefold.actor.ShardedJournal
+import io.github.matthewjones372.surefold.actor.Topic
+import io.github.matthewjones372.surefold.cluster.Cluster
+import io.github.matthewjones372.surefold.gauge
+import io.github.matthewjones372.surefold.logWarn
+import io.github.matthewjones372.surefold.readings
+import io.github.matthewjones372.surefold.stream.Running
+import io.github.matthewjones372.surefold.stream.Stream
+import io.github.matthewjones372.surefold.stream.StreamBackend
+import io.github.matthewjones372.surefold.stream.map
+import io.github.matthewjones372.surefold.stream.mapPar
+import io.github.matthewjones372.surefold.stream.restartOnDefect
+import io.github.matthewjones372.surefold.stream.runFold
+import io.github.matthewjones372.surefold.stream.start
+import io.github.matthewjones372.surefold.stream.tick
+import io.github.matthewjones372.surefold.stream.toSequence
 import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.concurrent.ConcurrentHashMap
@@ -31,9 +31,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * This node's own numbers once a second (bank spec 0007): the shards and entities lark's gauges count here (lark
- * 0081), and the rates since the last snapshot of what the bank's own meters count. Rates are deltas between two
- * readings of cumulative meters, so one snapshot is taken at a time.
+ * This node's own numbers once a second (bank spec 0007): the shards and entities surefold's gauges count here
+ * (surefold 0081), and the rates since the last snapshot of what the bank's own meters count. Rates are deltas between
+ * two readings of cumulative meters, so one snapshot is taken at a time.
  */
 class NodeMeter(private val node: String, private val cluster: Cluster) {
     private var lastAt = System.nanoTime()
@@ -47,7 +47,7 @@ class NodeMeter(private val node: String, private val cluster: Cluster) {
         val seconds = ((now - lastAt) / NANOS_PER_SECOND).coerceAtLeast(MIN_SECONDS)
         lastAt = now
 
-        // lark's `timed` records milliseconds as a histogram, read back with its buckets (lark spec 0109).
+        // surefold's `timed` records milliseconds as a histogram, read back with its buckets (surefold spec 0109).
         val asks = readings("bank.ask.duration").filterIsInstance<Reading.Distribution>()
         val count = asks.sumOf { it.count }
         val cumulative = asks
@@ -69,8 +69,8 @@ class NodeMeter(private val node: String, private val cluster: Cluster) {
             node = node,
             status = cluster.view.members.firstOrNull { it.node == cluster.self }?.status?.name ?: "Joining",
             atMillis = System.currentTimeMillis(),
-            shards = gauges("lark.sharding.shards"),
-            entities = gauges("lark.sharding.entities"),
+            shards = gauges("surefold.sharding.shards"),
+            entities = gauges("surefold.sharding.entities"),
             asksPerSecond = askedNow / seconds,
             askP99Millis = p99,
             commandsPerSecond = commandRates,
@@ -102,7 +102,7 @@ fun opsPublisher(meter: NodeMeter, topic: Topic<NodeSnapshot>, backend: StreamBa
             topic.publish(meter.snapshot())
             1L
         }
-        .restartOnDefect(io.github.matthewjones372.lark.Schedule.spaced(1.seconds))
+        .restartOnDefect(io.github.matthewjones372.surefold.Schedule.spaced(1.seconds))
         .runFold(0L) { published, now -> published + now }
         .start(backend)
 
@@ -113,7 +113,7 @@ class JournalHeads(private val sources: List<Pair<String, DataSource>>) {
     fun heads(): List<Pair<String, Long>> = sources.map { (name, data) ->
         name to data.connection.use { connection ->
             connection.createStatement().use { query ->
-                query.executeQuery("select coalesce(max(ordering), 0) from lark_journal").use { rows ->
+                query.executeQuery("select coalesce(max(ordering), 0) from surefold_journal").use { rows ->
                     rows.next()
                     rows.getLong(1)
                 }
@@ -190,7 +190,7 @@ class LiveOps(
 /**
  * The books as gauges, for alerts to watch (bank spec 0009): how far the ledger is from balancing, how many transfers
  * are still moving, and how far each read model trails each journal database. Read every [every], since each is a
- * query, and set through lark. Each starts at NaN, and a database that does not answer leaves the last reading:
+ * query, and set through surefold. Each starts at NaN, and a database that does not answer leaves the last reading:
  * never a false 0.
  */
 fun bookGauges(
@@ -227,7 +227,7 @@ fun bookGauges(
     val first = read()
     return Stream.tick(every, Unit)
         .map { _ -> read() }
-        .restartOnDefect(io.github.matthewjones372.lark.Schedule.spaced(every))
+        .restartOnDefect(io.github.matthewjones372.surefold.Schedule.spaced(every))
         .runFold(first) { total, now -> total + now }
         .start(backend)
 }

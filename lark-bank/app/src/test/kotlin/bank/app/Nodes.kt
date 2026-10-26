@@ -2,16 +2,16 @@ package bank.app
 
 import bank.domain.Bank
 import bank.issuer.TestIssuer
-import io.github.matthewjones372.lark.app.Module
-import io.github.matthewjones372.lark.app.single
-import io.github.matthewjones372.lark.app.typesafe.overridingConfig
-import io.github.matthewjones372.lark.app.use
-import io.github.matthewjones372.lark.cluster.Cluster
-import io.github.matthewjones372.lark.fail.fold
-import io.github.matthewjones372.lark.fail.onLeft
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.signedInAs
+import io.github.matthewjones372.surefold.app.Module
+import io.github.matthewjones372.surefold.app.single
+import io.github.matthewjones372.surefold.app.typesafe.overridingConfig
+import io.github.matthewjones372.surefold.app.use
+import io.github.matthewjones372.surefold.cluster.Cluster
+import io.github.matthewjones372.surefold.fail.fold
+import io.github.matthewjones372.surefold.fail.onLeft
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.io.IOException
@@ -108,7 +108,7 @@ private const val LAST_PORT = 32_000
 
 /**
  * Nodes of one cluster, all on [database], each on its own ports. With [journals] above 1, the journal is split across
- * that many databases (lark spec 0088), [database] the first of them.
+ * that many databases (surefold spec 0088), [database] the first of them.
  */
 class TestCluster(
     size: Int,

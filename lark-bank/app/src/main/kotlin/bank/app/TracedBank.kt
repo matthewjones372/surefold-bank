@@ -4,8 +4,8 @@ import bank.domain.AccountId
 import bank.domain.Bank
 import bank.domain.Money
 import bank.domain.TransferId
-import io.github.matthewjones372.lark.logAnnotated
-import io.github.matthewjones372.lark.otel.tracedSpan
+import io.github.matthewjones372.surefold.logAnnotated
+import io.github.matthewjones372.surefold.otel.tracedSpan
 import io.opentelemetry.api.trace.Tracer
 
 /**

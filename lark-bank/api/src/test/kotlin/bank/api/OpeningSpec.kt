@@ -6,8 +6,8 @@ import bank.domain.Currency
 import bank.domain.Listed
 import bank.domain.Money
 import bank.domain.Unavailable
-import io.github.matthewjones372.lark.fail.Either
 import io.github.matthewjones372.pelican.Outcome
+import io.github.matthewjones372.surefold.fail.Either
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

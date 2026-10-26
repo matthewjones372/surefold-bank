@@ -3,7 +3,7 @@
 ## Problem
 
 Every node writes every event into one Postgres, so adding nodes does not add write capacity: that one primary is
-the bank's ceiling. Lark spec 0088 splits a journal across databases by id; the bank should run on it.
+the bank's ceiling. Surefold spec 0088 splits a journal across databases by id; the bank should run on it.
 
 ## Not doing
 
@@ -15,7 +15,7 @@ the bank's ceiling. Lark spec 0088 splits a journal across databases by id; the 
 
 - `bank.database` is the journal's first database, `db-0`, and still keeps the read models and offsets.
   `bank.journal.databases` (`JOURNAL_DATABASES`) adds others as `name=url` pairs, which share its user, password
-  and pool size, and are migrated to lark's tables alone (`db/journal.xml`) before anything writes to them.
+  and pool size, and are migrated to surefold's tables alone (`db/journal.xml`) before anything writes to them.
 - The flock's journal is a `ShardedJournal` and its snapshots a `ShardedSnapshots`, over the same names in the same
   order. Accounts prune with `Prune.after(offsets, journal, …)`, so each database waits only on its own readers.
 - Each read model runs as one projection per database: `statements@db-0`, `statements@db-1`, and so on, including

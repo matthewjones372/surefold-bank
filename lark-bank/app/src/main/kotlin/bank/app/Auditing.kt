@@ -5,7 +5,7 @@ import bank.access.fga.FgaUnavailable
 import bank.access.fga.Tuple
 import bank.api.Audit
 import bank.api.Because
-import io.github.matthewjones372.lark.logWarn
+import io.github.matthewjones372.surefold.logWarn
 import java.time.Instant
 
 /**

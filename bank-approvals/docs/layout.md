@@ -1,7 +1,7 @@
 # bank-approvals — repository layout (draft)
 
 Spec 0019 in lark-bank is the brief. This is the shape of the repository it builds, laid out as lark-bank is (Kotlin on
-Lark and Pelican, Gradle, Nix) so a reader of one can find their way in the other.
+Surefold and Pelican, Gradle, Nix) so a reader of one can find their way in the other.
 
 ```
 bank-approvals/
@@ -10,10 +10,10 @@ bank-approvals/
 ├── README.md                  what it is, how to run it, the audit's guarantees in a page
 ├── flake.nix / flake.lock     JDK 25, Gradle, buf, Chromium for Playwright (as lark-bank's)
 ├── settings.gradle.kts        the modules below; larkSource / pelicanSource composite builds, as lark-bank's
-├── gradle.properties          larkVersion, pelicanVersion, bankEventsVersion
+├── gradle.properties          surefoldVersion, pelicanVersion, bankEventsVersion
 ├── build.gradle.kts           Kotlin, detekt, the layering check (domain depends on nothing)
 │
-├── domain/                    approvals-domain: pure Kotlin, no Lark, no Pelican, no I/O
+├── domain/                    approvals-domain: pure Kotlin, no Surefold, no Pelican, no I/O
 │   └── src/main/kotlin/bank/approvals/domain/
 │       ├── Request.kt         the saga's states and events: Requested … Applied / ApplyFailed, Rejected,
 │       │                      Withdrawn, Superseded, Expired; decide(state, command) → events | refusal
@@ -38,7 +38,7 @@ bank-approvals/
 │
 ├── app/                       approvals-saga (its running half) and approvals-audit
 │   └── src/main/kotlin/bank/approvals/app/
-│       ├── Requests.kt        a request as a Lark persistent entity, events versioned (lark 0091)
+│       ├── Requests.kt        a request as a Surefold persistent entity, events versioned (surefold 0091)
 │       ├── Timers.kt          expiry, and asking the owner to apply again until it answers
 │       ├── Policies.kt        policies.yaml read at start and on change; the version on each decision
 │       ├── Audit.kt           who and from where on each act; the nightly digest of chain heads, shipped offsite
@@ -48,7 +48,7 @@ bank-approvals/
 │       ├── Settings.kt / Wiring.kt / Main.kt
 │   └── src/main/resources/
 │       ├── application.conf
-│       └── db/                Liquibase: read models, the digest table (the journal is Lark's)
+│       └── db/                Liquibase: read models, the digest table (the journal is Surefold's)
 │   └── src/test/kotlin/…      a test cluster on Postgres in a container; Playwright for the pages
 │
 ├── policies/
@@ -67,7 +67,7 @@ bank-approvals/
 
 | From | What | How |
 |---|---|---|
-| Lark | entities, journal, timers, Kafka, cluster | mavenLocal snapshot, or `-PlarkSource` |
+| Surefold | entities, journal, timers, Kafka, cluster | mavenLocal snapshot, or `-PlarkSource` |
 | Pelican | endpoints, pages, pelican-oidc, pelican-test | mavenLocal snapshot, or `-PpelicanSource` |
 | lark-bank | `lark-bank-events`, which gains `bank.approval-events` (approvals-published) | `publishToMavenLocal` |
 | lark-bank | the test issuer (bank spec 0021), for tests and compose | published as `lark-bank-issuer` beside the events |

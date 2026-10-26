@@ -53,7 +53,7 @@ live. It tells no one yet.
 
 **Debug in the bank's services**: lark-bank, bank-approvals and access-sync each read their log level from a
 `<name>-logging` ConfigMap, `level: INFO`, mounted as a file named by `LOG_LEVEL_FILE` and reread every ten seconds;
-the root and Lark's loggers take the level, the libraries' quietened loggers keep theirs. Flux makes each ConfigMap
+the root and Surefold's loggers take the level, the libraries' quietened loggers keep theirs. Flux makes each ConfigMap
 once and leaves it (`kustomize.toolkit.fluxcd.io/ssa: IfNotPresent`), so a reconcile never undoes a switch.
 
 ```mermaid

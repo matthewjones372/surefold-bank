@@ -22,7 +22,7 @@ sleep $((seconds / 3))
 echo "demo: killing bank-3"
 docker kill lark-bank-bank-3-1 >/dev/null
 sleep $((seconds / 3))
-# Back at the same address while the others still hold its earlier life: a new life of bank-3 (lark spec 0097).
+# Back at the same address while the others still hold its earlier life: a new life of bank-3 (surefold spec 0097).
 echo "demo: starting bank-3 again"
 docker start lark-bank-bank-3-1 >/dev/null
 wait "$load" || true

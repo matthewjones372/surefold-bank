@@ -9,7 +9,7 @@ gone wrong at any of them, and today nothing records which:
 
 - **The bank makes spans and keeps none.** `TracedBank` opens one per transfer, and the SDK it hands it to has no
   exporter: the span ends and is gone. Its ids reach the log lines inside it, and no others.
-- **The trace stops at every boundary.** Lark carries it across a fork (Lark spec 0021) but not across a message to an
+- **The trace stops at every boundary.** Surefold carries it across a fork (Surefold spec 0021) but not across a message to an
   actor, local or on another node; Pelican's server continues an inbound `traceparent` but its client sends none; an
   event written to the journal and published to Kafka keeps no trace at all.
 - **"Why was this transfer slow?"** is answered from metrics, which say the p99 rose, and from logs, which spec 0023
@@ -18,7 +18,7 @@ gone wrong at any of them, and today nothing records which:
 ## Not doing
 
 - **The OpenTelemetry Java agent.** It instruments JDBC, Kafka's client and `java.net.http` for free, but costs 50 to
-  100 MiB and seconds of start per JVM on the small machines, and knows nothing of Lark's actors, which are most of the
+  100 MiB and seconds of start per JVM on the small machines, and knows nothing of Surefold's actors, which are most of the
   hops. Spans are made by the libraries the hops belong to.
 - **A span per Postgres statement.** The journal's append is one span; what Postgres did inside it is its own metrics.
 - **The browser.** The trace begins at the bank's HTTP server, not in the customer's page.
@@ -50,7 +50,7 @@ opens a trace that made it.
 ## Why this shape
 
 Spans from the libraries, not the agent: the agent's cost lands on every JVM on every machine, and its blind spot,
-Lark's messages, is where a transfer spends its time, so the upstream work is needed either way. Head sampling, not
+Surefold's messages, is where a transfer spends its time, so the upstream work is needed either way. Head sampling, not
 tail: tail sampling keeps every error and slow trace, but needs a collector holding every span of every trace in
 memory until it decides, which three small machines cannot spare at a thousand transfers a second; the alternative
 recommended later, if errors go unseen, is to sample 100% of requests that fail at the edge. OTLP straight to Tempo,
@@ -58,9 +58,9 @@ not through a collector: one less pod, and the services already batch.
 
 ## Depends on
 
-- **Lark spec 0122, "a trace that crosses a message"**: the sender's context carried on `tell` and `ask`, locally and
+- **Surefold spec 0122, "a trace that crosses a message"**: the sender's context carried on `tell` and `ask`, locally and
   across nodes, and the receiver handling the message inside it. Until it lands, a trace ends at the first actor.
-- **Lark spec 0123, "an event that keeps its trace"**: the journal keeps each event's `traceparent`, the Kafka
+- **Surefold spec 0123, "an event that keeps its trace"**: the journal keeps each event's `traceparent`, the Kafka
   producer sends it as a header, and the consumer continues it. Until it lands, a trace ends at the journal.
 - **Pelican spec 0064, "a client that carries the trace"**: `traceparent` on every call a Pelican client makes. Until
   it lands, screening's calls start new traces in bank-checks.
@@ -77,12 +77,12 @@ not through a collector: one less pod, and the services already batch.
       has no `compactor` block: seven days is two flags, its backend worker's and scheduler's. Exported with the JDK's
       HTTP client, not OkHttp. At home, the `traces-store` key is SOPS's to supply, as `backup-store-credentials` is;
       `garage-setup` makes the `traces` bucket for it.
-- [x] **`trace-actors`** — on Lark 0122. Done when: on a three-node cluster, one transfer's trace holds spans from the
+- [x] **`trace-actors`** — on Surefold 0122. Done when: on a three-node cluster, one transfer's trace holds spans from the
       node that took it, the shard's node and both accounts' nodes.
       Done: `TraceActorsSpec` sends six transfers on three nodes, each under its own sampled `traceparent`; every
       trace holds `PUT /transfers/{transferId}`, `transfer debitsource`, `account debit` and `account credit`, and
       the traces between them hold spans from more than one node. The bank adds a span per account command and per leg
-      sent; Lark carries them. Building it found a gap in Lark: an account answers its leg by reply, and a reply
+      sent; Surefold carries them. Building it found a gap in Surefold: an account answers its leg by reply, and a reply
       answered across nodes lost the trace, fixed there.
 - [x] **`trace-calls`** — on Pelican 0064: screening, Approvals and bank-access calls carry the trace; bank-checks,
       bank-approvals and OpenFGA export their spans. Done when: one transfer's trace holds bank-checks' screening span.
@@ -95,7 +95,7 @@ not through a collector: one less pod, and the services already batch.
       nothing from the actor's: both now hand over what it carried. OpenFGA exports over gRPC, so Tempo listens on
       4317 too; tried in compose, its sampler ignores the caller's decision and samples by trace id alone, so it runs
       at the bank's own ratio and keeps the same traces.
-- [x] **`trace-events`** — on Lark 0123: published events, and their handling by bank-checks' monitoring, access-sync
+- [x] **`trace-events`** — on Surefold 0123: published events, and their handling by bank-checks' monitoring, access-sync
       and the bank's grants. Done when: an account opened shows, in one trace, access-sync writing its owner to OpenFGA.
       Done, each hop proved on its own: an account opened under a sampled `traceparent` is on `bank.account-events`
       with that trace's `traceparent` (`TraceEventsSpec`); access-sync writes its owner in a consumer span of that

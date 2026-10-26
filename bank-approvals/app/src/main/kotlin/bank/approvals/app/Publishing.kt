@@ -10,22 +10,22 @@ import bank.approvals.protocol.toContract
 import bank.events.v1.ApprovalEvent
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import io.github.matthewjones372.lark.Schedule
-import io.github.matthewjones372.lark.actor.Journal
-import io.github.matthewjones372.lark.actor.OffsetStore
-import io.github.matthewjones372.lark.actor.PersistenceId
-import io.github.matthewjones372.lark.actor.SlicedFeed
-import io.github.matthewjones372.lark.actor.projection.Projection
-import io.github.matthewjones372.lark.actor.projection.runProjecting
-import io.github.matthewjones372.lark.counter
-import io.github.matthewjones372.lark.increment
-import io.github.matthewjones372.lark.kafka.Kafka
-import io.github.matthewjones372.lark.kafka.Producer
-import io.github.matthewjones372.lark.kafka.carrying
-import io.github.matthewjones372.lark.kafka.producer
-import io.github.matthewjones372.lark.logWarn
-import io.github.matthewjones372.lark.stream.mapAsync
-import io.github.matthewjones372.lark.stream.restartOnDefect
+import io.github.matthewjones372.surefold.Schedule
+import io.github.matthewjones372.surefold.actor.Journal
+import io.github.matthewjones372.surefold.actor.OffsetStore
+import io.github.matthewjones372.surefold.actor.PersistenceId
+import io.github.matthewjones372.surefold.actor.SlicedFeed
+import io.github.matthewjones372.surefold.actor.projection.Projection
+import io.github.matthewjones372.surefold.actor.projection.runProjecting
+import io.github.matthewjones372.surefold.counter
+import io.github.matthewjones372.surefold.increment
+import io.github.matthewjones372.surefold.kafka.Kafka
+import io.github.matthewjones372.surefold.kafka.Producer
+import io.github.matthewjones372.surefold.kafka.carrying
+import io.github.matthewjones372.surefold.kafka.producer
+import io.github.matthewjones372.surefold.logWarn
+import io.github.matthewjones372.surefold.stream.mapAsync
+import io.github.matthewjones372.surefold.stream.restartOnDefect
 import org.apache.kafka.clients.admin.Admin
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.producer.ProducerConfig
@@ -75,8 +75,8 @@ object ApprovalTopic {
  */
 class ApprovalEvents(private val producer: Producer<String, ByteArray>, private val contentId: Int) : AutoCloseable {
     /**
-     * Completes once the brokers have it for good (acks=all). [carried] goes as headers: the trace the event was written
-     * in, so whoever handles it continues that trace (lark-bank spec 0024).
+     * Completes once the brokers have it for good (acks=all). [carried] goes as headers: the trace the event was
+     * written in, so whoever handles it continues that trace (lark-bank spec 0024).
      */
     fun publish(event: ApprovalEvent, carried: Map<String, String> = emptyMap()): CompletableFuture<Unit> =
         producer.send(

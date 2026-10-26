@@ -1,15 +1,15 @@
 package bank.protocol
 
 import bank.domain.AccountEvent
-import io.github.matthewjones372.lark.actor.UnreadableEvent
-import io.github.matthewjones372.lark.actor.Upgrade
-import io.github.matthewjones372.lark.actor.versioned
+import io.github.matthewjones372.surefold.actor.UnreadableEvent
+import io.github.matthewjones372.surefold.actor.Upgrade
+import io.github.matthewjones372.surefold.actor.versioned
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.junit.jupiter.api.Test
 
-/** The journal's codecs are versioned (lark spec 0091), and what that promises the bank's journal. */
+/** The journal's codecs are versioned (surefold spec 0091), and what that promises the bank's journal. */
 class VersionedJournalSpec {
 
     private val deposit = AccountEvent.Deposited(gbp(500), "ref-1", 2)

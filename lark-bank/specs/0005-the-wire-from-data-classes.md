@@ -10,7 +10,7 @@ times, and a field missed in the mapping compiled.
 
 - **No annotations on the domain.** It stays Arrow and nothing else; the wire shapes are their own classes.
 - **No reading of journals written before this.** The bytes changed shape; a bank upgraded from before resets its
-  data. The demo has no data worth keeping, and lark spec 0091's `versioned` is the way if one ever does.
+  data. The demo has no data worth keeping, and surefold spec 0091's `versioned` is the way if one ever does.
 - **No proto3.** kotlinx's generator writes proto2; the bytes are the same, so a proto3 reader parses them.
 
 ## Shape
@@ -21,7 +21,7 @@ times, and a field missed in the mapping compiled.
 - **kimney** derives every crossing between the domain and the wire shapes, both ways, at compile time:
   `fun AccountEvent.toWire(): wire.AccountEvent = transformInto()`. A case or a field on one side and not the other
   stops the build.
-- **`Kotlinx.oneOf` tables** (lark spec 0093) give each sealed shape fixed tags: events, snapshots, requests, replies,
+- **`Kotlinx.oneOf` tables** (surefold spec 0093) give each sealed shape fixed tags: events, snapshots, requests, replies,
   bulk credits and the Kafka record. Each value is a protobuf message with a `oneof`.
 - **`protocol/schema/bank.proto`** is `Kotlinx.proto(...)` of the tables, pinned. `SchemaSpec` fails when it
   differs from what the classes make, and `protoc` compiles it in the tests: its classes read what the bank writes, and
@@ -44,4 +44,4 @@ times, and a field missed in the mapping compiled.
 ## Open questions
 
 Nothing open. `Kotlinx.asked` takes a single class, so a request that is one of a table is written by hand in
-`Codecs.kt`; an overload of `asked` over a table in lark would remove those lines.
+`Codecs.kt`; an overload of `asked` over a table in surefold would remove those lines.
