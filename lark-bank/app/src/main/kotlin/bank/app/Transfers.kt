@@ -38,6 +38,7 @@ import io.github.matthewjones372.surefold.actor.Next
 import io.github.matthewjones372.surefold.actor.PersistenceId
 import io.github.matthewjones372.surefold.actor.Remembered
 import io.github.matthewjones372.surefold.actor.Reply
+import io.github.matthewjones372.surefold.actor.Start
 import io.github.matthewjones372.surefold.actor.persistent
 import io.github.matthewjones372.surefold.counter
 import io.github.matthewjones372.surefold.fail.Either
@@ -79,7 +80,8 @@ private const val SCREEN = "screen"
  * state, so a saga recovered on another node carries on from where its last event left it. One recovered before its
  * credit was written debits again, which the account answers as applied (spec 0031). The replies waiting for it to
  * settle are this incarnation's only: after a move they are gone, and the caller's own timeout answers it as still
- * pending.
+ * pending. A transfer's id is new when its saga first starts, so it starts assuming new and reads its journal only
+ * once a first command shows otherwise (spec 0031, surefold spec 0198).
  */
 fun transfer(
     id: TransferId,
@@ -229,10 +231,7 @@ fun transfer(
                         val refusal = message.answer.leftOrNull()
                         when (val event = moving.after(message.step, refusal, now())) {
                             null -> none()
-
-                            else -> {
-                                took(event, moving, ctx)
-                            }
+                            else -> took(event, moving, ctx)
                         }
                     }
                 }
@@ -270,6 +269,7 @@ fun transfer(
             }
         },
         event = Transfer::evolve,
+        start = Start.assumingNew,
     ).onRecovered { ctx, recovered -> ctx.started(recovered.value) }
 }
 
