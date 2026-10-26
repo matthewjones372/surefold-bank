@@ -13,10 +13,10 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters.*
 
 /**
- * A record of the bank's handled in the trace it was published in (lark-bank
- * spec 0024): a consumer span, child of the publish, whose ids are on every
- * line logged while it is handled, as `trace_id` and `span_id`. A record
- * published outside any trace is handled as before, in none.
+ * A record of the bank's handled in the trace it was published in (bank spec
+ * 0024): a consumer span, child of the publish, whose ids are on every line
+ * logged while it is handled, as `trace_id` and `span_id`. A record published
+ * outside any trace is handled as before, in none.
  */
 object Handled:
   private object Headers extends TextMapGetter[ConsumerRecord[?, ?]]:

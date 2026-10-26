@@ -57,50 +57,50 @@
                 "bank-approvals/protocol/src/main/kotlin/bank/approvals/protocol/Mapping.kt": 100,
                 "bank-approvals/protocol/src/main/kotlin/bank/approvals/protocol/Messages.kt": 0,
                 "bank-approvals/protocol/src/main/kotlin/bank/approvals/protocol/wire/Wire.kt": 80,
-                "lark-bank/api/src/main/kotlin/bank/api/Audit.kt": 0,
-                "lark-bank/api/src/main/kotlin/bank/api/Caller.kt": 13.89,
-                "lark-bank/api/src/main/kotlin/bank/api/Endpoints.kt": 63.2,
-                "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt": 3.3,
-                "lark-bank/api/src/main/kotlin/bank/api/Looks.kt": 0,
-                "lark-bank/api/src/main/kotlin/bank/api/Opening.kt": 100,
-                "lark-bank/api/src/main/kotlin/bank/api/Screening.kt": 53.33,
-                "lark-bank/api/src/main/kotlin/bank/api/TraceCompletion.kt": 0,
-                "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt": 0,
-                "lark-bank/app/src/main/kotlin/bank/app/Access.kt": 96.05,
-                "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt": 96.15,
-                "lark-bank/app/src/main/kotlin/bank/app/Accounts.kt": 89.29,
-                "lark-bank/app/src/main/kotlin/bank/app/Auditing.kt": 91.3,
-                "lark-bank/app/src/main/kotlin/bank/app/Cluster.kt": 86.36,
-                "lark-bank/app/src/main/kotlin/bank/app/Exemplars.kt": 100,
-                "lark-bank/app/src/main/kotlin/bank/app/Identity.kt": 87.1,
-                "lark-bank/app/src/main/kotlin/bank/app/LevelFile.kt": 60,
-                "lark-bank/app/src/main/kotlin/bank/app/Main.kt": 0,
-                "lark-bank/app/src/main/kotlin/bank/app/Ops.kt": 99.12,
-                "lark-bank/app/src/main/kotlin/bank/app/Projections.kt": 91.78,
-                "lark-bank/app/src/main/kotlin/bank/app/Publishing.kt": 100,
-                "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt": 98.52,
-                "lark-bank/app/src/main/kotlin/bank/app/Screening.kt": 92.59,
-                "lark-bank/app/src/main/kotlin/bank/app/Settings.kt": 94.9,
-                "lark-bank/app/src/main/kotlin/bank/app/Shadowing.kt": 85.71,
-                "lark-bank/app/src/main/kotlin/bank/app/ShardedBank.kt": 92.11,
-                "lark-bank/app/src/main/kotlin/bank/app/TraceHeaders.kt": 100,
-                "lark-bank/app/src/main/kotlin/bank/app/TracedBank.kt": 100,
-                "lark-bank/app/src/main/kotlin/bank/app/Transfers.kt": 88.46,
-                "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt": 96.69,
-                "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt": 98.02,
-                "lark-bank/domain/src/main/kotlin/bank/domain/Bank.kt": 88.89,
-                "lark-bank/domain/src/main/kotlin/bank/domain/DailyLimit.kt": 100,
-                "lark-bank/domain/src/main/kotlin/bank/domain/Money.kt": 94.12,
-                "lark-bank/domain/src/main/kotlin/bank/domain/Transfer.kt": 82.05,
-                "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt": 0,
-                "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt": 0,
-                "lark-bank/loadtest/src/main/kotlin/bank/load/StandInCheck.kt": 0,
-                "lark-bank/protocol/src/main/kotlin/bank/protocol/Codecs.kt": 93.86,
-                "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt": 94.2,
-                "lark-bank/protocol/src/main/kotlin/bank/protocol/Mapping.kt": 100,
-                "lark-bank/protocol/src/main/kotlin/bank/protocol/Messages.kt": 63.64,
-                "lark-bank/protocol/src/main/kotlin/bank/protocol/wire/Ops.kt": 11.11,
-                "lark-bank/protocol/src/main/kotlin/bank/protocol/wire/Wire.kt": 94.74
+                "bank/api/src/main/kotlin/bank/api/Audit.kt": 0,
+                "bank/api/src/main/kotlin/bank/api/Caller.kt": 13.89,
+                "bank/api/src/main/kotlin/bank/api/Endpoints.kt": 63.2,
+                "bank/api/src/main/kotlin/bank/api/Handlers.kt": 3.3,
+                "bank/api/src/main/kotlin/bank/api/Looks.kt": 0,
+                "bank/api/src/main/kotlin/bank/api/Opening.kt": 100,
+                "bank/api/src/main/kotlin/bank/api/Screening.kt": 53.33,
+                "bank/api/src/main/kotlin/bank/api/TraceCompletion.kt": 0,
+                "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt": 0,
+                "bank/app/src/main/kotlin/bank/app/Access.kt": 96.05,
+                "bank/app/src/main/kotlin/bank/app/AccessLogging.kt": 96.15,
+                "bank/app/src/main/kotlin/bank/app/Accounts.kt": 89.29,
+                "bank/app/src/main/kotlin/bank/app/Auditing.kt": 91.3,
+                "bank/app/src/main/kotlin/bank/app/Cluster.kt": 86.36,
+                "bank/app/src/main/kotlin/bank/app/Exemplars.kt": 100,
+                "bank/app/src/main/kotlin/bank/app/Identity.kt": 87.1,
+                "bank/app/src/main/kotlin/bank/app/LevelFile.kt": 60,
+                "bank/app/src/main/kotlin/bank/app/Main.kt": 0,
+                "bank/app/src/main/kotlin/bank/app/Ops.kt": 99.12,
+                "bank/app/src/main/kotlin/bank/app/Projections.kt": 91.78,
+                "bank/app/src/main/kotlin/bank/app/Publishing.kt": 100,
+                "bank/app/src/main/kotlin/bank/app/ReadModels.kt": 98.52,
+                "bank/app/src/main/kotlin/bank/app/Screening.kt": 92.59,
+                "bank/app/src/main/kotlin/bank/app/Settings.kt": 94.9,
+                "bank/app/src/main/kotlin/bank/app/Shadowing.kt": 85.71,
+                "bank/app/src/main/kotlin/bank/app/ShardedBank.kt": 92.11,
+                "bank/app/src/main/kotlin/bank/app/TraceHeaders.kt": 100,
+                "bank/app/src/main/kotlin/bank/app/TracedBank.kt": 100,
+                "bank/app/src/main/kotlin/bank/app/Transfers.kt": 88.46,
+                "bank/app/src/main/kotlin/bank/app/Wiring.kt": 96.69,
+                "bank/domain/src/main/kotlin/bank/domain/Account.kt": 98.02,
+                "bank/domain/src/main/kotlin/bank/domain/Bank.kt": 88.89,
+                "bank/domain/src/main/kotlin/bank/domain/DailyLimit.kt": 100,
+                "bank/domain/src/main/kotlin/bank/domain/Money.kt": 94.12,
+                "bank/domain/src/main/kotlin/bank/domain/Transfer.kt": 82.05,
+                "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt": 0,
+                "bank/loadtest/src/main/kotlin/bank/load/Load.kt": 0,
+                "bank/loadtest/src/main/kotlin/bank/load/StandInCheck.kt": 0,
+                "bank/protocol/src/main/kotlin/bank/protocol/Codecs.kt": 93.86,
+                "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt": 94.2,
+                "bank/protocol/src/main/kotlin/bank/protocol/Mapping.kt": 100,
+                "bank/protocol/src/main/kotlin/bank/protocol/Messages.kt": 63.64,
+                "bank/protocol/src/main/kotlin/bank/protocol/wire/Ops.kt": 11.11,
+                "bank/protocol/src/main/kotlin/bank/protocol/wire/Wire.kt": 94.74
               },
               "unit": "%",
               "value": 58.45
@@ -274,144 +274,144 @@
             "bank-checks:checks.screening.domain.ScreenSpec.Screen - a rule reads the hour the transfer was requested, in UTC",
             "bank-checks:checks.screening.domain.ScreenSpec.Screen - the first rule in the admin's order that holds declines",
             "bank-checks:checks.screening.domain.ScreenSpec.Screen - with no rule live, every transfer is approved",
-            "lark-bank:bank.api.OpeningSpec.a daily limit that is not an amount of the account's currency is refused()",
-            "lark-bank:bank.api.OpeningSpec.a refusal for the daily limit names the limit, what is left today and what was asked()",
-            "lark-bank:bank.api.OpeningSpec.a refusal no opening can give is a bug, not an answer()",
-            "lark-bank:bank.api.OpeningSpec.an opening is refused as already open, as an invalid amount, or as unavailable()",
-            "lark-bank:bank.api.OpeningSpec.an opening reads its initial amount and its daily limit in the account's currency()",
-            "lark-bank:bank.api.OpeningSpec.an opening without a daily limit leaves it to the account's default()",
-            "lark-bank:bank.api.ScreeningClientSpec.the committed client is the one the description generates()",
-            "lark-bank:bank.api.ScreeningContractSpec.a check that stopped sending the evidence would break the bank()",
-            "lark-bank:bank.api.ScreeningContractSpec.the check serves everything the bank's client sends and reads()",
-            "lark-bank:bank.app.AccessAuditSpec.an auditor sees Bob's grant on the account, with the approval it came from, and not after it expires()",
-            "lark-bank:bank.app.AccessLogSpec.Ada's page lists Bob's look, and the topic carries it with the grant's approval id()",
-            "lark-bank:bank.app.AccessLogSpec.refusals are recorded for everyone, a customer's own looks are not, and only the auditor sees either()",
-            "lark-bank:bank.app.AccountPageSpec.an account opened on the page, withdrawn from with a lost answer, moves the money once()",
-            "lark-bank:bank.app.AccountPageSpec.an account that does not exist says so()",
-            "lark-bank:bank.app.AccountPageSpec.money moved without the page shows in its statement, with nothing clicked()",
-            "lark-bank:bank.app.AccountPageSpec.more than the balance is refused with the bank's own reason, and the statement shows what moved()",
-            "lark-bank:bank.app.ActAsSpec.a token acting as Ada with no grant behind it sees nothing of hers()",
-            "lark-bank:bank.app.ActAsSpec.stopping ends acting at once, and the grant cannot be used by someone else in support()",
-            "lark-bank:bank.app.ActAsSpec.support acts as Ada with a grant, sees her statement and the banner, is refused a withdrawal, and is back to themselves when it ends()",
-            "lark-bank:bank.app.ApiSpec.an account holds one currency, to its places, and its books balance apart from every other's()",
-            "lark-bank:bank.app.ApiSpec.an account is opened, paid into, refused, and paid out of over HTTP()",
-            "lark-bank:bank.app.CallerTableSpec.and the table covers every endpoint the document describes()",
-            "lark-bank:bank.app.CallerTableSpec.every endpoint answers every kind of caller as the table says()",
-            "lark-bank:bank.app.ConservationSpec.thousands of transfers across three nodes and two journal databases leave every penny where the ledger says()",
-            "lark-bank:bank.app.DailyLimitApiSpec.a daily limit that is not an amount of the account's currency is refused at opening()",
-            "lark-bank:bank.app.DailyLimitApiSpec.withdrawals and transfers past an account's daily limit are refused, saying the limit and what is left()",
-            "lark-bank:bank.app.DbRolesSpec.as bank_reader with bank caller set to Ada, select star from statement_line returns only her rows()",
-            "lark-bank:bank.app.DbRolesSpec.the bank reads a statement through the same fence, so a read the rules let slip returns nothing()",
-            "lark-bank:bank.app.ExemplarsSpec.a request in a sampled trace leaves its trace id on the latency histogram, and one in an unsampled trace does not()",
-            "lark-bank:bank.app.GrantsSpec.a grant asked for someone else, for too long, or by someone outside support is never given, and Approvals hears why()",
-            "lark-bank:bank.app.GrantsSpec.a grant to act as a customer, approved, lets that person act as them until it ends()",
-            "lark-bank:bank.app.GrantsSpec.support sees the account a grant names while it lives, nothing else, and nothing a second after it ends()",
-            "lark-bank:bank.app.LeavingSpec.a node leaving mid-run loses no money and doubles none()",
-            "lark-bank:bank.app.LevelFileSpec.DEBUG in the file turns the bank's lines to DEBUG, and INFO turns them back()",
-            "lark-bank:bank.app.LevelFileSpec.a file that is missing, or names no level, changes nothing()",
-            "lark-bank:bank.app.LogJsonSpec.every line a node writes, starting, serving and refusing, is one JSON object with the shared fields()",
-            "lark-bank:bank.app.OpsSpec.a p99 is the smallest bucket under which 99 in 100 fall()",
-            "lark-bank:bank.app.OpsSpec.one node's stream carries every node's snapshot, and a stopped node's snapshot stops()",
-            "lark-bank:bank.app.OpsSpec.the books are gauges an alert can watch, and a balanced ledger reads a gap of 0()",
-            "lark-bank:bank.app.OpsSpec.the ops page shows three nodes and the ledger balanced, and greys a node that stops()",
-            "lark-bank:bank.app.PagesSpec.the pages are served beside the API, and an endpoint still answers as itself()",
-            "lark-bank:bank.app.PublishingSpec.a publisher stopped mid-run and started again sends what it had not, and skips nothing()",
-            "lark-bank:bank.app.PublishingSpec.a schema that breaks the published one is refused, and nothing publishes with it()",
-            "lark-bank:bank.app.PublishingSpec.a transfer's events arrive on both topics, and Apicurio's own deserializer reads them()",
-            "lark-bank:bank.app.ReadModelsSpec.a batch handed over twice changes nothing the second time()",
-            "lark-bank:bank.app.ReadModelsSpec.the same batch written by eight writers at once is counted once, and every balance is where it ends()",
-            "lark-bank:bank.app.ScreeningSpec.a check that does not answer in time leaves it to the bank's policy()",
-            "lark-bank:bank.app.ScreeningSpec.a saga that stops mid-screening asks again when it starts, and gets the same decision()",
-            "lark-bank:bank.app.ScreeningSpec.a transfer's screening reaches the check inside the transfer's trace()",
-            "lark-bank:bank.app.ScreeningSpec.an approved transfer moves, and a declined one is rejected with the rule as its reason and moves nothing()",
-            "lark-bank:bank.app.ScreeningSpec.approving when unanswered, a transfer moves though the check is down()",
-            "lark-bank:bank.app.ScreeningSpec.two hundred transfers screened at once each get the check's answer, not the policy's()",
-            "lark-bank:bank.app.ShadowSpec.the bank answers as before, bank-access agrees with it, and a deliberately wrong relationship is counted()",
-            "lark-bank:bank.app.ShardedBankSpec.a start that timed out and never landed is unavailable, to send again, and not a missing transfer()",
-            "lark-bank:bank.app.SweeperSpec.a stranded transfer is found and finished without anyone asking about it()",
-            "lark-bank:bank.app.TraceActorsSpec.a transfer's trace holds its debit and credit, made on the nodes the accounts live on()",
-            "lark-bank:bank.app.TraceCallsSpec.a shadowed question reaches OpenFGA in the trace of the request it shadows()",
-            "lark-bank:bank.app.TraceCallsSpec.the current trace as headers, and none outside one()",
-            "lark-bank:bank.app.TraceEventsSpec.an account opened inside a trace is published with it, and its log annotations are not()",
-            "lark-bank:bank.app.TraceExportSpec.a request inside a sampled trace is in Tempo, its transfer a span of it, and one in an unsampled trace is not()",
-            "lark-bank:bank.app.TransferPageSpec.a payroll pasted as lines credits every account on it()",
-            "lark-bank:bank.app.TransferPageSpec.a transfer still pending when the page is answered is followed until it completes()",
-            "lark-bank:bank.app.TransferPageSpec.a transfer to an account that does not exist is refunded, and says why()",
-            "lark-bank:bank.domain.AccountDetailsSpec.a balance names its account and owner()",
-            "lark-bank:bank.domain.AccountDetailsSpec.a deposit and a withdrawal carry their reference and when they happened()",
-            "lark-bank:bank.domain.AccountDetailsSpec.a transfer's legs carry the transfer, a reference made from it, and when they happened()",
-            "lark-bank:bank.domain.AccountDetailsSpec.a transfer's view names it, both accounts and why it stopped()",
-            "lark-bank:bank.domain.AccountDetailsSpec.an account pays out its whole balance, and not a penny more()",
-            "lark-bank:bank.domain.AccountDetailsSpec.each refusal names the account and says why in words()",
-            "lark-bank:bank.domain.AccountSpec.a settled transfer's legs are closed once, and an account with none writes nothing()",
-            "lark-bank:bank.domain.AccountSpec.a transfer's leg retried after hundreds of other commands is still applied once()",
-            "lark-bank:bank.domain.AccountSpec.a transfer's legs are idempotent by transfer id()",
-            "lark-bank:bank.domain.AccountSpec.a withdrawal larger than the balance is refused and nothing is written()",
-            "lark-bank:bank.domain.AccountSpec.a zero or negative amount never moves()",
-            "lark-bank:bank.domain.AccountSpec.an account cannot be opened again for someone else()",
-            "lark-bank:bank.domain.AccountSpec.an account in bitcoin moves to the satoshi()",
-            "lark-bank:bank.domain.AccountSpec.an account keeps the currency it opened in, and refuses any other before anything moves()",
-            "lark-bank:bank.domain.AccountSpec.an account opens with its initial balance()",
-            "lark-bank:bank.domain.AccountSpec.nothing but opening reaches an account that is not open()",
-            "lark-bank:bank.domain.AccountSpec.only the most recent references are remembered()",
-            "lark-bank:bank.domain.AccountSpec.opening again for the same owner is a retry and writes nothing()",
-            "lark-bank:bank.domain.AccountSpec.the same reference twice moves the money once()",
-            "lark-bank:bank.domain.DailyLimitSpec.a debit refused for the limit rejects its transfer with the refusal as the reason()",
-            "lark-bank:bank.domain.DailyLimitSpec.a limit in another currency, or below zero, is refused at opening()",
-            "lark-bank:bank.domain.DailyLimitSpec.a limit of zero pays nothing out, and still takes money in()",
-            "lark-bank:bank.domain.DailyLimitSpec.a new UTC day starts again from nothing, and the last millisecond of the old one does not()",
-            "lark-bank:bank.domain.DailyLimitSpec.a refund never counts as a payout, and is never refused for the limit()",
-            "lark-bank:bank.domain.DailyLimitSpec.a refund on a later day gives nothing back to that day()",
-            "lark-bank:bank.domain.DailyLimitSpec.a refunded debit no longer counts against today's limit()",
-            "lark-bank:bank.domain.DailyLimitSpec.an Opened written before limits reads as the default()",
-            "lark-bank:bank.domain.DailyLimitSpec.an account opened with a limit keeps that one()",
-            "lark-bank:bank.domain.DailyLimitSpec.an account opened without a limit may pay out 10,000 in its currency a day()",
-            "lark-bank:bank.domain.DailyLimitSpec.an account that cannot cover the amount says so before the limit()",
-            "lark-bank:bank.domain.DailyLimitSpec.the default is 10,000 at the currency's own places()",
-            "lark-bank:bank.domain.DailyLimitSpec.the limit an account opens with is written in its Opened, the default included()",
-            "lark-bank:bank.domain.DailyLimitSpec.the refusal says the limit and what is left today()",
-            "lark-bank:bank.domain.DailyLimitSpec.withdrawals and debits count together against the one limit()",
-            "lark-bank:bank.domain.MoneySpec.a currency is only what the registry lists()",
-            "lark-bank:bank.domain.MoneySpec.a decimal string parses to its exact amount, padded to its currency's places()",
-            "lark-bank:bank.domain.MoneySpec.a rate's result is rounded once, as the caller says()",
-            "lark-bank:bank.domain.MoneySpec.adding two currencies is a bug, not a sum()",
-            "lark-bank:bank.domain.MoneySpec.amounts past what a Long of minor units held add exactly, even at eighteen places()",
-            "lark-bank:bank.domain.MoneySpec.an amount is only ever held at its currency's places()",
-            "lark-bank:bank.domain.MoneySpec.an amount past ten to the thirtieth is refused, the one limit an amount has()",
-            "lark-bank:bank.domain.MoneySpec.an amount reads with its currency's places, and its sign whatever its size()",
-            "lark-bank:bank.domain.MoneySpec.more places than the currency has is refused, never rounded()",
-            "lark-bank:bank.domain.MoneySpec.what is not a plain decimal is refused()",
-            "lark-bank:bank.domain.TransferSpec.a declined transfer is rejected with the rule that declined it, and nothing moves()",
-            "lark-bank:bank.domain.TransferSpec.a refused credit refunds the source()",
-            "lark-bank:bank.domain.TransferSpec.a refused debit rejects the transfer and nothing is undone()",
-            "lark-bank:bank.domain.TransferSpec.a refused refund leaves the saga refunding so it tries again()",
-            "lark-bank:bank.domain.TransferSpec.a transfer debits then credits then is done()",
-            "lark-bank:bank.domain.TransferSpec.a transfer screening did not answer for follows the bank's policy, and says so()",
-            "lark-bank:bank.domain.TransferSpec.with screening off, a transfer debits as it always did, and one already screened is not asked again()",
-            "lark-bank:bank.domain.TransferSpec.with screening on, a transfer screens before any money moves, and debits once approved()",
-            "lark-bank:bank.protocol.ContractSpec.an event of a kind this build does not know is told apart, for a consumer to skip()",
-            "lark-bank:bank.protocol.ContractSpec.every account event survives the wire as itself, in its account and place()",
-            "lark-bank:bank.protocol.ContractSpec.every transfer event survives the wire as itself, with both its accounts on it()",
-            "lark-bank:bank.protocol.ContractSpec.money is a plain decimal at its currency's scale, which a consumer reads exactly()",
-            "lark-bank:bank.protocol.ContractSpec.no domain event goes unpublished, since every kind of event is in the round trips above()",
-            "lark-bank:bank.protocol.DailyLimitWireSpec.a snapshot taken before limits reads as an account that has paid nothing out()",
-            "lark-bank:bank.protocol.DailyLimitWireSpec.an Opened carries the limit the account opened with()",
-            "lark-bank:bank.protocol.DailyLimitWireSpec.an Opened written before limits reads with none, which the account takes as the default()",
-            "lark-bank:bank.protocol.DailyLimitWireSpec.an account's snapshot keeps its limit and what it has paid out today()",
-            "lark-bank:bank.protocol.DailyLimitWireSpec.opening with a limit, and the refusal for passing it, cross between nodes as themselves()",
-            "lark-bank:bank.protocol.RoundTripSpec.a bulk credit and a transfer's requests cross between nodes as themselves()",
-            "lark-bank:bank.protocol.RoundTripSpec.an account's snapshot is the account()",
-            "lark-bank:bank.protocol.RoundTripSpec.every account event survives the journal()",
-            "lark-bank:bank.protocol.RoundTripSpec.every answer an account or a transfer gives crosses the wire as itself()",
-            "lark-bank:bank.protocol.RoundTripSpec.every command crosses between nodes as itself, and no command is a balance enquiry()",
-            "lark-bank:bank.protocol.RoundTripSpec.every transfer event survives the journal()",
-            "lark-bank:bank.protocol.SchemaSpec.the pinned schema is what the wire shapes make()",
-            "lark-bank:bank.protocol.SchemaSpec.what protoc's classes write, the bank reads()",
-            "lark-bank:bank.protocol.SchemaSpec.what the journal holds, protoc's classes read once past its version mark()",
-            "lark-bank:bank.protocol.VersionedJournalSpec.a version 2 reads every event written today through its upgrade from 1()",
-            "lark-bank:bank.protocol.VersionedJournalSpec.an event of a version newer than the codec is refused, not misread()",
-            "lark-bank:bank.protocol.VersionedJournalSpec.an event written before the codecs were versioned is read as version 1()",
-            "lark-bank:bank.protocol.VersionedJournalSpec.an event written today is marked with its version, and reads back()"
+            "surefold-bank:bank.api.OpeningSpec.a daily limit that is not an amount of the account's currency is refused()",
+            "surefold-bank:bank.api.OpeningSpec.a refusal for the daily limit names the limit, what is left today and what was asked()",
+            "surefold-bank:bank.api.OpeningSpec.a refusal no opening can give is a bug, not an answer()",
+            "surefold-bank:bank.api.OpeningSpec.an opening is refused as already open, as an invalid amount, or as unavailable()",
+            "surefold-bank:bank.api.OpeningSpec.an opening reads its initial amount and its daily limit in the account's currency()",
+            "surefold-bank:bank.api.OpeningSpec.an opening without a daily limit leaves it to the account's default()",
+            "surefold-bank:bank.api.ScreeningClientSpec.the committed client is the one the description generates()",
+            "surefold-bank:bank.api.ScreeningContractSpec.a check that stopped sending the evidence would break the bank()",
+            "surefold-bank:bank.api.ScreeningContractSpec.the check serves everything the bank's client sends and reads()",
+            "surefold-bank:bank.app.AccessAuditSpec.an auditor sees Bob's grant on the account, with the approval it came from, and not after it expires()",
+            "surefold-bank:bank.app.AccessLogSpec.Ada's page lists Bob's look, and the topic carries it with the grant's approval id()",
+            "surefold-bank:bank.app.AccessLogSpec.refusals are recorded for everyone, a customer's own looks are not, and only the auditor sees either()",
+            "surefold-bank:bank.app.AccountPageSpec.an account opened on the page, withdrawn from with a lost answer, moves the money once()",
+            "surefold-bank:bank.app.AccountPageSpec.an account that does not exist says so()",
+            "surefold-bank:bank.app.AccountPageSpec.money moved without the page shows in its statement, with nothing clicked()",
+            "surefold-bank:bank.app.AccountPageSpec.more than the balance is refused with the bank's own reason, and the statement shows what moved()",
+            "surefold-bank:bank.app.ActAsSpec.a token acting as Ada with no grant behind it sees nothing of hers()",
+            "surefold-bank:bank.app.ActAsSpec.stopping ends acting at once, and the grant cannot be used by someone else in support()",
+            "surefold-bank:bank.app.ActAsSpec.support acts as Ada with a grant, sees her statement and the banner, is refused a withdrawal, and is back to themselves when it ends()",
+            "surefold-bank:bank.app.ApiSpec.an account holds one currency, to its places, and its books balance apart from every other's()",
+            "surefold-bank:bank.app.ApiSpec.an account is opened, paid into, refused, and paid out of over HTTP()",
+            "surefold-bank:bank.app.CallerTableSpec.and the table covers every endpoint the document describes()",
+            "surefold-bank:bank.app.CallerTableSpec.every endpoint answers every kind of caller as the table says()",
+            "surefold-bank:bank.app.ConservationSpec.thousands of transfers across three nodes and two journal databases leave every penny where the ledger says()",
+            "surefold-bank:bank.app.DailyLimitApiSpec.a daily limit that is not an amount of the account's currency is refused at opening()",
+            "surefold-bank:bank.app.DailyLimitApiSpec.withdrawals and transfers past an account's daily limit are refused, saying the limit and what is left()",
+            "surefold-bank:bank.app.DbRolesSpec.as bank_reader with bank caller set to Ada, select star from statement_line returns only her rows()",
+            "surefold-bank:bank.app.DbRolesSpec.the bank reads a statement through the same fence, so a read the rules let slip returns nothing()",
+            "surefold-bank:bank.app.ExemplarsSpec.a request in a sampled trace leaves its trace id on the latency histogram, and one in an unsampled trace does not()",
+            "surefold-bank:bank.app.GrantsSpec.a grant asked for someone else, for too long, or by someone outside support is never given, and Approvals hears why()",
+            "surefold-bank:bank.app.GrantsSpec.a grant to act as a customer, approved, lets that person act as them until it ends()",
+            "surefold-bank:bank.app.GrantsSpec.support sees the account a grant names while it lives, nothing else, and nothing a second after it ends()",
+            "surefold-bank:bank.app.LeavingSpec.a node leaving mid-run loses no money and doubles none()",
+            "surefold-bank:bank.app.LevelFileSpec.DEBUG in the file turns the bank's lines to DEBUG, and INFO turns them back()",
+            "surefold-bank:bank.app.LevelFileSpec.a file that is missing, or names no level, changes nothing()",
+            "surefold-bank:bank.app.LogJsonSpec.every line a node writes, starting, serving and refusing, is one JSON object with the shared fields()",
+            "surefold-bank:bank.app.OpsSpec.a p99 is the smallest bucket under which 99 in 100 fall()",
+            "surefold-bank:bank.app.OpsSpec.one node's stream carries every node's snapshot, and a stopped node's snapshot stops()",
+            "surefold-bank:bank.app.OpsSpec.the books are gauges an alert can watch, and a balanced ledger reads a gap of 0()",
+            "surefold-bank:bank.app.OpsSpec.the ops page shows three nodes and the ledger balanced, and greys a node that stops()",
+            "surefold-bank:bank.app.PagesSpec.the pages are served beside the API, and an endpoint still answers as itself()",
+            "surefold-bank:bank.app.PublishingSpec.a publisher stopped mid-run and started again sends what it had not, and skips nothing()",
+            "surefold-bank:bank.app.PublishingSpec.a schema that breaks the published one is refused, and nothing publishes with it()",
+            "surefold-bank:bank.app.PublishingSpec.a transfer's events arrive on both topics, and Apicurio's own deserializer reads them()",
+            "surefold-bank:bank.app.ReadModelsSpec.a batch handed over twice changes nothing the second time()",
+            "surefold-bank:bank.app.ReadModelsSpec.the same batch written by eight writers at once is counted once, and every balance is where it ends()",
+            "surefold-bank:bank.app.ScreeningSpec.a check that does not answer in time leaves it to the bank's policy()",
+            "surefold-bank:bank.app.ScreeningSpec.a saga that stops mid-screening asks again when it starts, and gets the same decision()",
+            "surefold-bank:bank.app.ScreeningSpec.a transfer's screening reaches the check inside the transfer's trace()",
+            "surefold-bank:bank.app.ScreeningSpec.an approved transfer moves, and a declined one is rejected with the rule as its reason and moves nothing()",
+            "surefold-bank:bank.app.ScreeningSpec.approving when unanswered, a transfer moves though the check is down()",
+            "surefold-bank:bank.app.ScreeningSpec.two hundred transfers screened at once each get the check's answer, not the policy's()",
+            "surefold-bank:bank.app.ShadowSpec.the bank answers as before, bank-access agrees with it, and a deliberately wrong relationship is counted()",
+            "surefold-bank:bank.app.ShardedBankSpec.a start that timed out and never landed is unavailable, to send again, and not a missing transfer()",
+            "surefold-bank:bank.app.SweeperSpec.a stranded transfer is found and finished without anyone asking about it()",
+            "surefold-bank:bank.app.TraceActorsSpec.a transfer's trace holds its debit and credit, made on the nodes the accounts live on()",
+            "surefold-bank:bank.app.TraceCallsSpec.a shadowed question reaches OpenFGA in the trace of the request it shadows()",
+            "surefold-bank:bank.app.TraceCallsSpec.the current trace as headers, and none outside one()",
+            "surefold-bank:bank.app.TraceEventsSpec.an account opened inside a trace is published with it, and its log annotations are not()",
+            "surefold-bank:bank.app.TraceExportSpec.a request inside a sampled trace is in Tempo, its transfer a span of it, and one in an unsampled trace is not()",
+            "surefold-bank:bank.app.TransferPageSpec.a payroll pasted as lines credits every account on it()",
+            "surefold-bank:bank.app.TransferPageSpec.a transfer still pending when the page is answered is followed until it completes()",
+            "surefold-bank:bank.app.TransferPageSpec.a transfer to an account that does not exist is refunded, and says why()",
+            "surefold-bank:bank.domain.AccountDetailsSpec.a balance names its account and owner()",
+            "surefold-bank:bank.domain.AccountDetailsSpec.a deposit and a withdrawal carry their reference and when they happened()",
+            "surefold-bank:bank.domain.AccountDetailsSpec.a transfer's legs carry the transfer, a reference made from it, and when they happened()",
+            "surefold-bank:bank.domain.AccountDetailsSpec.a transfer's view names it, both accounts and why it stopped()",
+            "surefold-bank:bank.domain.AccountDetailsSpec.an account pays out its whole balance, and not a penny more()",
+            "surefold-bank:bank.domain.AccountDetailsSpec.each refusal names the account and says why in words()",
+            "surefold-bank:bank.domain.AccountSpec.a settled transfer's legs are closed once, and an account with none writes nothing()",
+            "surefold-bank:bank.domain.AccountSpec.a transfer's leg retried after hundreds of other commands is still applied once()",
+            "surefold-bank:bank.domain.AccountSpec.a transfer's legs are idempotent by transfer id()",
+            "surefold-bank:bank.domain.AccountSpec.a withdrawal larger than the balance is refused and nothing is written()",
+            "surefold-bank:bank.domain.AccountSpec.a zero or negative amount never moves()",
+            "surefold-bank:bank.domain.AccountSpec.an account cannot be opened again for someone else()",
+            "surefold-bank:bank.domain.AccountSpec.an account in bitcoin moves to the satoshi()",
+            "surefold-bank:bank.domain.AccountSpec.an account keeps the currency it opened in, and refuses any other before anything moves()",
+            "surefold-bank:bank.domain.AccountSpec.an account opens with its initial balance()",
+            "surefold-bank:bank.domain.AccountSpec.nothing but opening reaches an account that is not open()",
+            "surefold-bank:bank.domain.AccountSpec.only the most recent references are remembered()",
+            "surefold-bank:bank.domain.AccountSpec.opening again for the same owner is a retry and writes nothing()",
+            "surefold-bank:bank.domain.AccountSpec.the same reference twice moves the money once()",
+            "surefold-bank:bank.domain.DailyLimitSpec.a debit refused for the limit rejects its transfer with the refusal as the reason()",
+            "surefold-bank:bank.domain.DailyLimitSpec.a limit in another currency, or below zero, is refused at opening()",
+            "surefold-bank:bank.domain.DailyLimitSpec.a limit of zero pays nothing out, and still takes money in()",
+            "surefold-bank:bank.domain.DailyLimitSpec.a new UTC day starts again from nothing, and the last millisecond of the old one does not()",
+            "surefold-bank:bank.domain.DailyLimitSpec.a refund never counts as a payout, and is never refused for the limit()",
+            "surefold-bank:bank.domain.DailyLimitSpec.a refund on a later day gives nothing back to that day()",
+            "surefold-bank:bank.domain.DailyLimitSpec.a refunded debit no longer counts against today's limit()",
+            "surefold-bank:bank.domain.DailyLimitSpec.an Opened written before limits reads as the default()",
+            "surefold-bank:bank.domain.DailyLimitSpec.an account opened with a limit keeps that one()",
+            "surefold-bank:bank.domain.DailyLimitSpec.an account opened without a limit may pay out 10,000 in its currency a day()",
+            "surefold-bank:bank.domain.DailyLimitSpec.an account that cannot cover the amount says so before the limit()",
+            "surefold-bank:bank.domain.DailyLimitSpec.the default is 10,000 at the currency's own places()",
+            "surefold-bank:bank.domain.DailyLimitSpec.the limit an account opens with is written in its Opened, the default included()",
+            "surefold-bank:bank.domain.DailyLimitSpec.the refusal says the limit and what is left today()",
+            "surefold-bank:bank.domain.DailyLimitSpec.withdrawals and debits count together against the one limit()",
+            "surefold-bank:bank.domain.MoneySpec.a currency is only what the registry lists()",
+            "surefold-bank:bank.domain.MoneySpec.a decimal string parses to its exact amount, padded to its currency's places()",
+            "surefold-bank:bank.domain.MoneySpec.a rate's result is rounded once, as the caller says()",
+            "surefold-bank:bank.domain.MoneySpec.adding two currencies is a bug, not a sum()",
+            "surefold-bank:bank.domain.MoneySpec.amounts past what a Long of minor units held add exactly, even at eighteen places()",
+            "surefold-bank:bank.domain.MoneySpec.an amount is only ever held at its currency's places()",
+            "surefold-bank:bank.domain.MoneySpec.an amount past ten to the thirtieth is refused, the one limit an amount has()",
+            "surefold-bank:bank.domain.MoneySpec.an amount reads with its currency's places, and its sign whatever its size()",
+            "surefold-bank:bank.domain.MoneySpec.more places than the currency has is refused, never rounded()",
+            "surefold-bank:bank.domain.MoneySpec.what is not a plain decimal is refused()",
+            "surefold-bank:bank.domain.TransferSpec.a declined transfer is rejected with the rule that declined it, and nothing moves()",
+            "surefold-bank:bank.domain.TransferSpec.a refused credit refunds the source()",
+            "surefold-bank:bank.domain.TransferSpec.a refused debit rejects the transfer and nothing is undone()",
+            "surefold-bank:bank.domain.TransferSpec.a refused refund leaves the saga refunding so it tries again()",
+            "surefold-bank:bank.domain.TransferSpec.a transfer debits then credits then is done()",
+            "surefold-bank:bank.domain.TransferSpec.a transfer screening did not answer for follows the bank's policy, and says so()",
+            "surefold-bank:bank.domain.TransferSpec.with screening off, a transfer debits as it always did, and one already screened is not asked again()",
+            "surefold-bank:bank.domain.TransferSpec.with screening on, a transfer screens before any money moves, and debits once approved()",
+            "surefold-bank:bank.protocol.ContractSpec.an event of a kind this build does not know is told apart, for a consumer to skip()",
+            "surefold-bank:bank.protocol.ContractSpec.every account event survives the wire as itself, in its account and place()",
+            "surefold-bank:bank.protocol.ContractSpec.every transfer event survives the wire as itself, with both its accounts on it()",
+            "surefold-bank:bank.protocol.ContractSpec.money is a plain decimal at its currency's scale, which a consumer reads exactly()",
+            "surefold-bank:bank.protocol.ContractSpec.no domain event goes unpublished, since every kind of event is in the round trips above()",
+            "surefold-bank:bank.protocol.DailyLimitWireSpec.a snapshot taken before limits reads as an account that has paid nothing out()",
+            "surefold-bank:bank.protocol.DailyLimitWireSpec.an Opened carries the limit the account opened with()",
+            "surefold-bank:bank.protocol.DailyLimitWireSpec.an Opened written before limits reads with none, which the account takes as the default()",
+            "surefold-bank:bank.protocol.DailyLimitWireSpec.an account's snapshot keeps its limit and what it has paid out today()",
+            "surefold-bank:bank.protocol.DailyLimitWireSpec.opening with a limit, and the refusal for passing it, cross between nodes as themselves()",
+            "surefold-bank:bank.protocol.RoundTripSpec.a bulk credit and a transfer's requests cross between nodes as themselves()",
+            "surefold-bank:bank.protocol.RoundTripSpec.an account's snapshot is the account()",
+            "surefold-bank:bank.protocol.RoundTripSpec.every account event survives the journal()",
+            "surefold-bank:bank.protocol.RoundTripSpec.every answer an account or a transfer gives crosses the wire as itself()",
+            "surefold-bank:bank.protocol.RoundTripSpec.every command crosses between nodes as itself, and no command is a balance enquiry()",
+            "surefold-bank:bank.protocol.RoundTripSpec.every transfer event survives the journal()",
+            "surefold-bank:bank.protocol.SchemaSpec.the pinned schema is what the wire shapes make()",
+            "surefold-bank:bank.protocol.SchemaSpec.what protoc's classes write, the bank reads()",
+            "surefold-bank:bank.protocol.SchemaSpec.what the journal holds, protoc's classes read once past its version mark()",
+            "surefold-bank:bank.protocol.VersionedJournalSpec.a version 2 reads every event written today through its upgrade from 1()",
+            "surefold-bank:bank.protocol.VersionedJournalSpec.an event of a version newer than the codec is refused, not misread()",
+            "surefold-bank:bank.protocol.VersionedJournalSpec.an event written before the codecs were versioned is read as version 1()",
+            "surefold-bank:bank.protocol.VersionedJournalSpec.an event written today is marked with its version, and reads back()"
           ]
         }
       },
@@ -8282,7 +8282,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Caller.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Caller.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -8309,7 +8309,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Endpoints.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Endpoints.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -8335,7 +8335,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Endpoints.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Endpoints.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -8361,7 +8361,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Endpoints.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Endpoints.kt"
                 },
                 "region": {
                   "endColumn": 147,
@@ -8388,7 +8388,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Endpoints.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Endpoints.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -8414,7 +8414,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Endpoints.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Endpoints.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -8440,7 +8440,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 12,
@@ -8467,7 +8467,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 12,
@@ -8494,7 +8494,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 83,
@@ -8521,7 +8521,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 88,
@@ -8548,7 +8548,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 71,
@@ -8575,7 +8575,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 147,
@@ -8602,7 +8602,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -8629,7 +8629,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -8656,7 +8656,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -8683,7 +8683,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -8710,7 +8710,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 139,
@@ -8737,7 +8737,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -8764,7 +8764,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 134,
@@ -8791,7 +8791,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -8818,7 +8818,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -8845,7 +8845,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 140,
@@ -8872,7 +8872,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -8899,7 +8899,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -8926,7 +8926,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 157,
@@ -8953,7 +8953,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -8980,7 +8980,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -9007,7 +9007,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -9034,7 +9034,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -9061,7 +9061,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -9088,7 +9088,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -9115,7 +9115,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -9141,7 +9141,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 134,
@@ -9168,7 +9168,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -9195,7 +9195,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Handlers.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Handlers.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -9222,7 +9222,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Looks.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Looks.kt"
                 },
                 "region": {
                   "endColumn": 82,
@@ -9249,7 +9249,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/Looks.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/Looks.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -9275,7 +9275,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 29,
@@ -9302,7 +9302,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 27,
@@ -9328,7 +9328,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 36,
@@ -9355,7 +9355,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 10,
@@ -9382,7 +9382,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 10,
@@ -9409,7 +9409,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 58,
@@ -9436,7 +9436,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 66,
@@ -9463,7 +9463,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 71,
@@ -9490,7 +9490,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 68,
@@ -9517,7 +9517,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 73,
@@ -9544,7 +9544,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
+                  "uri": "bank/api/src/main/kotlin/bank/api/screening/ScreeningClient.kt"
                 },
                 "region": {
                   "endColumn": 171,
@@ -9571,7 +9571,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 15,
@@ -9598,7 +9598,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 15,
@@ -9625,7 +9625,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 30,
@@ -9652,7 +9652,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -9679,7 +9679,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -9706,7 +9706,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -9733,7 +9733,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -9760,7 +9760,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -9787,7 +9787,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -9814,7 +9814,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -9841,7 +9841,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -9868,7 +9868,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -9895,7 +9895,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 34,
@@ -9922,7 +9922,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -9949,7 +9949,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 132,
@@ -9976,7 +9976,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -10003,7 +10003,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -10030,7 +10030,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -10057,7 +10057,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 129,
@@ -10084,7 +10084,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 134,
@@ -10111,7 +10111,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 129,
@@ -10138,7 +10138,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -10165,7 +10165,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -10192,7 +10192,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -10219,7 +10219,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -10246,7 +10246,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Access.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Access.kt"
                 },
                 "region": {
                   "endColumn": 15,
@@ -10273,7 +10273,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 35,
@@ -10300,7 +10300,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 20,
@@ -10327,7 +10327,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -10354,7 +10354,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 38,
@@ -10381,7 +10381,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -10408,7 +10408,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -10435,7 +10435,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -10462,7 +10462,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 36,
@@ -10489,7 +10489,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -10516,7 +10516,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 40,
@@ -10543,7 +10543,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 40,
@@ -10570,7 +10570,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 144,
@@ -10597,7 +10597,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -10624,7 +10624,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -10651,7 +10651,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -10678,7 +10678,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -10705,7 +10705,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/AccessLogging.kt"
                 },
                 "region": {
                   "endColumn": 141,
@@ -10732,7 +10732,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Auditing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Auditing.kt"
                 },
                 "region": {
                   "endColumn": 15,
@@ -10759,7 +10759,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Auditing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Auditing.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -10786,7 +10786,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Cluster.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Cluster.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -10813,7 +10813,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Exemplars.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Exemplars.kt"
                 },
                 "region": {
                   "endColumn": 19,
@@ -10840,7 +10840,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Identity.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Identity.kt"
                 },
                 "region": {
                   "endColumn": 24,
@@ -10867,7 +10867,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Identity.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Identity.kt"
                 },
                 "region": {
                   "endColumn": 30,
@@ -10894,7 +10894,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/LevelFile.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/LevelFile.kt"
                 },
                 "region": {
                   "endColumn": 13,
@@ -10921,7 +10921,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Projections.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Projections.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -10948,7 +10948,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Projections.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Projections.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -10975,7 +10975,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Projections.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Projections.kt"
                 },
                 "region": {
                   "endColumn": 138,
@@ -11002,7 +11002,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Projections.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Projections.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -11029,7 +11029,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Projections.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Projections.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -11056,7 +11056,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Projections.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Projections.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -11083,7 +11083,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Projections.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Projections.kt"
                 },
                 "region": {
                   "endColumn": 126,
@@ -11110,7 +11110,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Publishing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Publishing.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -11137,7 +11137,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Publishing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Publishing.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -11164,7 +11164,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Publishing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Publishing.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -11191,7 +11191,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Publishing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Publishing.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -11218,7 +11218,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Publishing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Publishing.kt"
                 },
                 "region": {
                   "endColumn": 129,
@@ -11245,7 +11245,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Publishing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Publishing.kt"
                 },
                 "region": {
                   "endColumn": 142,
@@ -11272,7 +11272,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 16,
@@ -11299,7 +11299,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 16,
@@ -11326,7 +11326,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 21,
@@ -11353,7 +11353,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 37,
@@ -11380,7 +11380,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -11407,7 +11407,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 33,
@@ -11434,7 +11434,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -11461,7 +11461,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -11488,7 +11488,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -11515,7 +11515,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 33,
@@ -11542,7 +11542,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 35,
@@ -11569,7 +11569,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 37,
@@ -11596,7 +11596,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 39,
@@ -11623,7 +11623,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 35,
@@ -11650,7 +11650,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 36,
@@ -11677,7 +11677,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 33,
@@ -11704,7 +11704,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 34,
@@ -11731,7 +11731,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 51,
@@ -11758,7 +11758,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 79,
@@ -11785,7 +11785,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 95,
@@ -11812,7 +11812,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 27,
@@ -11839,7 +11839,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 91,
@@ -11866,7 +11866,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 55,
@@ -11893,7 +11893,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 96,
@@ -11920,7 +11920,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 113,
@@ -11947,7 +11947,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 60,
@@ -11974,7 +11974,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 92,
@@ -12001,7 +12001,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -12028,7 +12028,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 52,
@@ -12055,7 +12055,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 96,
@@ -12082,7 +12082,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -12109,7 +12109,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 140,
@@ -12136,7 +12136,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 159,
@@ -12163,7 +12163,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 79,
@@ -12190,7 +12190,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -12217,7 +12217,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -12244,7 +12244,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -12271,7 +12271,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 134,
@@ -12298,7 +12298,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -12325,7 +12325,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 151,
@@ -12352,7 +12352,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 132,
@@ -12379,7 +12379,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -12406,7 +12406,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 126,
@@ -12433,7 +12433,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -12460,7 +12460,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 137,
@@ -12487,7 +12487,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -12514,7 +12514,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 140,
@@ -12541,7 +12541,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -12568,7 +12568,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 149,
@@ -12595,7 +12595,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -12622,7 +12622,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -12649,7 +12649,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -12676,7 +12676,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 140,
@@ -12703,7 +12703,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -12730,7 +12730,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -12757,7 +12757,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 161,
@@ -12784,7 +12784,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 141,
@@ -12811,7 +12811,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ReadModels.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ReadModels.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -12838,7 +12838,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Screening.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Screening.kt"
                 },
                 "region": {
                   "endColumn": 35,
@@ -12865,7 +12865,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Screening.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Screening.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -12891,7 +12891,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Screening.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Screening.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -12918,7 +12918,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Screening.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Screening.kt"
                 },
                 "region": {
                   "endColumn": 24,
@@ -12945,7 +12945,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Settings.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Settings.kt"
                 },
                 "region": {
                   "endColumn": 145,
@@ -12972,7 +12972,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Settings.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Settings.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -12999,7 +12999,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Settings.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Settings.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -13025,7 +13025,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Settings.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Settings.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -13051,7 +13051,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Settings.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Settings.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -13078,7 +13078,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Settings.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Settings.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -13104,7 +13104,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Settings.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Settings.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -13130,7 +13130,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Settings.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Settings.kt"
                 },
                 "region": {
                   "endColumn": 134,
@@ -13156,7 +13156,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Shadowing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Shadowing.kt"
                 },
                 "region": {
                   "endColumn": 21,
@@ -13183,7 +13183,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Shadowing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Shadowing.kt"
                 },
                 "region": {
                   "endColumn": 132,
@@ -13210,7 +13210,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Shadowing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Shadowing.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -13237,7 +13237,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Shadowing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Shadowing.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -13264,7 +13264,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Shadowing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Shadowing.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -13291,7 +13291,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Shadowing.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Shadowing.kt"
                 },
                 "region": {
                   "endColumn": 22,
@@ -13318,7 +13318,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ShardedBank.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ShardedBank.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -13345,7 +13345,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ShardedBank.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ShardedBank.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -13372,7 +13372,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/ShardedBank.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/ShardedBank.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -13399,7 +13399,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/TraceHeaders.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/TraceHeaders.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -13426,7 +13426,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/TracedBank.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/TracedBank.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -13453,7 +13453,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Transfers.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Transfers.kt"
                 },
                 "region": {
                   "endColumn": 13,
@@ -13480,7 +13480,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Transfers.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Transfers.kt"
                 },
                 "region": {
                   "endColumn": 27,
@@ -13507,7 +13507,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -13533,7 +13533,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -13560,7 +13560,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -13587,7 +13587,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -13613,7 +13613,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -13639,7 +13639,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -13665,7 +13665,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -13691,7 +13691,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -13717,7 +13717,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -13744,7 +13744,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -13770,7 +13770,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 139,
@@ -13796,7 +13796,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -13822,7 +13822,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -13848,7 +13848,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 142,
@@ -13874,7 +13874,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -13900,7 +13900,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -13927,7 +13927,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -13953,7 +13953,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 144,
@@ -13979,7 +13979,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 151,
@@ -14005,7 +14005,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -14031,7 +14031,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 146,
@@ -14057,7 +14057,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/main/kotlin/bank/app/Wiring.kt"
+                  "uri": "bank/app/src/main/kotlin/bank/app/Wiring.kt"
                 },
                 "region": {
                   "endColumn": 126,
@@ -14083,7 +14083,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/AccessAuditSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/AccessAuditSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -14110,7 +14110,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/AccessLogSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/AccessLogSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -14137,7 +14137,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/AccessLogSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/AccessLogSpec.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -14164,7 +14164,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/AccessLogSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/AccessLogSpec.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -14191,7 +14191,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ActAsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ActAsSpec.kt"
                 },
                 "region": {
                   "endColumn": 147,
@@ -14218,7 +14218,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -14244,7 +14244,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -14271,7 +14271,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -14298,7 +14298,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -14325,7 +14325,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -14352,7 +14352,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -14379,7 +14379,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 129,
@@ -14406,7 +14406,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -14433,7 +14433,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -14460,7 +14460,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -14487,7 +14487,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -14514,7 +14514,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -14541,7 +14541,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -14568,7 +14568,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ApiSpec.kt"
                 },
                 "region": {
                   "endColumn": 180,
@@ -14595,7 +14595,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -14622,7 +14622,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -14649,7 +14649,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -14676,7 +14676,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
                 },
                 "region": {
                   "endColumn": 141,
@@ -14703,7 +14703,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -14730,7 +14730,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -14757,7 +14757,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
                 },
                 "region": {
                   "endColumn": 129,
@@ -14784,7 +14784,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -14811,7 +14811,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/CallerTableSpec.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -14838,7 +14838,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ConservationSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ConservationSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -14865,7 +14865,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ConservationSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ConservationSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -14892,7 +14892,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ConservationSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ConservationSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -14919,7 +14919,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -14946,7 +14946,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -14973,7 +14973,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -15000,7 +15000,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
                 },
                 "region": {
                   "endColumn": 140,
@@ -15027,7 +15027,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
                 },
                 "region": {
                   "endColumn": 145,
@@ -15054,7 +15054,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -15081,7 +15081,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
                 },
                 "region": {
                   "endColumn": 143,
@@ -15108,7 +15108,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
                 },
                 "region": {
                   "endColumn": 142,
@@ -15135,7 +15135,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/DbRolesSpec.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -15162,7 +15162,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ExemplarsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ExemplarsSpec.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -15189,7 +15189,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ExemplarsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ExemplarsSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -15216,7 +15216,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
                 },
                 "region": {
                   "endColumn": 157,
@@ -15243,7 +15243,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
                 },
                 "region": {
                   "endColumn": 129,
@@ -15270,7 +15270,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -15297,7 +15297,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
                 },
                 "region": {
                   "endColumn": 140,
@@ -15324,7 +15324,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -15351,7 +15351,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -15378,7 +15378,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -15405,7 +15405,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/GrantsSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -15432,7 +15432,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/LeavingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/LeavingSpec.kt"
                 },
                 "region": {
                   "endColumn": 126,
@@ -15459,7 +15459,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/LeavingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/LeavingSpec.kt"
                 },
                 "region": {
                   "endColumn": 138,
@@ -15486,7 +15486,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/LeavingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/LeavingSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -15513,7 +15513,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/LogJsonSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/LogJsonSpec.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -15540,7 +15540,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/LogJsonSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/LogJsonSpec.kt"
                 },
                 "region": {
                   "endColumn": 153,
@@ -15567,7 +15567,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/Nodes.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/Nodes.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -15594,7 +15594,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/Nodes.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/Nodes.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -15621,7 +15621,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -15648,7 +15648,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -15675,7 +15675,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -15702,7 +15702,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -15729,7 +15729,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/OpsSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -15756,7 +15756,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PagesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PagesSpec.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -15783,7 +15783,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PagesSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PagesSpec.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -15809,7 +15809,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
                 },
                 "region": {
                   "endColumn": 145,
@@ -15836,7 +15836,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
                 },
                 "region": {
                   "endColumn": 137,
@@ -15863,7 +15863,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -15890,7 +15890,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -15917,7 +15917,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -15944,7 +15944,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
                 },
                 "region": {
                   "endColumn": 137,
@@ -15971,7 +15971,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -15998,7 +15998,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/PublishingSpec.kt"
                 },
                 "region": {
                   "endColumn": 129,
@@ -16025,7 +16025,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ScreeningSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ScreeningSpec.kt"
                 },
                 "region": {
                   "endColumn": 144,
@@ -16052,7 +16052,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ScreeningSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ScreeningSpec.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -16079,7 +16079,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ScreeningSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ScreeningSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -16106,7 +16106,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ScreeningSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ScreeningSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -16133,7 +16133,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ShadowSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ShadowSpec.kt"
                 },
                 "region": {
                   "endColumn": 147,
@@ -16160,7 +16160,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ShadowSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ShadowSpec.kt"
                 },
                 "region": {
                   "endColumn": 141,
@@ -16187,7 +16187,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/ShadowSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/ShadowSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -16214,7 +16214,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/SweeperSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/SweeperSpec.kt"
                 },
                 "region": {
                   "endColumn": 134,
@@ -16241,7 +16241,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -16268,7 +16268,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
                 },
                 "region": {
                   "endColumn": 131,
@@ -16295,7 +16295,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -16322,7 +16322,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
                 },
                 "region": {
                   "endColumn": 144,
@@ -16349,7 +16349,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceActorsSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -16376,7 +16376,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceCallsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceCallsSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -16402,7 +16402,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceCallsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceCallsSpec.kt"
                 },
                 "region": {
                   "endColumn": 143,
@@ -16429,7 +16429,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceCallsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceCallsSpec.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -16456,7 +16456,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceEventsSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceEventsSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -16482,7 +16482,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceExportSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceExportSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -16509,7 +16509,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceExportSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceExportSpec.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -16536,7 +16536,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/app/src/test/kotlin/bank/app/TraceExportSpec.kt"
+                  "uri": "bank/app/src/test/kotlin/bank/app/TraceExportSpec.kt"
                 },
                 "region": {
                   "endColumn": 140,
@@ -16563,7 +16563,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Account.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -16590,7 +16590,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Account.kt"
                 },
                 "region": {
                   "endColumn": 141,
@@ -16617,7 +16617,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Account.kt"
                 },
                 "region": {
                   "endColumn": 138,
@@ -16644,7 +16644,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Account.kt"
                 },
                 "region": {
                   "endColumn": 138,
@@ -16671,7 +16671,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Account.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -16698,7 +16698,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Account.kt"
                 },
                 "region": {
                   "endColumn": 135,
@@ -16725,7 +16725,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Account.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Account.kt"
                 },
                 "region": {
                   "endColumn": 137,
@@ -16751,7 +16751,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Money.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Money.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -16778,7 +16778,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Money.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Money.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -16805,7 +16805,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Money.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Money.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -16832,7 +16832,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Money.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Money.kt"
                 },
                 "region": {
                   "endColumn": 126,
@@ -16859,7 +16859,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Money.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Money.kt"
                 },
                 "region": {
                   "endColumn": 18,
@@ -16886,7 +16886,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
                 },
                 "region": {
                   "endColumn": 132,
@@ -16913,7 +16913,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
                 },
                 "region": {
                   "endColumn": 145,
@@ -16940,7 +16940,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -16967,7 +16967,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -16994,7 +16994,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
+                  "uri": "bank/domain/src/main/kotlin/bank/domain/Transfer.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -17021,7 +17021,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/test/kotlin/bank/domain/AccountSpec.kt"
+                  "uri": "bank/domain/src/test/kotlin/bank/domain/AccountSpec.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -17048,7 +17048,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/test/kotlin/bank/domain/AccountSpec.kt"
+                  "uri": "bank/domain/src/test/kotlin/bank/domain/AccountSpec.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -17075,7 +17075,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/test/kotlin/bank/domain/TransferSpec.kt"
+                  "uri": "bank/domain/src/test/kotlin/bank/domain/TransferSpec.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -17102,7 +17102,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/test/kotlin/bank/domain/TransferSpec.kt"
+                  "uri": "bank/domain/src/test/kotlin/bank/domain/TransferSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -17129,7 +17129,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/test/kotlin/bank/domain/TransferSpec.kt"
+                  "uri": "bank/domain/src/test/kotlin/bank/domain/TransferSpec.kt"
                 },
                 "region": {
                   "endColumn": 122,
@@ -17156,7 +17156,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/domain/src/test/kotlin/bank/domain/TransferSpec.kt"
+                  "uri": "bank/domain/src/test/kotlin/bank/domain/TransferSpec.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -17183,7 +17183,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 82,
@@ -17210,7 +17210,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 54,
@@ -17237,7 +17237,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 49,
@@ -17264,7 +17264,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 16,
@@ -17291,7 +17291,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 32,
@@ -17318,7 +17318,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 38,
@@ -17345,7 +17345,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 27,
@@ -17372,7 +17372,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 27,
@@ -17399,7 +17399,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 31,
@@ -17426,7 +17426,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 130,
@@ -17453,7 +17453,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 132,
@@ -17480,7 +17480,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 151,
@@ -17507,7 +17507,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 140,
@@ -17534,7 +17534,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -17561,7 +17561,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 138,
@@ -17588,7 +17588,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
+                  "uri": "bank/issuer/src/main/kotlin/bank/issuer/TestIssuer.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -17614,7 +17614,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 16,
@@ -17641,7 +17641,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 27,
@@ -17668,7 +17668,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 37,
@@ -17695,7 +17695,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 75,
@@ -17722,7 +17722,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -17749,7 +17749,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 137,
@@ -17776,7 +17776,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 137,
@@ -17803,7 +17803,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 128,
@@ -17829,7 +17829,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 143,
@@ -17856,7 +17856,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 172,
@@ -17883,7 +17883,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/Load.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/Load.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -17910,7 +17910,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/loadtest/src/main/kotlin/bank/load/StandInCheck.kt"
+                  "uri": "bank/loadtest/src/main/kotlin/bank/load/StandInCheck.kt"
                 },
                 "region": {
                   "endColumn": 28,
@@ -17937,7 +17937,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Codecs.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Codecs.kt"
                 },
                 "region": {
                   "endColumn": 160,
@@ -17964,7 +17964,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -17991,7 +17991,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -18018,7 +18018,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -18045,7 +18045,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -18072,7 +18072,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 139,
@@ -18099,7 +18099,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 139,
@@ -18126,7 +18126,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 132,
@@ -18153,7 +18153,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -18180,7 +18180,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -18207,7 +18207,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 124,
@@ -18234,7 +18234,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 129,
@@ -18261,7 +18261,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -18288,7 +18288,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 133,
@@ -18315,7 +18315,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Contract.kt"
                 },
                 "region": {
                   "endColumn": 129,
@@ -18342,7 +18342,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/Mapping.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/Mapping.kt"
                 },
                 "region": {
                   "endColumn": 22,
@@ -18368,7 +18368,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/main/kotlin/bank/protocol/wire/Ops.kt"
+                  "uri": "bank/protocol/src/main/kotlin/bank/protocol/wire/Ops.kt"
                 },
                 "region": {
                   "endColumn": 24,
@@ -18395,7 +18395,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/test/kotlin/bank/protocol/ContractSpec.kt"
+                  "uri": "bank/protocol/src/test/kotlin/bank/protocol/ContractSpec.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -18422,7 +18422,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/test/kotlin/bank/protocol/ContractSpec.kt"
+                  "uri": "bank/protocol/src/test/kotlin/bank/protocol/ContractSpec.kt"
                 },
                 "region": {
                   "endColumn": 136,
@@ -18449,7 +18449,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/test/kotlin/bank/protocol/ContractSpec.kt"
+                  "uri": "bank/protocol/src/test/kotlin/bank/protocol/ContractSpec.kt"
                 },
                 "region": {
                   "endColumn": 127,
@@ -18476,7 +18476,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/test/kotlin/bank/protocol/RoundTripSpec.kt"
+                  "uri": "bank/protocol/src/test/kotlin/bank/protocol/RoundTripSpec.kt"
                 },
                 "region": {
                   "endColumn": 123,
@@ -18503,7 +18503,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/test/kotlin/bank/protocol/RoundTripSpec.kt"
+                  "uri": "bank/protocol/src/test/kotlin/bank/protocol/RoundTripSpec.kt"
                 },
                 "region": {
                   "endColumn": 125,
@@ -18530,7 +18530,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/test/kotlin/bank/protocol/SchemaSpec.kt"
+                  "uri": "bank/protocol/src/test/kotlin/bank/protocol/SchemaSpec.kt"
                 },
                 "region": {
                   "endColumn": 151,
@@ -18557,7 +18557,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "lark-bank/protocol/src/test/kotlin/bank/protocol/SchemaSpec.kt"
+                  "uri": "bank/protocol/src/test/kotlin/bank/protocol/SchemaSpec.kt"
                 },
                 "region": {
                   "endColumn": 132,

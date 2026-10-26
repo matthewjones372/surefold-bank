@@ -1,0 +1,20 @@
+# What surefold-cluster-kubernetes asks of the API: the running pods to seed from, and the Lease that breaks an even split.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: surefold-bank
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: surefold-cluster
+rules:
+  - { apiGroups: [ "" ], resources: [ pods ], verbs: [ list ] }
+  - { apiGroups: [ coordination.k8s.io ], resources: [ leases ], verbs: [ get, create, update ] }
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: surefold-cluster
+subjects: [ { kind: ServiceAccount, name: surefold-bank } ]
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: surefold-cluster }

@@ -20,7 +20,7 @@ trait Versions:
   def asked(request: String): IO[PolicyError, Option[Version]]
   def decide(rule: String, number: Int, approval: Approval): IO[PolicyError, Unit]
 
-// Approvals (lark-bank spec 0019), as the check uses it: asked about a version, and told it was made live, or why not.
+// Approvals (bank spec 0019), as the check uses it: asked about a version, and told it was made live, or why not.
 trait Approvals:
   def ask(proposal: Proposal): IO[PolicyError, (String, String)]
   def applied(request: String, hash: String): IO[PolicyError, Unit]

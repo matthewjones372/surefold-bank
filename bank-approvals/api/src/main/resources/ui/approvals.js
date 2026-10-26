@@ -1,4 +1,4 @@
-// One function per endpoint the pages use, and nothing the API does not declare (lark-bank spec 0019).
+// One function per endpoint the pages use, and nothing the API does not declare (bank spec 0019).
 // Every call answers { ok, status, body }: a refusal the API declares is a value to show, not an exception.
 
 async function call(method, path, body) {

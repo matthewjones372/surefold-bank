@@ -9,7 +9,7 @@ import kotlin.time.Duration.Companion.seconds
 fun main() {
     fun env(name: String) = System.getenv(name)?.takeIf(String::isNotEmpty)
     fun need(name: String) = env(name) ?: error("$name is not set")
-    // The level Estate's debug switch writes to the access-sync-logging ConfigMap, mounted here (lark-bank spec 0026).
+    // The level Estate's debug switch writes to the access-sync-logging ConfigMap, mounted here (bank spec 0026).
     env("LOG_LEVEL_FILE")?.let { LevelFile(Path.of(it)).follow(10.seconds) }
     val settings = SyncSettings(
         kafka = KafkaSettings(

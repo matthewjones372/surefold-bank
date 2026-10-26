@@ -1,6 +1,6 @@
 plugins {
     application
-    // Checks every graph in this project on `check`, as lark-bank's does.
+    // Checks every graph in this project on `check`, as surefold-bank's does.
     id("io.github.matthewjones372.surefold.wiring")
 }
 
@@ -44,13 +44,13 @@ dependencies {
     implementation(surefold("surefold-stream-actors"))
     implementation(surefold("surefold-kafka"))
 
-    // Who is calling: tokens from the bank's identity provider (lark-bank spec 0021).
+    // Who is calling: tokens from the bank's identity provider (bank spec 0021).
     implementation("io.github.matthewjones372:pelican-oidc:$pelicanVersion")
 
     // policies.yaml, read as plain maps and lists.
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.3")
 
-    // Spans exported to Tempo over OTLP/HTTP (lark-bank spec 0024), sent with the JDK's HTTP client rather than OkHttp.
+    // Spans exported to Tempo over OTLP/HTTP (bank spec 0024), sent with the JDK's HTTP client rather than OkHttp.
     implementation(platform("io.opentelemetry:opentelemetry-bom:1.67.0"))
     implementation("io.opentelemetry:opentelemetry-sdk")
     implementation("io.opentelemetry:opentelemetry-exporter-otlp") {
@@ -60,9 +60,9 @@ dependencies {
 
     implementation("org.postgresql:postgresql:42.7.13")
     implementation("com.zaxxer:HikariCP:7.1.0")
-    // Its level set while running, from the file Estate's debug switch writes (lark-bank spec 0026).
+    // Its level set while running, from the file Estate's debug switch writes (bank spec 0026).
     implementation("ch.qos.logback:logback-classic:1.5.20")
-    // Each line as one JSON object (lark-bank spec 0023); 8.x, on Jackson 2.
+    // Each line as one JSON object (bank spec 0023); 8.x, on Jackson 2.
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.1")
     // Liquibase logs through java.util.logging; bridged, its lines are JSON too.
     implementation("org.slf4j:jul-to-slf4j:2.0.17")
@@ -74,7 +74,7 @@ dependencies {
     testImplementation("net.logstash.logback:logstash-logback-encoder:8.1")
     testImplementation("io.github.matthewjones372:pelican-test:$pelicanVersion")
     // The bank's test identity provider, so tests call with real tokens, verified as Pocket ID's will be.
-    testImplementation("io.github.matthewjones372:lark-bank-issuer:$bankVersion")
+    testImplementation("io.github.matthewjones372:surefold-bank-issuer:$bankVersion")
     // The pages, driven in Chromium as a person would (approvals-pages).
     testImplementation("com.microsoft.playwright:playwright:1.59.0")
 }

@@ -15,7 +15,7 @@ enum RegistryError(msg: String) extends RuntimeException(msg):
 
 final case class Registered(artifact: String, version: String, contentId: Int)
 
-// Apicurio's REST API, v3, as lark-bank speaks it: a Protobuf schema registered once, found after, and held to
+// Apicurio's REST API, v3, as surefold-bank speaks it: a Protobuf schema registered once, found after, and held to
 // FULL_TRANSITIVE from its first version.
 final case class Apicurio(url: String, group: String = "default"):
   private val http = HttpClient.newHttpClient()

@@ -29,7 +29,7 @@ subprojects {
 
     repositories {
         mavenCentral()
-        // lark-bank-events, published locally from ../lark-bank (`./gradlew :events:publishToMavenLocal`).
+        // surefold-bank-events, published locally from ../bank (`./gradlew :events:publishToMavenLocal`).
         mavenLocal()
     }
 

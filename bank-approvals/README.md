@@ -1,6 +1,6 @@
 # bank-approvals
 
-Changes that more than one person agrees to, before they take effect, with an audit that shows tampering: lark-bank
+Changes that more than one person agrees to, before they take effect, with an audit that shows tampering: surefold-bank
 spec 0019. A service owning something (the check's rules first) asks for approval of one change, shown as the text
 before and after; named people approve, reject or comment; the service applies it once enough have agreed, and says so.
 Every act is an event in a request's own hash chain, kept for good.

@@ -20,7 +20,7 @@ import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.util.UUID
 
-/** lark-bank spec 0023's `log-json`: every line Approvals writes is one JSON object, with the estate's field names. */
+/** bank spec 0023's `log-json`: every line Approvals writes is one JSON object, with the estate's field names. */
 class LogJsonSpec {
     private val run = UUID.randomUUID().toString().take(8)
     private val json = ObjectMapper()

@@ -1,6 +1,6 @@
-# tweet-street
+# surefold-bank
 
-[![build](https://github.com/matthewjones372/tweet-street/actions/workflows/build.yml/badge.svg)](https://github.com/matthewjones372/tweet-street/actions/workflows/build.yml)
+[![build](https://github.com/matthewjones372/surefold-bank/actions/workflows/build.yml/badge.svg)](https://github.com/matthewjones372/surefold-bank/actions/workflows/build.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white)
 ![Scala](https://img.shields.io/badge/Scala-3-DC322F?logo=scala&logoColor=white)
@@ -9,14 +9,14 @@
 A small bank, built to see whether a handful of Kotlin and Scala libraries hold up when the money has to add up. It
 is four services: the bank itself on a three-node cluster, transfer screening, changes that need two people to
 agree, and fine-grained access control. The name is Wall Street for birds, since it runs on
-[Surefold](https://github.com/matthewjones372/lark).
+[Surefold](https://github.com/matthewjones372/surefold).
 
 It is a personal project, not a real bank. It holds no real money, and the credentials in it are development values
 for running it on your own machine.
 
 ## What it does
 
-- **Every account is an actor** on a three-node [Surefold](https://github.com/matthewjones372/lark) cluster. It owns its
+- **Every account is an actor** on a three-node [Surefold](https://github.com/matthewjones372/surefold) cluster. It owns its
   balance, writes its events to a Postgres journal before it answers, and lives on whichever node holds its shard.
 - **A transfer is a saga.** It debits one account, credits the other, and refunds the first if the credit is
   refused. If the node running it dies part way through, another node picks it up from its last event.
@@ -42,7 +42,7 @@ flowchart TB
     risk([Risk and admins]) --> checks
     approvers([Approvers]) --> approvals
 
-    bank[lark-bank<br/>three nodes, one Surefold cluster]
+    bank[surefold-bank<br/>three nodes, one Surefold cluster]
     checks[bank-checks<br/>screening, monitoring, policy]
     approvals[bank-approvals<br/>requests and votes]
     access[bank-access<br/>OpenFGA and access-sync]
@@ -77,31 +77,31 @@ gives the range across runs:
 | payrolls of 100 credits at 20/s, 2,000 credits a second | 0 | 6.6–8.4 ms | 64–93 ms |
 
 Transfers run clean, under 1 in 1,000 failed and a p99 under 1 s, up to 250 to 300 a second. Every run is in
-[the benchmarks](lark-bank/docs/benchmarks-jetty.md); what tracing costs, and a smaller machine, are in
-[lark-bank's README](lark-bank/README.md#what-it-carries).
+[the benchmarks](bank/docs/benchmarks-jetty.md); what tracing costs, and a smaller machine, are in
+[surefold-bank's README](bank/README.md#what-it-carries).
 
 ## Where to start reading
 
 | To see | Look at |
 |---|---|
-| The domain, with no framework in it | [`lark-bank/domain`](lark-bank/domain/src/main/kotlin/bank/domain): `Account.kt`, `Transfer.kt`, `Money.kt` |
-| Accounts and transfers as actors on the cluster | [`Accounts.kt`](lark-bank/app/src/main/kotlin/bank/app/Accounts.kt), [`Transfers.kt`](lark-bank/app/src/main/kotlin/bank/app/Transfers.kt), [`ShardedBank.kt`](lark-bank/app/src/main/kotlin/bank/app/ShardedBank.kt) |
-| The chaos run | [`lark-bank/scripts/chaos-docker.sh`](lark-bank/scripts/chaos-docker.sh) |
+| The domain, with no framework in it | [`bank/domain`](bank/domain/src/main/kotlin/bank/domain): `Account.kt`, `Transfer.kt`, `Money.kt` |
+| Accounts and transfers as actors on the cluster | [`Accounts.kt`](bank/app/src/main/kotlin/bank/app/Accounts.kt), [`Transfers.kt`](bank/app/src/main/kotlin/bank/app/Transfers.kt), [`ShardedBank.kt`](bank/app/src/main/kotlin/bank/app/ShardedBank.kt) |
+| The chaos run | [`bank/scripts/chaos-docker.sh`](bank/scripts/chaos-docker.sh) |
 | Screening a transfer | [`bank-checks/screening`](bank-checks/screening/src/main/scala/checks/screening) |
 | The audit trail as a hash chain | [`Chain.kt`](bank-approvals/domain/src/main/kotlin/bank/approvals/domain/Chain.kt) |
-| How the four services fit together | [`lark-bank/docs/services.md`](lark-bank/docs/services.md) |
-| Why each piece is the way it is | [`lark-bank/specs/`](lark-bank/specs), one spec per change |
+| How the four services fit together | [`bank/docs/services.md`](bank/docs/services.md) |
+| Why each piece is the way it is | [`bank/specs/`](bank/specs), one spec per change |
 
 ## The folders
 
 | Folder | What it is |
 |---|---|
-| [`lark-bank/`](lark-bank) | The bank. Accounts, payments and transfers as event-sourced actors on a three-node Surefold cluster, journaled to Postgres and published to Kafka. Kotlin. It also holds the docker compose and kind setups that run all four services together. |
+| [`bank/`](surefold-bank) | The bank. Accounts, payments and transfers as event-sourced actors on a three-node Surefold cluster, journaled to Postgres and published to Kafka. Kotlin. It also holds the docker compose and kind setups that run all four services together. |
 | [`bank-checks/`](bank-checks) | Screens each transfer before money moves and flags movements after, by rules an admin writes in a web wizard. Scala 3 and ZIO, with rules in [verdict](https://github.com/matthewjones372/verdict)'s language. |
 | [`bank-approvals/`](bank-approvals) | Changes that more than one person agrees to before they take effect, with an audit trail kept as a hash chain. Kotlin on Surefold and Pelican. |
 | [`bank-access/`](bank-access) | Who may do what, in one place: an OpenFGA model, a service that derives relationships from events, and the client the other services ask. |
 
-It is built on four libraries of mine: [Surefold](https://github.com/matthewjones372/lark) for actors, clustering, event
+It is built on four libraries of mine: [Surefold](https://github.com/matthewjones372/surefold) for actors, clustering, event
 sourcing and streams, [Pelican](https://github.com/matthewjones372/pelican) for HTTP endpoints and pages,
 [Proofload](https://github.com/matthewjones372/proofload) for the load tests, and
 [kimney](https://github.com/matthewjones372/kimney) for mapping between the wire and the domain.
@@ -114,10 +114,10 @@ The bank builds against snapshots of Surefold and Pelican that are not on Maven 
 repository and tell Gradle where they are, once, in `~/.gradle/gradle.properties`:
 
 ```bash
-git clone https://github.com/matthewjones372/lark ../surefold
+git clone https://github.com/matthewjones372/surefold ../surefold
 git clone https://github.com/matthewjones372/pelican ../pelican
 cat >> ~/.gradle/gradle.properties <<PROPS
-larkSource=$(cd ../surefold && pwd)
+surefoldSource=$(cd ../surefold && pwd)
 pelicanSource=$(cd ../pelican && pwd)
 accessSource=$(pwd)/bank-access
 PROPS
@@ -126,10 +126,10 @@ PROPS
 With docker compose, three bank nodes, two Postgres databases and Kafka on one machine:
 
 ```bash
-cd lark-bank
+cd bank
 ./gradlew :app:installDist :loadtest:installDist
-docker build -f deploy/docker/bank.Dockerfile -t lark-bank:dev .
-docker build -f deploy/docker/loadtest.Dockerfile -t lark-bank-loadtest:dev .
+docker build -f deploy/docker/bank.Dockerfile -t surefold-bank:dev .
+docker build -f deploy/docker/loadtest.Dockerfile -t surefold-bank-loadtest:dev .
 docker compose -f deploy/docker/compose.yml up -d --wait
 docker compose -f deploy/docker/compose.yml run --rm -e SCENARIO=transfers load
 ```
@@ -141,7 +141,7 @@ other services and the observability stack; each needs its service's image built
 With [kind](https://kind.sigs.k8s.io), all four services on a local three-worker Kubernetes cluster:
 
 ```bash
-cd lark-bank
+cd bank
 scripts/up.sh       # builds every image from the folders beside it, makes the cluster, applies deploy/k8s
 scripts/load.sh transfers
 scripts/down.sh

@@ -5,12 +5,12 @@
 setup: 
   - uses: cachix/install-nix-action@v31
   - id: pins
-    run: "pin() { nix eval --impure --raw --expr \"(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev\"; }\necho \"lark=$(pin lark)\" >> \"$GITHUB_OUTPUT\"\necho \"pelican=$(pin pelican)\" >> \"$GITHUB_OUTPUT\"\n"
+    run: "pin() { nix eval --impure --raw --expr \"(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev\"; }\necho \"surefold=$(pin surefold)\" >> \"$GITHUB_OUTPUT\"\necho \"pelican=$(pin pelican)\" >> \"$GITHUB_OUTPUT\"\n"
   - uses: actions/checkout@v5
     with: 
-      repository: matthewjones372/lark
-      ref: "${{ steps.pins.outputs.lark }}"
-      path: deps/lark
+      repository: matthewjones372/surefold
+      ref: "${{ steps.pins.outputs.surefold }}"
+      path: deps/surefold
   - uses: actions/checkout@v5
     with: 
       repository: matthewjones372/pelican
@@ -20,22 +20,22 @@ setup:
     with: 
       repository: matthewjones372/verdict
       path: deps/verdict
-  - name: "verdict, lark-bank-events and lark-bank-issuer, published locally"
-    run: "(cd bank-checks && nix develop -c bash -c 'cd ../deps/verdict && sbt -batch publishLocal')\n(cd lark-bank && nix develop .#ci -c ./gradlew -PlarkSource=../deps/lark -PpelicanSource=../deps/pelican \\\n  :events:publishToMavenLocal :issuer:publishToMavenLocal)\n"
-  - name: "lark-bank-events and lark-bank-issuer, published locally"
-    working-directory: lark-bank
-    run: "nix develop .#ci -c ./gradlew -PlarkSource=../deps/lark -PpelicanSource=../deps/pelican \\\n  :events:publishToMavenLocal :issuer:publishToMavenLocal\n"
-  - name: "lark-bank-events, published locally"
-    working-directory: lark-bank
-    run: "nix develop .#ci -c ./gradlew -PlarkSource=../deps/lark -PpelicanSource=../deps/pelican :events:publishToMavenLocal"
+  - name: "verdict, surefold-bank-events and surefold-bank-issuer, published locally"
+    run: "(cd bank-checks && nix develop -c bash -c 'cd ../deps/verdict && sbt -batch publishLocal')\n(cd bank && nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican \\\n  :events:publishToMavenLocal :issuer:publishToMavenLocal)\n"
+  - name: "surefold-bank-events and surefold-bank-issuer, published locally"
+    working-directory: bank
+    run: "nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican \\\n  :events:publishToMavenLocal :issuer:publishToMavenLocal\n"
+  - name: "surefold-bank-events, published locally"
+    working-directory: bank
+    run: "nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican :events:publishToMavenLocal"
 builds: 
-  lark-bank: 
+  bank: 
     wrap: "nix develop .#ci -c"
-    tool: "./gradlew -PlarkSource=$GITHUB_WORKSPACE/deps/lark -PpelicanSource=$GITHUB_WORKSPACE/deps/pelican -PaccessSource=$GITHUB_WORKSPACE/bank-access -Porg.gradle.java.installations.fromEnv=JDK25,JDK21 -Porg.gradle.java.installations.auto-download=false -Pkotlin.compiler.execution.strategy=in-process"
+    tool: "./gradlew -PsurefoldSource=$GITHUB_WORKSPACE/deps/surefold -PpelicanSource=$GITHUB_WORKSPACE/deps/pelican -PaccessSource=$GITHUB_WORKSPACE/bank-access -Porg.gradle.java.installations.fromEnv=JDK25,JDK21 -Porg.gradle.java.installations.auto-download=false -Pkotlin.compiler.execution.strategy=in-process"
   bank-checks:
     wrap: nix develop -c
   bank-approvals: 
     wrap: "nix develop .#ci -c"
-    tool: "./gradlew -PlarkSource=$GITHUB_WORKSPACE/deps/lark -PpelicanSource=$GITHUB_WORKSPACE/deps/pelican -Pkotlin.compiler.execution.strategy=in-process"
+    tool: "./gradlew -PsurefoldSource=$GITHUB_WORKSPACE/deps/surefold -PpelicanSource=$GITHUB_WORKSPACE/deps/pelican -Pkotlin.compiler.execution.strategy=in-process"
   bank-access: 
     wrap: nix develop -c

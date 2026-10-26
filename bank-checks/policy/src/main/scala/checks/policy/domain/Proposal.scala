@@ -8,7 +8,7 @@ import java.security.MessageDigest
 // How far a rule reaches over the records kept for the last `days`: the live version's count, and the new one's.
 final case class Reach(before: Long, after: Long, of: Long, days: Int)
 
-// One version asked for, as Approvals shows it (lark-bank spec 0019): the rule as it is in force and as it would be,
+// One version asked for, as Approvals shows it (bank spec 0019): the rule as it is in force and as it would be,
 // facts its policy is matched on, and the reach beside them.
 final case class Proposal(
   subject: String,

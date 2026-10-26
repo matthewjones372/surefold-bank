@@ -29,7 +29,7 @@ data class KafkaSettings(
     val replication: Short,
     val publishers: Int,
     val every: Duration,
-    /** Approvals' user on the brokers (lark-bank spec 0021), signed in with SCRAM-SHA-512; null connects as nobody. */
+    /** Approvals' user on the brokers (bank spec 0021), signed in with SCRAM-SHA-512; null connects as nobody. */
     val username: String? = null,
     val password: String? = null,
 ) {
@@ -53,7 +53,7 @@ data class KafkaSettings(
 data class AuditSettings(val digestEvery: Duration)
 
 /**
- * Whose tokens approvals takes, and for which audience (lark-bank spec 0021); and the pages' sign-in as the provider's
+ * Whose tokens approvals takes, and for which audience (bank spec 0021); and the pages' sign-in as the provider's
  * client: its id and secret, where the provider sends people back, and the key every node seals sessions with.
  */
 data class IdentitySettings(
@@ -68,7 +68,7 @@ data class IdentitySettings(
 )
 
 /**
- * Spans exported (lark-bank spec 0024): with [enabled], over OTLP/HTTP to [otlp], `/v1/traces` added; a request with no
+ * Spans exported (bank spec 0024): with [enabled], over OTLP/HTTP to [otlp], `/v1/traces` added; a request with no
  * trace of its own is sampled at [sampled], and one that arrives in a trace follows it.
  */
 data class TelemetrySettings(val enabled: Boolean, val otlp: String, val sampled: Double)

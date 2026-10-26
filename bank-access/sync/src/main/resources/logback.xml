@@ -1,5 +1,5 @@
 <configuration>
-  <!-- One JSON object per line (lark-bank spec 0023), the estate's field names: what Fluent Bit ships and Loki reads.
+  <!-- One JSON object per line (bank spec 0023), the estate's field names: what Fluent Bit ships and Loki reads.
        Each library's MDC is fields of its own. LOG_FORMAT=plain is a line for a terminal. -->
   <appender name="json" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="net.logstash.logback.encoder.LogstashEncoder">

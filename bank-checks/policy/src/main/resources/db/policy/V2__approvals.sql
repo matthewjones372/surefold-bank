@@ -1,4 +1,4 @@
--- A version that would change what is in force waits for approval (lark-bank spec 0019): which request asked about
+-- A version that would change what is in force waits for approval (bank spec 0019): which request asked about
 -- it, the hash of what was asked, and how it ended. Versions stored before this needed nobody.
 ALTER TABLE rule_version ADD COLUMN approval TEXT NOT NULL DEFAULT 'NotNeeded';
 ALTER TABLE rule_version ADD COLUMN approval_request TEXT;

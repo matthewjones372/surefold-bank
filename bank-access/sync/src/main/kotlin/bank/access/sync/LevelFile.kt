@@ -8,7 +8,7 @@ import java.nio.file.Path
 import kotlin.time.Duration
 
 /**
- * access-sync's log level, read from [file] (lark-bank spec 0026): `INFO` or `DEBUG`, as Estate's debug switch writes
+ * access-sync's log level, read from [file] (bank spec 0026): `INFO` or `DEBUG`, as Estate's debug switch writes
  * it to the `access-sync-logging` ConfigMap mounted there. The root logger takes it, and so access-sync's own; Kafka's,
  * quietened in `logback.xml`, keeps its level. A file that is missing, or says something that is not a level, changes
  * nothing.

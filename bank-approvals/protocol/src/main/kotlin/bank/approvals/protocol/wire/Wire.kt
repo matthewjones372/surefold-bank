@@ -176,7 +176,7 @@ data class ByteArrayEvent(val bytes: ByteArray) {
 
 /**
  * One request event as the journal keeps it: the event's own bytes, and its link in the request's hash chain, the
- * SHA-256 of the link before it and those bytes (lark-bank spec 0019). The bytes are kept as written, so the chain is
+ * SHA-256 of the link before it and those bytes (bank spec 0019). The bytes are kept as written, so the chain is
  * checked against exactly what is stored.
  */
 @Serializable

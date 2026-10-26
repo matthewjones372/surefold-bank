@@ -26,7 +26,7 @@ import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
-/** lark-bank spec 0019's approvals-saga, against Postgres and real tokens. */
+/** bank spec 0019's approvals-saga, against Postgres and real tokens. */
 class SagaSpec {
 
     private fun change(subject: String, kind: String = "test.change", facts: Map<String, String> = emptyMap()) =

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The model applied to OpenFGA (lark-bank spec 0022's access-server): the store found by name, or made, and the model
+# The model applied to OpenFGA (bank spec 0022's access-server): the store found by name, or made, and the model
 # in this image written to it as its newest version, which every client reads. Run by the access-model Job each time
 # the image changes, so the model in the cluster is the model on main. FGA_API_URL and FGA_API_TOKEN say where, and as
 # whom; MODEL is the model's file.

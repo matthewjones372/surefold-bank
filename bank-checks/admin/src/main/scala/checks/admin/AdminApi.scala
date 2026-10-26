@@ -391,7 +391,7 @@ object AdminApi:
     }
   )
 
-  // Signing in is the identity provider's (lark-bank spec 0019): sent there with a state this browser keeps, and
+  // Signing in is the identity provider's (bank spec 0019): sent there with a state this browser keeps, and
   // back to /callback, which opens a session if the provider says the person is in one of the admins' groups.
   // Behind the ingress's HTTPS the cookies are Secure; a test talks plain HTTP to the port, and they cannot be.
   private def secure(request: Request) = request.headers.get("X-Forwarded-Proto").contains("https")

@@ -21,7 +21,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
-/** lark-bank spec 0019's approvals-published: every request's events on `bank.approval-events`, as a consumer reads them. */
+/** bank spec 0019's approvals-published: every request's events on `bank.approval-events`, as a consumer reads them. */
 class PublishedSpec {
     private val run = UUID.randomUUID().toString().take(8)
 

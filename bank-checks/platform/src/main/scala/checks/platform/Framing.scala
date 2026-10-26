@@ -7,7 +7,7 @@ enum FramingError(msg: String) extends RuntimeException(msg):
   case NotFramed(magic: Byte)   extends FramingError(s"a record starting with $magic, not the framing's zero byte")
   case OtherMessage(index: Int) extends FramingError(s"a record of message $index, where the topic has only its first")
 
-// As lark-bank-events' README frames a record: a zero byte, the schema's 4-byte content id, the message index (one
+// As surefold-bank-events' README frames a record: a zero byte, the schema's 4-byte content id, the message index (one
 // zero byte), then the message.
 final case class Framed(contentId: Int, message: Array[Byte])
 

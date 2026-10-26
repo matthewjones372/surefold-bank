@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 
-/** lark-bank spec 0026's debug switch: Approvals' level, from the file its ConfigMap is mounted as. */
+/** bank spec 0026's debug switch: Approvals' level, from the file its ConfigMap is mounted as. */
 class LevelFileSpec {
     private val root = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger
     private val kafka = LoggerFactory.getLogger("org.apache.kafka") as Logger

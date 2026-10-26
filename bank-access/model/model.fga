@@ -1,4 +1,4 @@
-# Who may do what across the estate (lark-bank spec 0022): the one answer every service asks. Relationships are written
+# Who may do what across the estate (bank spec 0022): the one answer every service asks. Relationships are written
 # by access-sync from events, approvals and Pocket ID, never by hand; a grant's expiry is its condition.
 model
   schema 1.1

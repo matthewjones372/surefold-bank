@@ -1,7 +1,7 @@
 name: build
 
-# Each service built and tested on GitHub's runners, never a self-hosted one. Lark and Pelican come from their public
-# repositories at the revisions lark-bank/flake.lock pins, verdict from its main, and the bank's events (and its test
+# Each service built and tested on GitHub's runners, never a self-hosted one. Surefold and Pelican come from their public
+# repositories at the revisions bank/flake.lock pins, verdict from its main, and the bank's events (and its test
 # issuer) are published to Maven local before the services that read them are built.
 on:
   push: { branches: [ main ] }
@@ -17,11 +17,11 @@ permissions:
 
 jobs:
   # Which services a pull request needs built: the ones it changes, and the ones that build from what it changes
-  # (lark-bank's events, issuer and pins; bank-access's client). A push to main builds them all.
+  # (bank's events, issuer and pins; bank-access's client). A push to main builds them all.
   changes:
     runs-on: namespace-profile-mattjones372
     outputs:
-      lark-bank: ${{ steps.which.outputs.lark-bank }}
+      bank: ${{ steps.which.outputs.bank }}
       bank-checks: ${{ steps.which.outputs.bank-checks }}
       bank-approvals: ${{ steps.which.outputs.bank-approvals }}
       bank-access: ${{ steps.which.outputs.bank-access }}
@@ -33,21 +33,21 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          all() { for s in lark-bank bank-checks bank-approvals bank-access; do echo "$s=true" >> "$GITHUB_OUTPUT"; done; }
+          all() { for s in bank bank-checks bank-approvals bank-access; do echo "$s=true" >> "$GITHUB_OUTPUT"; done; }
           if [ "${{ github.event_name }}" != "pull_request" ]; then all; exit 0; fi
           # Markdown (specs, docs, READMEs) builds nothing.
           changed=$(git diff --name-only "$BASE...$HEAD" | grep -vE '\.md$' || true)
           echo "$changed"
           touches() { echo "$changed" | grep -qE "$1" && echo true || echo false; }
-          shared='^(\.github/workflows/build\.yml|lark-bank/(events/|issuer/|flake\.lock))'
-          echo "lark-bank=$(touches '^(lark-bank/|bank-access/|\.github/workflows/build\.yml)')" >> "$GITHUB_OUTPUT"
+          shared='^(\.github/workflows/build\.yml|bank/(events/|issuer/|flake\.lock))'
+          echo "bank=$(touches '^(bank/|bank-access/|\.github/workflows/build\.yml)')" >> "$GITHUB_OUTPUT"
           echo "bank-checks=$(touches "^bank-checks/|$shared")" >> "$GITHUB_OUTPUT"
           echo "bank-approvals=$(touches "^bank-approvals/|$shared")" >> "$GITHUB_OUTPUT"
           echo "bank-access=$(touches "^bank-access/|$shared")" >> "$GITHUB_OUTPUT"
 
-  lark-bank:
+  bank:
     needs: changes
-    if: needs.changes.outputs.lark-bank == 'true'
+    if: needs.changes.outputs.bank == 'true'
     runs-on: namespace-profile-mattjones372
     steps:
       - uses: actions/checkout@v5
@@ -63,17 +63,17 @@ jobs:
           dependency-graph: "${{ github.event_name == 'push' && 'generate-and-upload' || 'disabled' }}"
       - id: pins
         run: |
-          pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
-          echo "lark=$(pin lark)" >> "$GITHUB_OUTPUT"
+          pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev"; }
+          echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/lark, ref: "${{ steps.pins.outputs.lark }}", path: deps/lark }
+        with: { repository: matthewjones372/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
         with: { repository: matthewjones372/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
       - name: Build and test
-        working-directory: lark-bank
+        working-directory: bank
         run: |
-          nix develop .#ci -c ./gradlew -PlarkSource=../deps/lark -PpelicanSource=../deps/pelican -PaccessSource=../bank-access \
+          nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican -PaccessSource=../bank-access \
             -Porg.gradle.java.installations.fromEnv=JDK25,JDK21 -Porg.gradle.java.installations.auto-download=false \
             -Pkotlin.compiler.execution.strategy=in-process build :events:build --stacktrace koverXmlReport
       - name: Keep the test and coverage reports for Gauntlet
@@ -85,7 +85,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gauntlet-reports-lark-bank
+          name: gauntlet-reports-bank
           path: ${{ runner.temp }}/gauntlet-reports
           if-no-files-found: ignore
           retention-days: 7
@@ -93,10 +93,10 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: lark-bank-test-reports
+          name: bank-test-reports
           path: |
-            lark-bank/**/build/reports/tests/
-            lark-bank/**/build/test-results/
+            bank/**/build/reports/tests/
+            bank/**/build/test-results/
           retention-days: 7
 
   bank-checks:
@@ -123,18 +123,18 @@ jobs:
         with: { repository: matthewjones372/verdict, path: deps/verdict }
       - id: pins
         run: |
-          pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
-          echo "lark=$(pin lark)" >> "$GITHUB_OUTPUT"
+          pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev"; }
+          echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/lark, ref: "${{ steps.pins.outputs.lark }}", path: deps/lark }
+        with: { repository: matthewjones372/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
         with: { repository: matthewjones372/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
-      - name: verdict, lark-bank-events and lark-bank-issuer, published locally
+      - name: verdict, surefold-bank-events and surefold-bank-issuer, published locally
         run: |
           (cd bank-checks && nix develop -c bash -c 'cd ../deps/verdict && sbt -batch publishLocal')
-          (cd lark-bank && nix develop .#ci -c ./gradlew --no-daemon -Pkotlin.compiler.execution.strategy=in-process \
-            -PlarkSource=../deps/lark -PpelicanSource=../deps/pelican :events:publishToMavenLocal :issuer:publishToMavenLocal)
+          (cd bank && nix develop .#ci -c ./gradlew --no-daemon -Pkotlin.compiler.execution.strategy=in-process \
+            -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican :events:publishToMavenLocal :issuer:publishToMavenLocal)
       - name: Build and test
         working-directory: bank-checks
         run: nix develop -c sbt -batch compile coverage test coverageReport scalafmtCheckAll
@@ -170,22 +170,22 @@ jobs:
           dependency-graph: "${{ github.event_name == 'push' && 'generate-and-upload' || 'disabled' }}"
       - id: pins
         run: |
-          pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
-          echo "lark=$(pin lark)" >> "$GITHUB_OUTPUT"
+          pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev"; }
+          echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/lark, ref: "${{ steps.pins.outputs.lark }}", path: deps/lark }
+        with: { repository: matthewjones372/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
         with: { repository: matthewjones372/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
-      - name: lark-bank-events and lark-bank-issuer, published locally
-        working-directory: lark-bank
+      - name: surefold-bank-events and surefold-bank-issuer, published locally
+        working-directory: bank
         run: |
           nix develop .#ci -c ./gradlew --no-daemon -Pkotlin.compiler.execution.strategy=in-process \
-            -PlarkSource=../deps/lark -PpelicanSource=../deps/pelican :events:publishToMavenLocal :issuer:publishToMavenLocal
+            -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican :events:publishToMavenLocal :issuer:publishToMavenLocal
       - name: Build and test
         working-directory: bank-approvals
         run: |
-          nix develop .#ci -c ./gradlew -PlarkSource=../deps/lark -PpelicanSource=../deps/pelican \
+          nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican \
             -Pkotlin.compiler.execution.strategy=in-process build --stacktrace koverXmlReport
       - name: Keep the test and coverage reports for Gauntlet
         if: always()
@@ -231,16 +231,16 @@ jobs:
         run: nix flake check --print-build-logs
       - id: pins
         run: |
-          pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./lark-bank/flake.lock)).nodes.$1.locked.rev"; }
-          echo "lark=$(pin lark)" >> "$GITHUB_OUTPUT"
+          pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev"; }
+          echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/lark, ref: "${{ steps.pins.outputs.lark }}", path: deps/lark }
+        with: { repository: matthewjones372/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
         with: { repository: matthewjones372/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
-      - name: lark-bank-events, published locally
-        working-directory: lark-bank
-        run: nix develop .#ci -c ./gradlew -PlarkSource=../deps/lark -PpelicanSource=../deps/pelican :events:publishToMavenLocal
+      - name: surefold-bank-events, published locally
+        working-directory: bank
+        run: nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican :events:publishToMavenLocal
       - name: Build and test access-sync and the client
         working-directory: bank-access
         run: nix develop -c ./gradlew build koverXmlReport
@@ -262,7 +262,7 @@ jobs:
   # main, and it runs none of the repository's code: it downloads the graph files and submits them, so the write token
   # it needs never reaches a build.
   dependency-graph:
-    needs: [lark-bank, bank-approvals, bank-access]
+    needs: [bank, bank-approvals, bank-access]
     if: github.event_name == 'push' && !cancelled()
     runs-on: namespace-profile-mattjones372
     permissions: { contents: write }

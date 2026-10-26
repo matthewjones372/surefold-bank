@@ -66,8 +66,8 @@ class ClientSpec {
     private fun store(): Fga = TestOpenFga.fresh().also { fga ->
         fga.write(
             listOf(
-                Tuple("group:auditor#member", "auditor", "bank:lark"),
-                Tuple("bank:lark", "bank", "account:$acc"),
+                Tuple("group:auditor#member", "auditor", "bank:surefold"),
+                Tuple("bank:surefold", "bank", "account:$acc"),
                 Tuple("person:ada", "owner", "account:$acc"),
                 Tuple("person:aud", "member", "group:auditor"),
                 Tuple("person:bob", "impersonator", "person:ada", Instant.now().plusSeconds(600)),

@@ -67,7 +67,7 @@ private const val EXPIRE = "expire"
 private const val APPLY = "apply"
 
 /**
- * One request, as a saga (lark-bank spec 0019): each act decided by the pure domain, written to the journal, and
+ * One request, as a saga (bank spec 0019): each act decided by the pure domain, written to the journal, and
  * answered with the whole history once written. The next step is read off the state, so a request recovered on another
  * node carries on: its expiry is armed again, and so is an approved one's asking its owner again.
  */

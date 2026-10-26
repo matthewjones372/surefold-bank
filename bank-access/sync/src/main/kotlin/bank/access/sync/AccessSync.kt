@@ -61,7 +61,7 @@ data class SyncSettings(
 )
 
 /**
- * access-sync (lark-bank spec 0022): every relationship in the store, derived from something already recorded. Three
+ * access-sync (bank spec 0022): every relationship in the store, derived from something already recorded. Three
  * readers, each on a thread of its own: the account events, the approval events, and Pocket ID's groups.
  */
 class AccessSync(private val settings: SyncSettings, private val telemetry: OpenTelemetry = OpenTelemetry.noop()) :
@@ -128,7 +128,7 @@ class AccessSync(private val settings: SyncSettings, private val telemetry: Open
         while (running.get()) {
             val records = consumer.poll(Duration.ofMillis(500))
             if (records.isEmpty) continue
-            // A record published inside a trace is written in it, alone; the rest together, as before (lark-bank spec 0024).
+            // A record published inside a trace is written in it, alone; the rest together, as before (bank spec 0024).
             val (inTrace, untraced) = records.partition(::traced)
             fga.write(untraced.flatMap(::relationships))
             inTrace.forEach { record ->

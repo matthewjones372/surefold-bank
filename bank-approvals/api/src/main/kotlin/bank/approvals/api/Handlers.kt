@@ -56,7 +56,7 @@ fun interface Histories {
 }
 
 /**
- * How people sign in to the pages, and what verifies a caller: a bearer token, or a signed-in session (lark-bank spec
+ * How people sign in to the pages, and what verifies a caller: a bearer token, or a signed-in session (bank spec
  * 0021). The app builds it from pelican-oidc against the identity provider.
  */
 interface Signing {
@@ -277,7 +277,7 @@ fun approvalsApi(
     // cached.
     pages = pages("ui").guardedBy(signing.guard)
     authenticate(bearer, signing.authenticator)
-    // A server span per request, continuing the caller's trace (lark-bank spec 0024); outermost, so a refusal is in it.
+    // A server span per request, continuing the caller's trace (bank spec 0024); outermost, so a refusal is in it.
     filter(openTelemetry(telemetry))
 }
 
