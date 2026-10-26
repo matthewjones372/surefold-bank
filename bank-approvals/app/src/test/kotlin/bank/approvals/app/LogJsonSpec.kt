@@ -6,10 +6,10 @@ import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.joran.JoranConfigurator
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.matthewjones372.lark.app.use
-import io.github.matthewjones372.lark.logAnnotated
-import io.github.matthewjones372.lark.logWarn
 import io.github.matthewjones372.pelican.test.shouldBeOk
+import io.github.matthewjones372.surefold.app.use
+import io.github.matthewjones372.surefold.logAnnotated
+import io.github.matthewjones372.surefold.logWarn
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe

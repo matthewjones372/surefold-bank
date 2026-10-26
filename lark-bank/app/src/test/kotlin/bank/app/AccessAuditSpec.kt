@@ -6,10 +6,10 @@ import bank.api.accountViewers
 import bank.api.personSees
 import bank.api.statement
 import bank.domain.AccountId
-import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.pelican.In3
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.test.apiClient
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -73,7 +73,8 @@ class AccessAuditSpec {
                 page.navigate("$base/access.html?person=bob")
                 page.waitForSelector("#sees tr[data-account=$acc]:has-text('$approval')")
 
-                // Once the grant has expired, Bob is no longer one who can see it, though the relationship is still there.
+                // Once the grant has expired, Bob is no longer one who can see it, though the relationship is still
+                // there.
                 Thread.sleep(maxOf(0, expires.toEpochMilli() - System.currentTimeMillis()) + 1_000)
                 page.navigate("$base/access.html?account=$acc")
                 page.waitForSelector("#viewers tr[data-person=ada]")

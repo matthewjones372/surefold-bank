@@ -9,8 +9,8 @@ import bank.approvals.domain.Refusal
 import bank.approvals.domain.RequestCommand
 import bank.approvals.domain.RequestEvent
 import bank.approvals.domain.RequestId
-import io.github.matthewjones372.lark.actor.Reply
-import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.surefold.actor.Reply
+import io.github.matthewjones372.surefold.fail.Either
 import java.time.Instant
 
 /** What a request answers: its whole history, which the asker replays, or why it could not take what it was asked. */

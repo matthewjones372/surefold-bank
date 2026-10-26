@@ -2,7 +2,7 @@ package bank.app
 
 import bank.api.Caller
 import bank.api.Look
-import io.github.matthewjones372.lark.app.liquibase.migrate
+import io.github.matthewjones372.surefold.app.liquibase.migrate
 import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

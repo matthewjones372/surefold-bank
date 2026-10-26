@@ -1,9 +1,9 @@
 package bank.approvals.domain
 
-import io.github.matthewjones372.lark.assert.shouldBeLeft
-import io.github.matthewjones372.lark.assert.shouldBeRight
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.onRight
+import io.github.matthewjones372.surefold.assert.shouldBeLeft
+import io.github.matthewjones372.surefold.assert.shouldBeRight
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.onRight
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf

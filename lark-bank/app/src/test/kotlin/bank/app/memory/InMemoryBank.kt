@@ -21,22 +21,22 @@ import bank.protocol.TransferAsk
 import bank.protocol.TransferEvents
 import bank.protocol.TransferMessage
 import bank.protocol.TransferRequest
-import io.github.matthewjones372.lark.actor.ActorRef
-import io.github.matthewjones372.lark.actor.Address
-import io.github.matthewjones372.lark.actor.Faults
-import io.github.matthewjones372.lark.actor.JournalConflict
-import io.github.matthewjones372.lark.actor.Ordering
-import io.github.matthewjones372.lark.actor.PersistenceId
-import io.github.matthewjones372.lark.actor.Remembered
-import io.github.matthewjones372.lark.actor.Reply
-import io.github.matthewjones372.lark.actor.TestActor
-import io.github.matthewjones372.lark.actor.TestActors
-import io.github.matthewjones372.lark.actor.TraceEntry
-import io.github.matthewjones372.lark.actor.events
-import io.github.matthewjones372.lark.actor.testActors
-import io.github.matthewjones372.lark.assert.shouldBeRight
-import io.github.matthewjones372.lark.clock
-import io.github.matthewjones372.lark.fixedClock
+import io.github.matthewjones372.surefold.actor.ActorRef
+import io.github.matthewjones372.surefold.actor.Address
+import io.github.matthewjones372.surefold.actor.Faults
+import io.github.matthewjones372.surefold.actor.JournalConflict
+import io.github.matthewjones372.surefold.actor.Ordering
+import io.github.matthewjones372.surefold.actor.PersistenceId
+import io.github.matthewjones372.surefold.actor.Remembered
+import io.github.matthewjones372.surefold.actor.Reply
+import io.github.matthewjones372.surefold.actor.TestActor
+import io.github.matthewjones372.surefold.actor.TestActors
+import io.github.matthewjones372.surefold.actor.TraceEntry
+import io.github.matthewjones372.surefold.actor.events
+import io.github.matthewjones372.surefold.actor.testActors
+import io.github.matthewjones372.surefold.assert.shouldBeRight
+import io.github.matthewjones372.surefold.clock
+import io.github.matthewjones372.surefold.fixedClock
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -46,9 +46,10 @@ import kotlin.time.Duration.Companion.seconds
 private val NOON: Instant = Instant.parse("2026-10-10T12:00:00Z")
 
 /**
- * The bank's shipped `account(...)` and `transfer(...)` behaviours as Lark test actors, stepped on the test's thread
- * with an in-memory journal: no cluster, no Postgres, no threads (bank spec 0028). [order] and [faults] are Lark's
- * (Lark spec 0128): a seeded order, and messages between actors lost, doubled, delayed or crashing their receiver.
+ * The bank's shipped `account(...)` and `transfer(...)` behaviours as Surefold test actors, stepped on the test's
+ * thread with an in-memory journal: no cluster, no Postgres, no threads (bank spec 0028). [order] and [faults] are
+ * Surefold's (Surefold spec 0128): a seeded order, and messages between actors lost, doubled, delayed or crashing their
+ * receiver.
  */
 fun inMemory(
     legTimeout: Duration = 1.seconds,
@@ -71,7 +72,7 @@ fun <A> inMemoryOf(
     faults: Faults = Faults(),
     closeAfter: Duration? = null,
     block: InMemoryBank.() -> A,
-): A = // Events are stamped from lark's clock, bound here for the test's thread.
+): A = // Events are stamped from surefold's clock, bound here for the test's thread.
     clock.locally(fixedClock(NOON)) {
         testActors(clock = fixedClock(NOON), order = order, faults = faults) {
             InMemoryBank(this, legTimeout, Actors(this, legTimeout, closeAfter)).block()
@@ -186,8 +187,9 @@ internal class Actors(
 }
 
 /**
- * A test actor seen only as an [ActorRef], so Lark's `ask` takes a node's path: an ask nobody answers yet times out,
- * as one to a saga still moving does on a node, where a test actor's own ask fails. It all still runs on this thread.
+ * A test actor seen only as an [ActorRef], so Surefold's `ask` takes a node's path: an ask nobody answers yet times
+ * out, as one to a saga still moving does on a node, where a test actor's own ask fails. It all still runs on this
+ * thread.
  */
 private class Plain<M : Any>(private val actor: ActorRef<M>) : ActorRef<M> {
     override val address: Address get() = actor.address

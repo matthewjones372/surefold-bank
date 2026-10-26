@@ -31,7 +31,7 @@ subprojects {
 
     repositories {
         mavenCentral()
-        // Lark, Pelican and lark-bank's packages are installed locally as snapshots; see gradle.properties.
+        // Surefold, Pelican and lark-bank's packages are installed locally as snapshots; see gradle.properties.
         mavenLocal()
     }
 
@@ -39,12 +39,14 @@ subprojects {
         jvmToolchain(25)
     }
 
+    val surefoldVersion = providers.gradleProperty("surefoldVersion").get()
+
     dependencies {
         "detektPlugins"("dev.detekt:detekt-rules-ktlint-wrapper:2.0.0-alpha.6")
         "testImplementation"(kotlin("test"))
         "testImplementation"("org.junit.jupiter:junit-jupiter:6.1.3")
         "testImplementation"("io.kotest:kotest-assertions-core:6.2.4")
-        "testImplementation"("io.github.matthewjones372:lark-assert:${providers.gradleProperty("larkVersion").get()}")
+        "testImplementation"("io.github.matthewjones372:surefold-assert:$surefoldVersion")
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 

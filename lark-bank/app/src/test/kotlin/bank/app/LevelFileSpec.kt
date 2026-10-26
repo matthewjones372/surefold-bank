@@ -11,9 +11,9 @@ import java.nio.file.Files
 /** Bank spec 0026's `logging-configmaps`: the bank's level, from the file its ConfigMap is mounted as. */
 class LevelFileSpec {
     private val root = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger
-    private val lark = LoggerFactory.getLogger("lark") as Logger
+    private val surefold = LoggerFactory.getLogger("surefold") as Logger
     private val kafka = LoggerFactory.getLogger("org.apache.kafka") as Logger
-    private val before = listOf(root, lark, kafka).associateWith { it.level }
+    private val before = listOf(root, surefold, kafka).associateWith { it.level }
     private val file = Files.createTempFile("level", "")
 
     @AfterEach
@@ -25,13 +25,13 @@ class LevelFileSpec {
         Files.writeString(file, "DEBUG\n")
         LevelFile(file).read() shouldBe Level.DEBUG
         LoggerFactory.getLogger("bank.app.Transfers").isDebugEnabled shouldBe true
-        lark.level shouldBe Level.DEBUG
+        surefold.level shouldBe Level.DEBUG
         kafka.level shouldBe Level.WARN
 
         Files.writeString(file, "info")
         LevelFile(file).read() shouldBe Level.INFO
         LoggerFactory.getLogger("bank.app.Transfers").isDebugEnabled shouldBe false
-        lark.level shouldBe Level.INFO
+        surefold.level shouldBe Level.INFO
     }
 
     @Test

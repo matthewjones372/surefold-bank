@@ -24,18 +24,18 @@ stay in one database.
 - **Sweeper**: a transfer projection keeps unsettled sagas in a table, and the singleton nudges any older than
   5 s. A saga whose node died resumes without anyone asking about it.
 - **Kafka**: a third projection publishes `PublishedAccountEvent` to `bank.account-events`, keyed by account,
-  through lark-kafka's `publishTo` (Lark spec 0087), so its offset is saved only once the broker has every event
-  up to it. A `lark-kafka` consumer group on every node reads it back into an `alerts` table for large movements, committing
+  through surefold-kafka's `publishTo` (Surefold spec 0087), so its offset is saved only once the broker has every event
+  up to it. A `surefold-kafka` consumer group on every node reads it back into an `alerts` table for large movements, committing
   through `runCommitting`.
 - **Pruning**: snapshots prune with `Prune.after(offsets, "statements", "kafka")`, so the journal stays bounded
   and never loses what a read model has not read.
-- Streams run on `lark-stream-actors`, in the application's flock.
+- Streams run on `surefold-stream-actors`, in the application's flock.
 
 ## Why this shape
 
 A singleton keeps each projection single-writer without a lock table. The alternative is splitting the feed by
-account hash across nodes, which scales further but needs a partition-aware feed that Lark's `JournalFeed` does
-not offer. That would be a Lark spec of its own if a single writer turns out to be the limit.
+account hash across nodes, which scales further but needs a partition-aware feed that Surefold's `JournalFeed` does
+not offer. That would be a Surefold spec of its own if a single writer turns out to be the limit.
 
 ## Stack
 

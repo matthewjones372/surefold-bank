@@ -10,7 +10,7 @@ flowchart TB
     risk([Risk and admins]) --> checks
     approvers([Approvers]) --> approvals
 
-    bank[lark-bank<br/>three nodes, one Lark cluster]
+    bank[lark-bank<br/>three nodes, one Surefold cluster]
     checks[bank-checks<br/>screening, monitoring, policy]
     approvals[bank-approvals<br/>requests and votes]
     access[bank-access<br/>OpenFGA and access-sync]
@@ -35,8 +35,8 @@ The bank: accounts, money in currencies, and transfers between accounts. This re
 
 | | |
 |---|---|
-| Built with | Kotlin on [Lark](https://github.com/matthewjones372/lark) and [Pelican](https://github.com/matthewjones372/pelican), JDK 25 |
-| Runs as | three nodes in one Lark cluster; any node takes any call and forwards it to the entity's node |
+| Built with | Kotlin on [Surefold](https://github.com/matthewjones372/lark) and [Pelican](https://github.com/matthewjones372/pelican), JDK 25 |
+| Runs as | three nodes in one Surefold cluster; any node takes any call and forwards it to the entity's node |
 | Serves | the API and its docs (`/api-docs`), customer pages (`/`), the ops page (`/ops`), on 8080 |
 | Keeps | an event journal split by account across two Postgres databases, and the read models beside the first |
 | Publishes | `bank.account-events`, `bank.transfer-events`, `bank.access-events` (staff looks), `bank.access-decisions` |
@@ -74,7 +74,7 @@ agrees to.
 
 | | |
 |---|---|
-| Built with | Kotlin on Lark and Pelican |
+| Built with | Kotlin on Surefold and Pelican |
 | Serves | the API and the approvers' pages, on 8070 |
 | Keeps | every request as a journal of events in its own hash chain, in its own Postgres |
 | Publishes | `bank.approval-events` |

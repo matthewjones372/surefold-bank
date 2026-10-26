@@ -10,10 +10,10 @@ import bank.approvals.api.ask
 import bank.approvals.api.comment
 import bank.events.v1.ApprovalEvent
 import bank.events.v1.ApprovalEvent.EventCase
-import io.github.matthewjones372.lark.app.use
-import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.test.shouldBeOk
+import io.github.matthewjones372.surefold.app.use
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual

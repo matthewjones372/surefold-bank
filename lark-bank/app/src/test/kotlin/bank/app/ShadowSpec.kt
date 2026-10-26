@@ -5,10 +5,10 @@ import bank.access.fga.Tuple
 import bank.api.getAccount
 import bank.api.statement
 import bank.domain.AccountId
-import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.pelican.In3
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.test.apiClient
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.testcontainers.containers.GenericContainer

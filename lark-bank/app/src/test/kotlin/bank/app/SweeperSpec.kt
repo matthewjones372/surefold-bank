@@ -4,8 +4,8 @@ import bank.domain.AccountId
 import bank.domain.TransferEvent
 import bank.protocol.Kinds
 import bank.protocol.TransferEvents
-import io.github.matthewjones372.lark.actor.PersistenceId
-import io.github.matthewjones372.lark.assert.shouldBeRight
+import io.github.matthewjones372.surefold.actor.PersistenceId
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

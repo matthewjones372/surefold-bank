@@ -2,8 +2,8 @@ package bank.app
 
 import bank.domain.AccountEvent
 import com.github.dockerjava.api.model.ExposedPort
-import io.github.matthewjones372.lark.actor.journal.jdbc.JdbcOffsets
-import io.github.matthewjones372.lark.app.liquibase.migrate
+import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcOffsets
+import io.github.matthewjones372.surefold.app.liquibase.migrate
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test

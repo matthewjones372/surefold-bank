@@ -5,9 +5,9 @@ import bank.domain.AccountCommand
 import bank.protocol.AccountAnswer
 import bank.protocol.AccountAsk
 import bank.protocol.AccountMessage
-import io.github.matthewjones372.lark.actor.ActorRef
-import io.github.matthewjones372.lark.actor.Address
-import io.github.matthewjones372.lark.actor.Reply
+import io.github.matthewjones372.surefold.actor.ActorRef
+import io.github.matthewjones372.surefold.actor.Address
+import io.github.matthewjones372.surefold.actor.Reply
 
 /** What the way between a saga and an account does to one leg, or to the account's answer to it. */
 enum class Fault {
@@ -25,8 +25,8 @@ enum class Fault {
 }
 
 /**
- * The saga's [AccountsById] with a way between it and the accounts that a test can make unkind: Lark's `testActors`
- * delivers first in, first out and never loses a message (bank spec 0028 until Lark spec 0128), so the retry and
+ * The saga's [AccountsById] with a way between it and the accounts that a test can make unkind: Surefold's `testActors`
+ * delivers first in, first out and never loses a message (bank spec 0028 until Surefold spec 0128), so the retry and
  * stale-answer cases are made here, one leg at a time.
  */
 class Network(private val accounts: AccountsById) : AccountsById {

@@ -6,7 +6,7 @@ import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.TransferId
 import bank.domain.TransferStatus
-import io.github.matthewjones372.lark.assert.shouldBeRight
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

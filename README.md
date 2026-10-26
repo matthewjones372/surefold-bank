@@ -9,14 +9,14 @@
 A small bank, built to see whether a handful of Kotlin and Scala libraries hold up when the money has to add up. It
 is four services: the bank itself on a three-node cluster, transfer screening, changes that need two people to
 agree, and fine-grained access control. The name is Wall Street for birds, since it runs on
-[Lark](https://github.com/matthewjones372/lark).
+[Surefold](https://github.com/matthewjones372/lark).
 
 It is a personal project, not a real bank. It holds no real money, and the credentials in it are development values
 for running it on your own machine.
 
 ## What it does
 
-- **Every account is an actor** on a three-node [Lark](https://github.com/matthewjones372/lark) cluster. It owns its
+- **Every account is an actor** on a three-node [Surefold](https://github.com/matthewjones372/lark) cluster. It owns its
   balance, writes its events to a Postgres journal before it answers, and lives on whichever node holds its shard.
 - **A transfer is a saga.** It debits one account, credits the other, and refunds the first if the credit is
   refused. If the node running it dies part way through, another node picks it up from its last event.
@@ -42,7 +42,7 @@ flowchart TB
     risk([Risk and admins]) --> checks
     approvers([Approvers]) --> approvals
 
-    bank[lark-bank<br/>three nodes, one Lark cluster]
+    bank[lark-bank<br/>three nodes, one Surefold cluster]
     checks[bank-checks<br/>screening, monitoring, policy]
     approvals[bank-approvals<br/>requests and votes]
     access[bank-access<br/>OpenFGA and access-sync]
@@ -96,12 +96,12 @@ Transfers run clean, under 1 in 1,000 failed and a p99 under 1 s, up to 250 to 3
 
 | Folder | What it is |
 |---|---|
-| [`lark-bank/`](lark-bank) | The bank. Accounts, payments and transfers as event-sourced actors on a three-node Lark cluster, journaled to Postgres and published to Kafka. Kotlin. It also holds the docker compose and kind setups that run all four services together. |
+| [`lark-bank/`](lark-bank) | The bank. Accounts, payments and transfers as event-sourced actors on a three-node Surefold cluster, journaled to Postgres and published to Kafka. Kotlin. It also holds the docker compose and kind setups that run all four services together. |
 | [`bank-checks/`](bank-checks) | Screens each transfer before money moves and flags movements after, by rules an admin writes in a web wizard. Scala 3 and ZIO, with rules in [verdict](https://github.com/matthewjones372/verdict)'s language. |
-| [`bank-approvals/`](bank-approvals) | Changes that more than one person agrees to before they take effect, with an audit trail kept as a hash chain. Kotlin on Lark and Pelican. |
+| [`bank-approvals/`](bank-approvals) | Changes that more than one person agrees to before they take effect, with an audit trail kept as a hash chain. Kotlin on Surefold and Pelican. |
 | [`bank-access/`](bank-access) | Who may do what, in one place: an OpenFGA model, a service that derives relationships from events, and the client the other services ask. |
 
-It is built on four libraries of mine: [Lark](https://github.com/matthewjones372/lark) for actors, clustering, event
+It is built on four libraries of mine: [Surefold](https://github.com/matthewjones372/lark) for actors, clustering, event
 sourcing and streams, [Pelican](https://github.com/matthewjones372/pelican) for HTTP endpoints and pages,
 [Proofload](https://github.com/matthewjones372/proofload) for the load tests, and
 [kimney](https://github.com/matthewjones372/kimney) for mapping between the wire and the domain.
@@ -110,14 +110,14 @@ sourcing and streams, [Pelican](https://github.com/matthewjones372/pelican) for 
 
 You need Docker and JDK 25. Each folder also has a Nix flake whose dev shell has everything else (`nix develop`).
 
-The bank builds against snapshots of Lark and Pelican that are not on Maven Central yet, so clone them beside this
+The bank builds against snapshots of Surefold and Pelican that are not on Maven Central yet, so clone them beside this
 repository and tell Gradle where they are, once, in `~/.gradle/gradle.properties`:
 
 ```bash
-git clone https://github.com/matthewjones372/lark ../lark
+git clone https://github.com/matthewjones372/lark ../surefold
 git clone https://github.com/matthewjones372/pelican ../pelican
 cat >> ~/.gradle/gradle.properties <<PROPS
-larkSource=$(cd ../lark && pwd)
+larkSource=$(cd ../surefold && pwd)
 pelicanSource=$(cd ../pelican && pwd)
 accessSource=$(pwd)/bank-access
 PROPS
@@ -153,7 +153,7 @@ runs everything on one node for a machine short of disk.
 ## Building
 
 [`.github/workflows/build.yml`](.github/workflows/build.yml) builds and tests each service on GitHub's runners, the
-same way you would by hand: Lark, Pelican and verdict are checked out beside the services, and the bank's event
+same way you would by hand: Surefold, Pelican and verdict are checked out beside the services, and the bank's event
 schemas are published to Maven local before the services that read them are built.
 
 ## Licence

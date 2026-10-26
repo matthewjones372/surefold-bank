@@ -33,7 +33,7 @@ private class Kept : SpanExporter {
     override fun shutdown(): CompletableResultCode = CompletableResultCode.ofSuccess()
 }
 
-/** Lark-bank spec 0024's `trace-events`: an account opened inside a trace has its owner written in that trace. */
+/** Surefold-bank spec 0024's `trace-events`: an account opened inside a trace has its owner written in that trace. */
 class TracedSyncSpec {
     private val run = UUID.randomUUID().toString().take(8)
 

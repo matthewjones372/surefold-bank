@@ -34,8 +34,8 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
     /**
      * Statements, balances and the ledger's totals, from a batch of account events. Answers how many were new.
      *
-     * Partitions write at once (spec 0014), and after a range of slices moves between databases (lark spec 0105) two
-     * of them can hold the same account's events. So what counts as new is decided by the statement line's key, not
+     * Partitions write at once (spec 0014), and after a range of slices moves between databases (surefold spec 0105)
+     * two of them can hold the same account's events. So what counts as new is decided by the statement line's key, not
      * by the balance read first: the totals add only the lines this batch inserted, a balance is only ever moved
      * forward, and the totals' rows are written in one order, so two batches never wait on each other in a circle.
      */

@@ -27,13 +27,13 @@ The two numbers to know:
 
 ## A journal database is down
 
-`JournalUnwritten`: a command was refused because its journal database could not be written (lark spec 0098).
+`JournalUnwritten`: a command was refused because its journal database could not be written (surefold spec 0098).
 
 - The customer saw a 503 and can retry with the same reference; nothing was applied twice.
 - On Kubernetes, CloudNativePG promotes the replica. With `dataDurability: required`, writes wait until the old
   primary is back as a replica: expect 503s for that database's accounts until then (bank spec 0008).
 - In Docker there is no replica: start the database again. Once it is back, the feed passes the orderings of the
-  appends that never committed after `gapTimeout` (10 s) together (lark#294), and the read models catch up.
+  appends that never committed after `gapTimeout` (10 s) together (surefold#294), and the read models catch up.
 
 ## The bank answers 503
 
@@ -41,7 +41,7 @@ The two numbers to know:
 
 - A 503 means the bank could not answer in time. The caller retries with the same reference, and it is applied
   once.
-- Look at `lark_cluster_unreachable` and `lark_cluster_members`: while a member is unreachable, its shards answer
+- Look at `surefold_cluster_unreachable` and `surefold_cluster_members`: while a member is unreachable, its shards answer
   nothing until it is back or downed (`stableAfter`, 20 s on Kubernetes).
 - Then `JournalUnwritten`, and each node's heap: a node the kernel kills for its memory limit comes back as a new
   life, and its shards move twice.
@@ -52,7 +52,7 @@ The two numbers to know:
 
 - A member unreachable for `stableAfter` is downed by the side that keeps a majority (a `Lease` on Kubernetes). The
   downed node ends its process (`whenDowned = exit`) and is started again by Kubernetes or Docker as a new life
-  (lark spec 0097), which joins the cluster that downed it (lark#295). Nothing needs doing unless it keeps happening.
+  (surefold spec 0097), which joins the cluster that downed it (surefold#295). Nothing needs doing unless it keeps happening.
 - It keeps happening: look for long GC pauses (`jvm_gc_pause_seconds_max`), a heap near its limit, or the node's
   CPU throttled. A node that cannot answer a probe within `ackWithin` for `stableAfter` is downed however healthy.
 - Never restart every node at once to "fix" a split: the journal is safe, but every saga in flight stalls until its
@@ -63,7 +63,7 @@ The two numbers to know:
 `ReadModelBehind`: a reader is more than 10,000 events behind one journal database for five minutes.
 
 - Behind by a lot and not moving: the lag is the furthest-behind partition (spec 0014). Find which in the offsets
-  (`select name, last_ordering from lark_offset order by last_ordering`, names like `statements@db-0#2`), and its
+  (`select name, last_ordering from surefold_offset order by last_ordering`, names like `statements@db-0#2`), and its
   worker's node in the logs (`read models of db-0 partition 2 starting on …`). Check that node is Up, and its log
   for `the feed passes ordering`. One such line per gap is expected after a database outage; they should come
   together, not one every `gapTimeout`.
@@ -242,7 +242,7 @@ falling behind.
 
 ## Growing the journal
 
-Which journal database owns which of the 1,024 slices is a table in the primary, `lark_journal_slices` (lark spec
+Which journal database owns which of the 1,024 slices is a table in the primary, `surefold_journal_slices` (surefold spec
 0105), written on first start from the databases listed then. To grow:
 
 1. Add the database to `JOURNAL_DATABASES` and roll the bank. It owns nothing yet.
@@ -250,8 +250,8 @@ Which journal database owns which of the 1,024 slices is a table in the primary,
    (the image built by Nix carries the command):
 
    ```bash
-   kubectl -n lark-bank exec lark-bank-0 -- sh -c 'LARK_JOURNAL_USER=$DATABASE_USER LARK_JOURNAL_PASSWORD=$DATABASE_PASSWORD \
-     lark-journal-move move --database db-0=$DATABASE_URL --database db-1=… --database db-2=… --slices 0..255 --to db-2'
+   kubectl -n lark-bank exec lark-bank-0 -- sh -c 'SUREFOLD_JOURNAL_USER=$DATABASE_USER SUREFOLD_JOURNAL_PASSWORD=$DATABASE_PASSWORD \
+     surefold-journal-move move --database db-0=$DATABASE_URL --database db-1=… --database db-2=… --slices 0..255 --to db-2'
    ```
 
    The first `--database` is the primary, which holds the slice table. Only the moving range pauses, for a few
@@ -261,13 +261,13 @@ Which journal database owns which of the 1,024 slices is a table in the primary,
 
 A database listed must never be removed while it owns any slice.
 
-Each database's appends share commits (lark spec 0108): whatever appends are waiting go in one transaction with one
+Each database's appends share commits (surefold spec 0108): whatever appends are waiting go in one transaction with one
 commit. It is on by default; `JOURNAL_GROUP_COMMIT=false` turns it off, and each append is then a transaction of its
 own. At 400 transfers a second on one small host it took a journal append from about 7 ms to under 1 ms.
 
 ## Changing an event
 
-The journal's events and snapshots are versioned (lark spec 0091, `protocol/.../Codecs.kt`): each is written marked
+The journal's events and snapshots are versioned (surefold spec 0091, `protocol/.../Codecs.kt`): each is written marked
 with `JOURNAL_VERSION`, and one written before versioning is read as version 1. A node refuses an event of a
 version newer than its own, rather than misread it, so a new shape is rolled out in two releases:
 

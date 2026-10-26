@@ -6,7 +6,7 @@ import bank.access.fga.Fga
 import bank.api.Asked
 import bank.api.Caller
 import com.sun.net.httpserver.HttpServer
-import io.github.matthewjones372.lark.otel.span
+import io.github.matthewjones372.surefold.otel.span
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry

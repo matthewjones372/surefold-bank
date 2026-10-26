@@ -70,7 +70,7 @@ data:
               summary: "The {{ $labels.currency }} ledger is {{ $value }} {{ $labels.currency }} out with no transfer moving"
               runbook: docs/runbook.md#the-ledger-does-not-balance
           - alert: JournalUnwritten
-            expr: sum(increase(lark_delivery_unwritten_total[5m])) > 0
+            expr: sum(increase(surefold_delivery_unwritten_total[5m])) > 0
             labels: { severity: critical }
             annotations:
               # Its lines in Loki (spec 0023), for Grafana's Explore.
@@ -89,7 +89,7 @@ data:
               summary: "More than 5% of requests answer 503"
               runbook: docs/runbook.md#the-bank-answers-503
           - alert: ClusterMemberUnreachable
-            expr: max(lark_cluster_unreachable) > 0
+            expr: max(surefold_cluster_unreachable) > 0
             for: 1m
             labels: { severity: warning }
             annotations:
@@ -98,7 +98,7 @@ data:
               summary: "A member has been unreachable for a minute; nobody moves on until it is back or downed"
               runbook: docs/runbook.md#a-node-is-unreachable
           - alert: ClusterBelowSize
-            expr: max(lark_cluster_members{status="Up"}) < 3
+            expr: max(surefold_cluster_members{status="Up"}) < 3
             for: 5m
             labels: { severity: warning }
             annotations:
@@ -107,7 +107,7 @@ data:
               summary: "Only {{ $value }} of 3 nodes are Up"
               runbook: docs/runbook.md#a-node-is-unreachable
           - alert: NodeDowned
-            expr: sum(increase(lark_cluster_downed_total[10m])) > 0
+            expr: sum(increase(surefold_cluster_downed_total[10m])) > 0
             labels: { severity: info }
             annotations:
               # Its lines in Loki (spec 0023), for Grafana's Explore.
@@ -197,12 +197,12 @@ data:
               summary: "{{ $value }} transfers went unscreened in five minutes: the bank's policy decided them"
               runbook: docs/runbook.md#screening-is-slow-or-unanswered
           - alert: MailboxesFull
-            expr: sum(increase(lark_actor_dead_letters_total{reason="full"}[5m])) > 0
+            expr: sum(increase(surefold_actor_dead_letters_total{reason="full"}[5m])) > 0
             labels: { severity: warning }
             annotations:
               # Its lines in Loki (spec 0023), for Grafana's Explore.
               logs: '{namespace="lark-bank", app="lark-bank", level=~"(?i)warn|error"}'
-              summary: "Messages were dropped because an entity could not keep up (lark spec 0095)"
+              summary: "Messages were dropped because an entity could not keep up (surefold spec 0095)"
           - alert: WalArchivingStalled
             expr: max by (database) (cnpg_pg_stat_archiver_seconds_since_last_archival) > 900
             for: 15m

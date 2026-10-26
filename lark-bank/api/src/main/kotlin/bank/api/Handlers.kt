@@ -10,12 +10,6 @@ import bank.domain.Money
 import bank.domain.TransferError
 import bank.domain.TransferId
 import bank.domain.Unavailable
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.flatMap
-import io.github.matthewjones372.lark.fail.fold
-import io.github.matthewjones372.lark.fail.map
-import io.github.matthewjones372.lark.fail.mapLeft
-import io.github.matthewjones372.lark.fail.onRight
 import io.github.matthewjones372.pelican.ApiException
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.api
@@ -28,6 +22,12 @@ import io.github.matthewjones372.pelican.metrics.metrics
 import io.github.matthewjones372.pelican.metrics.otel.openTelemetry
 import io.github.matthewjones372.pelican.ok
 import io.github.matthewjones372.pelican.pages
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.flatMap
+import io.github.matthewjones372.surefold.fail.fold
+import io.github.matthewjones372.surefold.fail.map
+import io.github.matthewjones372.surefold.fail.mapLeft
+import io.github.matthewjones372.surefold.fail.onRight
 import io.micrometer.core.instrument.MeterRegistry
 import io.opentelemetry.api.OpenTelemetry
 import java.util.concurrent.ConcurrentHashMap

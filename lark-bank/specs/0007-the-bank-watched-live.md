@@ -16,9 +16,9 @@ of a node being killed is a person reading numbers out of five terminals.
 
 ## Shape
 
-- **Every node publishes a snapshot of itself once a second** to a cluster topic, `ops` (lark spec 0082):
+- **Every node publishes a snapshot of itself once a second** to a cluster topic, `ops` (surefold spec 0082):
   - its status in its own view;
-  - its shards and entities by kind, from what lark's gauges already count (0081);
+  - its shards and entities by kind, from what surefold's gauges already count (0081);
   - its asks per second, and their p99;
   - whether it runs the read-models singleton.
 - **The node serving the page** subscribes to the topic, and adds what one node can answer for all:
@@ -52,7 +52,7 @@ and one stream.
 ## Depends on
 
 - **Pelican: pages served beside an API** (Pelican spec 0059), as 0006.
-- **Nothing else.** Topics are lark 0082, the gauges 0081, and `sse` is Pelican's already.
+- **Nothing else.** Topics are surefold 0082, the gauges 0081, and `sse` is Pelican's already.
 
 ## Stack
 
@@ -86,9 +86,9 @@ Settled while building:
 - **The page is `/ops`,** served by Pelican from `ui/ops.html` like 0006's pages.
 - **The ledger's badge says "Settling" while money moves.** The read models trail the journal under load, so the
   two sides differ for a moment; "Not balanced" is kept for a gap at rest, as the banner is.
-- **The ask p99 comes from a distribution summary.** lark's `timed` records milliseconds as a histogram, which
+- **The ask p99 comes from a distribution summary.** surefold's `timed` records milliseconds as a histogram, which
   Micrometer keeps as a summary, not a timer. OpsSpec now makes asks and expects a rate and a p99.
 - **The demo found two faults.** One was the bank's, and is fixed: a transfer whose start was lost with a killed
-  node answered 500, where it should say 503, send again. The other is Lark's: a node back on the same address can
+  node answered 500, where it should say 503, send again. The other is Surefold's: a node back on the same address can
   be downed as the one removed. The README records both, and the demo waits for the removal before it restarts
   the node.

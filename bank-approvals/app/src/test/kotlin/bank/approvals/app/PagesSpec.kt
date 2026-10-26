@@ -10,10 +10,10 @@ import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.Playwright
 import com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat
-import io.github.matthewjones372.lark.app.use
-import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.test.shouldBeOk
+import io.github.matthewjones372.surefold.app.use
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

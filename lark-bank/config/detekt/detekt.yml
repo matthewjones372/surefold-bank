@@ -1,4 +1,4 @@
 ktlint:
-  # `{ -> x }` picks lark's zero-argument closingOf overload; without the arrow the call is ambiguous.
+  # `{ -> x }` picks surefold's zero-argument closingOf overload; without the arrow the call is ambiguous.
   FunctionLiteral:
     active: false

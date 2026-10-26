@@ -4,9 +4,9 @@ import bank.domain.AccountError
 import bank.domain.Currencies
 import bank.domain.Money
 import bank.domain.Unavailable
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.attempt
-import io.github.matthewjones372.lark.fail.bind
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.attempt
+import io.github.matthewjones372.surefold.fail.bind
 
 // Opening an account with its daily limit, and the refusals that limit adds (bank spec 0027).
 

@@ -20,13 +20,13 @@ restart) found what a runbook would have had to say.
 
 ## Settled while building
 
-- The first chaos run found four faults, none of them lost money: the read models stalled behind gaps (lark#294),
-  a restarted seed formed a second cluster (lark#295), a saga failed when an account region's mailbox was full and
+- The first chaos run found four faults, none of them lost money: the read models stalled behind gaps (surefold#294),
+  a restarted seed formed a second cluster (surefold#295), a saga failed when an account region's mailbox was full and
   left its money in flight (the saga now defers the leg to its timer), and a node the kernel killed for its memory
   (the heap is now half the container, with generational ZGC).
 - Later runs found two more. A node thawed with a full region mailbox stopped its cluster actor and stayed out of
-  the cluster, serving, as a zombie (lark#299, spec 0101); this was the "bank-2 gone" of run 3. And actor failures
-  during a database outage were thousands of stack traces on stderr rather than log lines (lark#300, spec 0102).
+  the cluster, serving, as a zombie (surefold#299, spec 0101); this was the "bank-2 gone" of run 3. And actor failures
+  during a database outage were thousands of stack traces on stderr rather than log lines (surefold#300, spec 0102).
 - A 2 s pool connection timeout, to fail appends sooner, was tried and reverted: it failed the recoveries that follow
   a shard move.
 - Nothing here is verified on Kubernetes: kind does not run where this was built.

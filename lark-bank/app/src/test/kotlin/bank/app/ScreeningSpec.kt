@@ -8,8 +8,8 @@ import bank.domain.TransferId
 import bank.domain.TransferStatus
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.sun.net.httpserver.HttpServer
-import io.github.matthewjones372.lark.assert.shouldBeLeft
-import io.github.matthewjones372.lark.assert.shouldBeRight
+import io.github.matthewjones372.surefold.assert.shouldBeLeft
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

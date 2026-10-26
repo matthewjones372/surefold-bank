@@ -5,8 +5,8 @@
 Once the transfer writes less (spec 0031), the commits themselves set the rate. Three things around them are fixed
 where they should be measured, or cost more than they need to:
 
-- **Group commit's size is lark's default.** `Wiring.kt` builds `GroupCommit()`, which means up to 64 appends a group
-  and 2 committers per journal database per node: 12 commits in flight across the cluster. Lark spec 0108 chose those
+- **Group commit's size is surefold's default.** `Wiring.kt` builds `GroupCommit()`, which means up to 64 appends a group
+  and 2 committers per journal database per node: 12 commits in flight across the cluster. Surefold spec 0108 chose those
   numbers on its own load. The bank's config cannot change them.
 - **Derived writes wait for their commits as journal writes do.** db-0 holds the read models, their offsets, the
   access log and grants beside the journal. A read-model batch, which is rebuilt from the journal if it is lost, waits
@@ -30,7 +30,7 @@ Postgres itself runs untuned in `deploy/docker/compose.yml`: only `max_connectio
 ```hocon
 journal {
   groupCommit = true
-  # Lark spec 0108's defaults. Raised only with a ramp that shows it helps.
+  # Surefold spec 0108's defaults. Raised only with a ramp that shows it helps.
   maxAppends = 64
   maxAppends = ${?JOURNAL_GROUP_MAX_APPENDS}
   committers = 2

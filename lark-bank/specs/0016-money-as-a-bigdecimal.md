@@ -62,7 +62,7 @@ entry measures.
 
 ## Depends on
 
-Nothing new in Lark or Pelican. kimney 0.3.0's `withTransformer`, for the `Money` pair.
+Nothing new in Surefold or Pelican. kimney 0.3.0's `withTransformer`, for the `Money` pair.
 
 ## Stack
 
@@ -104,5 +104,5 @@ scripts/chaos-docker.sh
   no virtual thread pinned after start.
 - **The `BigDecimal` code, measured the same way:** 36,000 requested, 31,964 ok and 4,036 failed; p50 1.34 s, p99
   4.33 s; the ledger conserved. Within the run-to-run noise of the `Long` code's numbers: the journal's appends, at
-  6.3 and 7.1 ms, still set the rate, and a `BigDecimal` per amount costs nothing that shows. Lark spec 0108 (appends
+  6.3 and 7.1 ms, still set the rate, and a `BigDecimal` per amount costs nothing that shows. Surefold spec 0108 (appends
   that share a commit) is what goes after the appends.

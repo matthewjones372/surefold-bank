@@ -2,7 +2,7 @@
 
 ## Problem
 
-Lark has sharded entities, a JDBC journal, snapshots and reliable delivery, and Pelican has typed endpoints, but
+Surefold has sharded entities, a JDBC journal, snapshots and reliable delivery, and Pelican has typed endpoints, but
 nothing uses them together at load. Petshop runs one actor on one node. The bank is the service that makes all
 of them carry weight at once: many accounts across several nodes, and money that must never be created, lost or
 moved twice while nodes come and go.
@@ -15,7 +15,7 @@ moved twice while nodes come and go.
 
 ## Shape
 
-- **Account**: an entity sharded by `lark-cluster`, `delivered(persistent(...))` over `JdbcJournal` on Postgres,
+- **Account**: an entity sharded by `surefold-cluster`, `delivered(persistent(...))` over `JdbcJournal` on Postgres,
   snapshotted every 100 events by `JdbcSnapshots`. It is the only writer for its id, so it takes no locks.
   Commands carry a reference, and the last 256 references are kept in the state, so a retry changes nothing.
 - **Transfer**: a saga entity, persisted, that debits the source, then credits the destination, and refunds the
@@ -23,7 +23,7 @@ moved twice while nodes come and go.
   On restart it reads its next step off its state.
 - **Bulk credit**: `sharded.reliable(...)` producers send `Delivered` credits that are confirmed rather than
   answered, so a resend after a shard moves is dropped by the entity's dedup rather than paid twice.
-- **Wire**: Protobuf everywhere (`lark-actor-remote-protobuf`; since spec 0005, `lark-actor-remote-kotlinx`, with the data classes as the source). `Protobuf.asked` pairs each request with its
+- **Wire**: Protobuf everywhere (`surefold-actor-remote-protobuf`; since spec 0005, `surefold-actor-remote-kotlinx`, with the data classes as the source). `Protobuf.asked` pairs each request with its
   reply, and the same messages are the journal's bytes.
 - The domain (`decide`, `evolve`, the saga's `next`) is pure and tested without an actor.
 

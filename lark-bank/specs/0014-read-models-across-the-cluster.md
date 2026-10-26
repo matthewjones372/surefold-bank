@@ -17,13 +17,13 @@ split the journal across databases so that writes grow with them; reads should g
 
 ## Shape
 
-- **Partitions by slice (lark spec 0106).** Each journal database's feed is split `bank.readModels.partitions` ways
+- **Partitions by slice (surefold spec 0106).** Each journal database's feed is split `bank.readModels.partitions` ways
   (default 4) by the ids' slices. A worker follows one database's partition and runs its statements, transfer
   status and Kafka publishing, each saving its own offset as `statements@db-0#2`.
 - **Spread over the nodes.** `cluster.spread("read-models", databases × partitions)` places the workers as evenly as
   the nodes allow. A worker whose node leaves or is downed starts on another from its saved offsets.
 - **Writers that can run at once.** Partitions write concurrently, and after a range of slices moves between
-  databases (lark spec 0105), the same account's events can reach two of them. So:
+  databases (surefold spec 0105), the same account's events can reach two of them. So:
   - the ledger's totals add only the statement lines a batch inserted, whose key decides who counts an event;
   - a balance or a transfer's status is only ever moved forward (`where last_seq < excluded.last_seq`);
   - rows are written in one order, currencies and ids sorted, so two batches never wait on each other in a circle.
@@ -39,8 +39,8 @@ one node, and no more.
 
 ## Depends on
 
-- Lark spec 0106 (a projection across nodes), merged, and Lark's `Slices.partition` and partitioned `Prune.after`
-  (lark #305), merged.
+- Surefold spec 0106 (a projection across nodes), merged, and Surefold's `Slices.partition` and partitioned `Prune.after`
+  (surefold #305), merged.
 
 ## Stack
 

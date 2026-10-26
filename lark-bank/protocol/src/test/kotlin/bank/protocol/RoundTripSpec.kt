@@ -14,15 +14,15 @@ import bank.domain.TransferId
 import bank.domain.TransferStatus
 import bank.domain.TransferView
 import bank.domain.Unavailable
-import io.github.matthewjones372.lark.actor.ActorRef
-import io.github.matthewjones372.lark.actor.Address
-import io.github.matthewjones372.lark.actor.Delivery
-import io.github.matthewjones372.lark.actor.Reply
-import io.github.matthewjones372.lark.actor.remote.MessageCodec
-import io.github.matthewjones372.lark.actor.remote.Refs
-import io.github.matthewjones372.lark.actor.remote.decode
-import io.github.matthewjones372.lark.actor.remote.encode
-import io.github.matthewjones372.lark.fail.Either
+import io.github.matthewjones372.surefold.actor.ActorRef
+import io.github.matthewjones372.surefold.actor.Address
+import io.github.matthewjones372.surefold.actor.Delivery
+import io.github.matthewjones372.surefold.actor.Reply
+import io.github.matthewjones372.surefold.actor.remote.MessageCodec
+import io.github.matthewjones372.surefold.actor.remote.Refs
+import io.github.matthewjones372.surefold.actor.remote.decode
+import io.github.matthewjones372.surefold.actor.remote.encode
+import io.github.matthewjones372.surefold.fail.Either
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 

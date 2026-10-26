@@ -2,9 +2,9 @@ package bank.app
 
 import bank.domain.AccountId
 import bank.domain.TransferId
-import io.github.matthewjones372.lark.app.use
-import io.github.matthewjones372.lark.assert.shouldBeRight
-import io.github.matthewjones372.lark.parMap
+import io.github.matthewjones372.surefold.app.use
+import io.github.matthewjones372.surefold.assert.shouldBeRight
+import io.github.matthewjones372.surefold.parMap
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -67,7 +67,8 @@ class LeavingSpec {
         val leaver = Thread.ofPlatform().start(leave)
         parMap(batches.drop(4)) { batch ->
             batch.forEachIndexed { i, (id, from, to) ->
-                // A call that lands mid-move may be unavailable; the caller retries with the same id, as a client would.
+                // A call that lands mid-move may be unavailable; the caller retries with the same id, as a client
+                // would.
                 eventually(20) { staying[i % staying.size].bank.transfer(id, from, to, gbp(100)).isRight() }
                 sent.incrementAndGet()
             }

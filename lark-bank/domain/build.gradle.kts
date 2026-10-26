@@ -1,4 +1,4 @@
-// Of Lark, only its Either: its core brings nothing but the stdlib.
-val larkVersion: String = providers.gradleProperty("larkVersion").get()
+// Of Surefold, only its Either: its core brings nothing but the stdlib.
+val surefoldVersion: String = providers.gradleProperty("surefoldVersion").get()
 
-dependencies { api("io.github.matthewjones372:lark:$larkVersion") }
+dependencies { api("io.github.matthewjones372:surefold:$surefoldVersion") }

@@ -1,13 +1,13 @@
 # Working in this repo
 
-bank-approvals is built the way lark-bank is, on Lark and Pelican.
+bank-approvals is built the way lark-bank is, on Surefold and Pelican.
 
 - **Specs come first.** Nothing is built without a committed spec. The brief for this service is lark-bank's spec
   0019, *Changes more than one person agrees to*; its stack entries marked "in bank-approvals" are built here, one per
   pull request. What comes after it is specced in `specs/`, from 0001.
-- **A gap is a spec upstream.** When Lark, Pelican or lark-bank's packages lack something, draft the spec there, and
+- **A gap is a spec upstream.** When Surefold, Pelican or lark-bank's packages lack something, draft the spec there, and
   name it under **Depends on** with the workaround in use until it lands.
-- **The domain is pure.** `domain/` depends on the JDK and lark's core, for its `Either`, nothing else. Every rule of
+- **The domain is pure.** `domain/` depends on the JDK and surefold's core, for its `Either`, nothing else. Every rule of
   approval is a test there, with no actor, journal or clock: the time is an argument.
 - **The record is the point.** Every act is an event, and nothing is edited or deleted. A vote the rules turn away is
   an event too, `VoteRefused`, never a silent no.
