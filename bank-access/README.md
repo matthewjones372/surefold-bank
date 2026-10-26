@@ -1,6 +1,6 @@
 # bank-access
 
-Who may do what across the Surefold Bank estate, in one place (surefold-bank spec 0022): an OpenFGA model, the relationships
+Who may do what across the Surefold Bank estate, in one place (bank spec 0022): an OpenFGA model, the relationships
 derived from events, approvals and Pocket ID's groups, and the client each service asks.
 
 | | |

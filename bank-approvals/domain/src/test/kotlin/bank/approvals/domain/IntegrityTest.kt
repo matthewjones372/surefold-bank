@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.junit.jupiter.api.Test
 
-/** What is approved cannot change after, and tampering with the record shows (surefold-bank spec 0019's audit). */
+/** What is approved cannot change after, and tampering with the record shows (bank spec 0019's audit). */
 class IntegrityTest {
 
     private val proposal = Proposal(

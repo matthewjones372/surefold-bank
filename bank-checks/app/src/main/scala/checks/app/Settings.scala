@@ -13,7 +13,7 @@ import zio.*
 final case class KafkaSettings(enabled: Boolean, kafka: KafkaConfig, consumer: AccountEventsConfig)
 
 /**
- * Spans to Tempo (surefold-bank spec 0024): with [[enabled]], over OTLP/HTTP to
+ * Spans to Tempo (bank spec 0024): with [[enabled]], over OTLP/HTTP to
  * [[otlp]]; a request with no trace of its own is sampled at [[sampled]], and
  * one that arrives in a trace follows it.
  */

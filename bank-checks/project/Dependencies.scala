@@ -28,7 +28,7 @@ object Dependencies {
 
   val zioHttp = "dev.zio" %% "zio-http" % zioHttpV
 
-  // Spans (surefold-bank spec 0024): the API where a span is made, the SDK and its OTLP exporter where the app starts, sent
+  // Spans (bank spec 0024): the API where a span is made, the SDK and its OTLP exporter where the app starts, sent
   // with the JDK's HTTP client rather than OkHttp.
   private val otelV       = "1.66.0"
   val otelApi             = "io.opentelemetry" % "opentelemetry-api"                % otelV
@@ -43,7 +43,7 @@ object Dependencies {
   val zioConfigTypesafe = "dev.zio" %% "zio-config-typesafe" % zioConfigV
 
   val zioLoggingSlf4j = "dev.zio"  %% "zio-logging-slf4j2" % zioLoggingV
-  // Each line as one JSON object (surefold-bank spec 0023), as every service in the estate writes them.
+  // Each line as one JSON object (bank spec 0023), as every service in the estate writes them.
   val logback         = "ch.qos.logback"       % "logback-classic"          % "1.5.20"
   val logstashEncoder = "net.logstash.logback" % "logstash-logback-encoder" % "8.1"
 
@@ -57,7 +57,7 @@ object Dependencies {
   val flyway   = "org.flywaydb"     % "flyway-database-postgresql" % flywayV
   val hikari   = "com.zaxxer"       % "HikariCP"                   % hikariV
 
-  // ID tokens verified as pelican-oidc verifies the bank's (surefold-bank spec 0021).
+  // ID tokens verified as pelican-oidc verifies the bank's (bank spec 0021).
   val nimbus = "com.nimbusds" % "nimbus-jose-jwt" % "10.10"
 
   val verdict = "dev.verdict" %% "verdict-core" % verdictV

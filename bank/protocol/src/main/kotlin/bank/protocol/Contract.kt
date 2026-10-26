@@ -38,8 +38,8 @@ import bank.events.v1.TransferEvent as TransferRecord
 import bank.events.v1.TransferEvent.EventCase as TransferCase
 
 /*
- * The bank's events as the contract other services read (bank spec 0015, surefold-bank-events): each domain event to its
- * Protobuf message, and back. The journal's own encoding (Codecs.kt) changes on its own; this one only ever grows.
+ * The bank's events as the contract other services read (bank spec 0015, surefold-bank-events): each domain event to
+ * its Protobuf message, and back. The journal's own encoding (Codecs.kt) changes on its own; this one only ever grows.
  */
 
 /** An account's event as published: [sequence] is its place in account [account], from 1. */

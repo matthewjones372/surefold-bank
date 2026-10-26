@@ -1,4 +1,4 @@
-# The model's specification (surefold-bank spec 0022's access-model): each relation, as the estate relies on it. A grant is
+# The model's specification (bank spec 0022's access-model): each relation, as the estate relies on it. A grant is
 # written with its expiry; each check says what time it is, as access-client does.
 name: bank-access
 model_file: ./model.fga

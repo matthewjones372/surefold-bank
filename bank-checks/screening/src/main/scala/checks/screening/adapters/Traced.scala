@@ -12,11 +12,11 @@ import java.lang.Iterable as JavaIterable
 import scala.jdk.CollectionConverters.*
 
 /**
- * A server span for each request the routes answer (surefold-bank spec 0024),
- * continuing the caller's trace from its `traceparent`: the bank's screening
- * call, so a transfer's trace holds what the check did with it. The span's ids
- * are put on every line logged while it is answered, as `trace_id` and
- * `span_id`, as the bank's are.
+ * A server span for each request the routes answer (bank spec 0024), continuing
+ * the caller's trace from its `traceparent`: the bank's screening call, so a
+ * transfer's trace holds what the check did with it. The span's ids are put on
+ * every line logged while it is answered, as `trace_id` and `span_id`, as the
+ * bank's are.
  *
  * Named once for the routes it wraps, `POST /screen`, rather than from the
  * request's path, which for another route could carry an id.

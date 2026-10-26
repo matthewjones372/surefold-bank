@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutionException
 /** The topic decisions are kept on, as surefold-bank-events describes it. */
 const val DECISIONS = "bank.access-decisions"
 
-/** Where decisions that someone may want to account for go (surefold-bank spec 0022, settled 7). */
+/** Where decisions that someone may want to account for go (bank spec 0022, settled 7). */
 fun interface Decisions {
     fun record(who: Asker, relation: Relation, obj: String, answer: Answer)
 

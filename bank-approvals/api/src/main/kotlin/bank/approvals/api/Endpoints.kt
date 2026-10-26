@@ -11,7 +11,7 @@ import io.github.matthewjones372.pelican.queryParam
 
 // ---- bodies ----
 
-/** One change asked about, as the owning service sends it (surefold-bank spec 0019). */
+/** One change asked about, as the owning service sends it (bank spec 0019). */
 data class NewRequest(
     val kind: String,
     val subject: String,
@@ -169,7 +169,7 @@ val applyFailed = endpoint(requestId, jsonBody<ApplyFailedBody>()) {
     json<RequestView>().orFail(notFound, refused, forbidden, unavailable)
 }
 
-// ---- the audit (surefold-bank spec 0019) ----
+// ---- the audit (bank spec 0019) ----
 
 data class OriginView(val session: String, val address: String, val userAgent: String)
 
@@ -226,7 +226,7 @@ val verify = endpoint {
     json<Verification>().orFail(forbidden)
 }
 
-// ---- the pages' lists (surefold-bank spec 0019) ----
+// ---- the pages' lists (bank spec 0019) ----
 
 val listQuery = queryParam<String>(
     "list",

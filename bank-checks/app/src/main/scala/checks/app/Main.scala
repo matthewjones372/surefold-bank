@@ -52,8 +52,7 @@ object Main extends ZIOAppDefault:
     })
 
   /**
-   * Every route, screening's traced through [[telemetry]] (surefold-bank spec
-   * 0024).
+   * Every route, screening's traced through [[telemetry]] (bank spec 0024).
    */
   def routesWith(telemetry: OpenTelemetry) =
     (ScreeningHttp.routes @@ Traced.server(
@@ -77,7 +76,7 @@ object Main extends ZIOAppDefault:
 
   def layers(settings: Settings) =
     val flags = if settings.kafka.enabled then ZLayer.succeed(settings.kafka.kafka) >>> KafkaFlags.layer else noFlags
-    // A version that would change what is in force is asked about in Approvals first (surefold-bank spec 0019).
+    // A version that would change what is in force is asked about in Approvals first (bank spec 0019).
     val approvals =
       settings.approvals.fold(Approvals.off)(config =>
         (ZLayer.succeed(config) ++ Client.default.orDie) >>> ApprovalsHttp.layer

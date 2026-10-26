@@ -5,7 +5,7 @@ data class Relation(val type: String, val name: String) {
     override fun toString() = "$type#$name"
 }
 
-/** An account's relations (surefold-bank spec 0022): its owner pays, and its owner, supporters and auditors view. */
+/** An account's relations (bank spec 0022): its owner pays, and its owner, supporters and auditors view. */
 object Account {
     val owner = Relation("account", "owner")
     val supporter = Relation("account", "supporter")

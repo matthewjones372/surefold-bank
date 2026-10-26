@@ -45,10 +45,10 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /*
- * Every request's events on Kafka (surefold-bank spec 0019), in the bank's published language (spec 0015): the schema in
- * surefold-bank-events, registered in Apicurio under FULL_TRANSITIVE, and each record framed as Apicurio's and Confluent's
- * deserializers read it. A projection follows the journal and publishes each event once it is written; the owning
- * service applies on `ApprovalGiven` or `AutoApproved`.
+ * Every request's events on Kafka (bank spec 0019), in the bank's published language (spec 0015): the schema in
+ * surefold-bank-events, registered in Apicurio under FULL_TRANSITIVE, and each record framed as Apicurio's and
+ * Confluent's deserializers read it. A projection follows the journal and publishes each event once it is written; the
+ * owning service applies on `ApprovalGiven` or `AutoApproved`.
  */
 
 /** The topic, and what fixes its shape. */
@@ -76,7 +76,7 @@ object ApprovalTopic {
 class ApprovalEvents(private val producer: Producer<String, ByteArray>, private val contentId: Int) : AutoCloseable {
     /**
      * Completes once the brokers have it for good (acks=all). [carried] goes as headers: the trace the event was
-     * written in, so whoever handles it continues that trace (surefold-bank spec 0024).
+     * written in, so whoever handles it continues that trace (bank spec 0024).
      */
     fun publish(event: ApprovalEvent, carried: Map<String, String> = emptyMap()): CompletableFuture<Unit> =
         producer.send(

@@ -1,7 +1,7 @@
 package checks.platform
 
 /**
- * How a Kafka client signs in to the brokers (surefold-bank spec 0021): as a
+ * How a Kafka client signs in to the brokers (bank spec 0021): as a
  * SCRAM-SHA-512 user, or as nobody, which only a broker with no users accepts.
  */
 final case class KafkaSignIn(username: Option[String], password: String):

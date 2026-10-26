@@ -40,7 +40,7 @@ private class Collector : AutoCloseable {
     override fun close() = server.stop(0)
 }
 
-/** surefold-bank spec 0024's `trace-calls`, Approvals' half: a request continues its caller's trace, and is exported. */
+/** bank spec 0024's `trace-calls`, Approvals' half: a request continues its caller's trace, and is exported. */
 class TraceSpec {
     @Test
     fun `a request in a sampled trace is exported in it, and one in an unsampled trace is not`() {

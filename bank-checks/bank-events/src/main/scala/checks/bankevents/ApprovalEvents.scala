@@ -10,7 +10,7 @@ import zio.kafka.consumer.{Consumer, OffsetBatch, Subscription}
 import zio.kafka.serde.{Deserializer, Serde}
 import zio.stream.ZStream
 
-// What Approvals decided about the check's own requests (surefold-bank spec 0019), as Policy's language: given, for content
+// What Approvals decided about the check's own requests (bank spec 0019), as Policy's language: given, for content
 // with a hash, or ended without it. Every other kind, and every other event, is someone else's or only the record.
 object ApprovalEvents:
   val topic = "bank.approval-events"

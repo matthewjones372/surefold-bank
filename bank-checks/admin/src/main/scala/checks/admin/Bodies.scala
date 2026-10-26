@@ -32,7 +32,7 @@ final case class VersionBody(
   atMillis: Long,
   words: String,
   document: String,
-  // Where its approval stands (surefold-bank spec 0019): not-needed, waiting, given or refused, and the request.
+  // Where its approval stands (bank spec 0019): not-needed, waiting, given or refused, and the request.
   approval: String = "not-needed",
   request: Option[String] = None,
   approvalNote: Option[String] = None

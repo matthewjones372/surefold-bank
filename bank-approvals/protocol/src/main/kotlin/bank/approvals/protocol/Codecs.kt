@@ -79,7 +79,7 @@ const val JOURNAL_VERSION = 1
 /** One event's bytes as the history's chain hashes them: the wire shape, unversioned. */
 fun RequestEvent.stored(): ByteArray = requestEvents.write(toWire())
 
-/** A request event as the journal keeps it: the event, and its link in the request's chain (surefold-bank spec 0019). */
+/** A request event as the journal keeps it: the event, and its link in the request's chain (bank spec 0019). */
 data class ChainedEvent(val event: RequestEvent, val link: String)
 
 /** A stored event's bytes and link as written, before anything reads them: what the chain is checked against. */

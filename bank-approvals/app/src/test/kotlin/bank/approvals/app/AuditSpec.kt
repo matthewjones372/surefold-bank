@@ -40,7 +40,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.UUID
 
-/** surefold-bank spec 0019's approvals-audit: who and from where, the content hash on acting, the chains and their digests. */
+/** bank spec 0019's approvals-audit: who and from where, the content hash on acting, the chains and their digests. */
 class AuditSpec {
     private val run = UUID.randomUUID().toString().take(8)
 

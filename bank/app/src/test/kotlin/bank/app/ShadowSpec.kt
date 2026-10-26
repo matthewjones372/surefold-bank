@@ -106,7 +106,9 @@ class ShadowSpec {
             val base = node.server.baseUrl
             node.bank.open(AccountId(acc), "ada", gbp(5_000), "open:$acc").shouldBeRight()
             // What access-sync writes from the Opened, written here instead.
-            fga.write(listOf(Tuple("person:ada", "owner", "account:$acc"), Tuple("bank:surefold", "bank", "account:$acc")))
+            fga.write(
+                listOf(Tuple("person:ada", "owner", "account:$acc"), Tuple("bank:surefold", "bank", "account:$acc")),
+            )
 
             apiClient(base, JacksonCodecs).use { client ->
                 answered(base) { client.calling("ada").response(getAccount, acc).status shouldBe 200 }

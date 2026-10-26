@@ -1,4 +1,4 @@
-# What CI builds bank-approvals in (surefold-bank spec 0017).
+# What CI builds bank-approvals in (bank spec 0017).
 # `nix develop .#ci -c ./gradlew build`.
 {
   description = "bank-approvals";

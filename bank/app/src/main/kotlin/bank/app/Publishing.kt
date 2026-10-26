@@ -51,7 +51,9 @@ interface Publisher : AutoCloseable {
     fun publish(record: Outbound): CompletableFuture<Unit>
 }
 
-/** The bank's topics, and the schema each carries: its file in surefold-bank-events, whose first message is the topic's. */
+/**
+ * The bank's topics, and the schema each carries: its file in surefold-bank-events, whose first message is the topic's.
+ */
 enum class EventStream(val topic: String, val schema: String) {
     ACCOUNTS("bank.account-events", "bank/events/v1/account.proto"),
     TRANSFERS("bank.transfer-events", "bank/events/v1/transfer.proto"),

@@ -15,7 +15,7 @@ Four bounded contexts, one sbt module each, meeting only through named contracts
 
 `bank-events` is the anti-corruption layer between the bank's events and Monitoring, and between Approvals' events and
 Policy: the only module that sees a generated class. With approvals on, a version that would change what is in force
-is asked about in Approvals (surefold-bank spec 0019) and waits; it is in force once Approvals gives it, for the content
+is asked about in Approvals (bank spec 0019) and waits; it is in force once Approvals gives it, for the content
 the check asked about, and never if its request ends another way. `admin` is the admin API and the wizard; `app` wires everything into one process.
 
 The build draws the context map: `screening` and `monitoring` depend on `policy` and never on each other, and

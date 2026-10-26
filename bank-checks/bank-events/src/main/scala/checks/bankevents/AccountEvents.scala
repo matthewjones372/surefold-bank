@@ -44,7 +44,7 @@ object AccountEvents:
   // At least once: each partition in order, an offset committed only once its event is kept and its flags acked.
   val run: ZIO[AccountEventsConfig & Consumer & Monitoring, Throwable, Unit] = runWith(OpenTelemetry.noop())
 
-  // As run, each event published in a trace checked in it (surefold-bank spec 0024).
+  // As run, each event published in a trace checked in it (bank spec 0024).
   def runWith(telemetry: OpenTelemetry): ZIO[AccountEventsConfig & Consumer & Monitoring, Throwable, Unit] =
     for
       config  <- ZIO.service[AccountEventsConfig]

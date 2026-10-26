@@ -8,7 +8,7 @@ import java.nio.file.Path
 import kotlin.time.Duration
 
 /**
- * Approvals' log level, read from [file] (surefold-bank spec 0026): `INFO` or `DEBUG`, as Estate's debug switch writes it
+ * Approvals' log level, read from [file] (bank spec 0026): `INFO` or `DEBUG`, as Estate's debug switch writes it
  * to the `bank-approvals-logging` ConfigMap mounted there. The root and Surefold's loggers take it, and so Approvals'
  * own; the libraries quietened in `logback.xml` keep their levels. A file that is missing, or says something that is
  * not a level, changes nothing.

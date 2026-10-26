@@ -10,7 +10,7 @@ import io.github.matthewjones372.pelican.headerParam
 import io.github.matthewjones372.pelican.optional
 import java.util.Date
 
-/** A bearer token from the bank's identity provider, as the bank takes it (surefold-bank spec 0021). */
+/** A bearer token from the bank's identity provider, as the bank takes it (bank spec 0021). */
 val bearer = bearerAuth(name = "approvals", description = "An access token from the bank's identity provider")
 
 /** Someone signed in, and the session their token was issued to: who, on every act, and part of from where. */

@@ -43,7 +43,7 @@ class Memo {
 }
 
 /**
- * bank-access as a service asks it (surefold-bank spec 0022): [check] and [listObjects] against the store [fga] names,
+ * bank-access as a service asks it (bank spec 0022): [check] and [listObjects] against the store [fga] names,
  * each within the [fga]'s timeout, which is the request's budget for it. No answer in time is [Answer.Unanswered],
  * never yes. Every refusal, and every check by staff or one acting, is kept in [decisions].
  */

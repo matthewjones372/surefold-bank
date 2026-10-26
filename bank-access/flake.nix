@@ -1,5 +1,5 @@
 {
-  description = "bank-access: who may do what across the Surefold Bank estate, in OpenFGA (surefold-bank spec 0022)";
+  description = "bank-access: who may do what across the Surefold Bank estate, in OpenFGA (bank spec 0022)";
 
   inputs.nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.xz";
 
@@ -15,7 +15,7 @@
       });
 
       # The model and what applies it, as an image the access-model Job runs, loaded into kind by
-      # surefold-bank's scripts/up.sh (surefold-bank spec 0022's access-server).
+      # surefold-bank's scripts/up.sh (bank spec 0022's access-server).
       packages = forEach (pkgs: rec {
         apply-model = pkgs.writeShellApplication {
           name = "apply-model";

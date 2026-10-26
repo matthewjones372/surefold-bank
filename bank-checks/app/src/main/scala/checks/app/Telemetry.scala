@@ -13,8 +13,8 @@ import io.opentelemetry.sdk.trace.samplers.Sampler
 import zio.*
 
 /**
- * The SDK the check's spans are made through (surefold-bank spec 0024), closed, and
- * its last spans sent, as it stops.
+ * The SDK the check's spans are made through (bank spec 0024), closed, and its
+ * last spans sent, as it stops.
  */
 object Telemetry:
   private val ServiceName = AttributeKey.stringKey("service.name")

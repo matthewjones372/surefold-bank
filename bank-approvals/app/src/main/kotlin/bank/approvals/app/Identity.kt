@@ -15,7 +15,7 @@ import java.security.SecureRandom
 import java.util.Base64
 
 /**
- * The identity provider as pelican-oidc sees it (surefold-bank spec 0021), as the bank's: API tokens verified against
+ * The identity provider as pelican-oidc sees it (bank spec 0021), as the bank's: API tokens verified against
  * [IdentitySettings.issuer], and the pages signed in to as its client, the session sealed with the key every node shares.
  */
 fun signing(settings: IdentitySettings): Signing {

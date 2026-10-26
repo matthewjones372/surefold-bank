@@ -11,7 +11,7 @@ import org.slf4j.MDC
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 
-/** surefold-bank spec 0023's `log-json`: access-sync's lines are JSON objects, with the estate's field names. */
+/** bank spec 0023's `log-json`: access-sync's lines are JSON objects, with the estate's field names. */
 class LogJsonSpec {
     @Test
     fun `a line, its MDC and its exception are one JSON object with the shared fields`() {

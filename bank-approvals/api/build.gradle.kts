@@ -7,6 +7,6 @@ dependencies {
     api("io.github.matthewjones372:pelican-jetty:$pelicanVersion")
     api("io.github.matthewjones372:pelican-jackson:$pelicanVersion")
     api("io.github.matthewjones372:pelican-jetty-docs:$pelicanVersion")
-    // A server span per request, continuing the caller's trace (surefold-bank spec 0024).
+    // A server span per request, continuing the caller's trace (bank spec 0024).
     api("io.github.matthewjones372:pelican-metrics-otel:$pelicanVersion")
 }

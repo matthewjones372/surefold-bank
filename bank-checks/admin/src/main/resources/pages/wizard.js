@@ -44,7 +44,7 @@ function show(...nodes) {
 
 // ---- signing in ----
 
-// Sign-in is the identity provider's (surefold-bank spec 0019): off to /login, and back to where this page was.
+// Sign-in is the identity provider's (bank spec 0019): off to /login, and back to where this page was.
 function signIn() {
   location.href = `/login?return=${encodeURIComponent("/" + location.hash)}`;
 }
@@ -59,7 +59,7 @@ function signedOutPage() {
 // Who is signed in, and where Approvals' pages are, once known.
 let me = null;
 
-// A version's request in Approvals (surefold-bank spec 0019), as a link when its pages are known.
+// A version's request in Approvals (bank spec 0019), as a link when its pages are known.
 function requestLink(version, text) {
   return me?.approvalsPages
     ? el("a", { href: `${me.approvalsPages}/request.html?id=${encodeURIComponent(version.request)}`, class: "request" }, text)

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.time.Instant
 
-/** Every path of the saga in surefold-bank spec 0019, and every vote the rules turn away. */
+/** Every path of the saga in bank spec 0019, and every vote the rules turn away. */
 class RequestTest {
 
     private val t0 = Instant.parse("2026-10-01T09:00:00Z")

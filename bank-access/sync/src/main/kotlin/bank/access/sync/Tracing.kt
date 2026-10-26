@@ -20,7 +20,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 /** Where access-sync's spans go, and what share of the traces it starts it keeps; with no [otlp], none leave. */
 data class TraceSettings(val otlp: String? = null, val sampled: Double = 0.1)
 
-/** The SDK as the estate's services build it (surefold-bank spec 0024): W3C trace context, following the caller's choice. */
+/** The SDK as the estate's services build it (bank spec 0024): W3C trace context, following the caller's choice. */
 fun openTelemetry(settings: TraceSettings): OpenTelemetrySdk {
     val tracing = SdkTracerProvider.builder()
         .setResource(

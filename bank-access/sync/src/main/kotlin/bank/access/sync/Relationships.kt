@@ -7,7 +7,7 @@ import bank.events.v1.ApprovalEvent.EventCase
 import java.time.Duration
 import java.time.Instant
 
-// What each recorded fact means to the model (surefold-bank spec 0022): pure, so a rebuild from offset zero writes exactly
+// What each recorded fact means to the model (bank spec 0022): pure, so a rebuild from offset zero writes exactly
 // what the first reading did.
 
 const val ACCOUNTS = "bank.account-events"
@@ -16,7 +16,7 @@ const val APPROVALS = "bank.approval-events"
 /** The bank itself, the one object ops and auditors hang from. */
 const val BANK = "bank:surefold"
 
-/** The groups the estate's model names (surefold-bank spec 0022), emptied in the store if Pocket ID loses one. */
+/** The groups the estate's model names (bank spec 0022), emptied in the store if Pocket ID loses one. */
 val KNOWN_GROUPS = setOf("risk", "support", "ops", "auditor", "admins")
 
 /** Who runs and audits the bank: Pocket ID's groups, wired to it once. */
@@ -35,7 +35,7 @@ fun AccountEvent.relationships(): List<Tuple> = when (eventCase) {
     else -> emptyList()
 }
 
-/** The kind of request a grant is in bank-approvals: the bank's (surefold-bank spec 0021). */
+/** The kind of request a grant is in bank-approvals: the bank's (bank spec 0021). */
 const val GRANT_KIND = "bank.access-grant"
 
 /** How long a grant lasts when it does not say, as the bank reads it. */

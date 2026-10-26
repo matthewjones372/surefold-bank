@@ -7,6 +7,6 @@
 
     <!-- surefold's journal, snapshots and offsets: every request's events, kept for good. -->
     <include file="surefold/journal/jdbc/postgres.sql"/>
-    <!-- The nightly digests of every chain's head, and the record of each export (surefold-bank spec 0019). -->
+    <!-- The nightly digests of every chain's head, and the record of each export (bank spec 0019). -->
     <include file="db/audit.sql"/>
 </databaseChangeLog>

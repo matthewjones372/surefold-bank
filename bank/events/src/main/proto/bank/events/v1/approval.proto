@@ -1,4 +1,4 @@
-// Every event of every request for approval, on the topic bank.approval-events, keyed by request id (surefold-bank spec
+// Every event of every request for approval, on the topic bank.approval-events, keyed by request id (bank spec
 // 0019). bank-approvals writes them; the service that owns a request's subject applies it on ApprovalGiven or
 // AutoApproved, and treats Rejected, Withdrawn, Superseded and Expired as the change not happening. Only ever added
 // to: see money.proto. The cases are nested, since transfer.proto already has a Requested and a Rejected.

@@ -45,7 +45,7 @@ fun Browser.signedIn(base: String, subject: String, groups: String, then: String
     return page
 }
 
-/** surefold-bank spec 0019's approvals-pages: a request asked, talked over, approved by two and applied, through the pages. */
+/** bank spec 0019's approvals-pages: a request asked, talked over, approved by two and applied, through the pages. */
 class PagesSpec {
     private val run = UUID.randomUUID().toString().take(8)
 

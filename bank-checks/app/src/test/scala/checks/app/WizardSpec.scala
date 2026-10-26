@@ -16,7 +16,7 @@ import zio.test.*
 import scala.jdk.CollectionConverters.*
 
 object WizardSpec extends ZIOSpecDefault:
-  // The bank's test identity provider: its sign-in page believes whoever you say you are (surefold-bank spec 0021).
+  // The bank's test identity provider: its sign-in page believes whoever you say you are (bank spec 0021).
   private val issuer = ZLayer.scoped(ZIO.fromAutoCloseable(ZIO.attempt(TestIssuer(0, "127.0.0.1", null, null))))
 
   // A port known up front: the provider sends people back to the callback it was told.

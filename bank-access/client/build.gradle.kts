@@ -3,7 +3,7 @@ plugins { `maven-publish` }
 dependencies {
     api(project(":fga"))
     implementation("io.github.matthewjones372:surefold-bank-events:0.1.0-SNAPSHOT")
-    // 3.9.2 and not older: SCRAM sign-in on JDK 25 (surefold-bank spec 0021).
+    // 3.9.2 and not older: SCRAM sign-in on JDK 25 (bank spec 0021).
     implementation("org.apache.kafka:kafka-clients:3.9.2")
     api("io.micrometer:micrometer-core:1.17.1")
     implementation("org.slf4j:slf4j-api:2.0.17")
