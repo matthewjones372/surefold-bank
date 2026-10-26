@@ -150,9 +150,22 @@ class JournalDatabases(val others: List<Pair<String, HikariDataSource>>) {
 
 private fun journalDatabases(settings: DatabaseSettings, journal: JournalSettings): JournalDatabases = JournalDatabases(
     journal.others.map { (name, url) ->
-        name to pool(settings, url, "journal-$name").also { pool -> migrate(pool, "db/journal.xml") }
+        name to pool(settings, url, "journal-$name").also { pool ->
+            renameLarkTables(pool)
+            migrate(pool, "db/journal.xml")
+        }
     },
 )
+
+/**
+ * A database from before the library was renamed Surefold has its journal's tables named `lark_*`: renamed to
+ * surefold's, so the changelog that follows finds them rather than making empty ones beside them. On any other
+ * database this does nothing; `db/lark-tables.sql` says how.
+ */
+internal fun renameLarkTables(data: DataSource) = data.connection.use { connection ->
+    val rename = checkNotNull(JournalDatabases::class.java.getResource("/db/lark-tables.sql")).readText()
+    connection.createStatement().use { it.execute(rename) }
+}
 
 private fun migrate(data: DataSource, changelog: String) = data.connection.use { connection ->
     val database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(JdbcConnection(connection))
@@ -163,7 +176,8 @@ private fun migrate(data: DataSource, changelog: String) = data.connection.use {
 class Persistence(val journal: ShardedJournal, val offsets: JdbcOffsets, val heads: JournalHeads)
 
 val storage: Module =
-    singleOf({ settings: DatabaseSettings -> pool(settings) }, { pool -> pool.close() }).boundTo<DataSource>() +
+    singleOf({ settings: DatabaseSettings -> pool(settings).also(::renameLarkTables) }, { pool -> pool.close() })
+        .boundTo<DataSource>() +
         migrations("db/changelog.xml") +
         single { settings: DatabaseSettings, journal: JournalSettings ->
             install({ journalDatabases(settings, journal) }) { databases, _ -> databases.close() }
