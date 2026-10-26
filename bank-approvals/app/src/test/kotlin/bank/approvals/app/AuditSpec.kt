@@ -20,13 +20,13 @@ import bank.approvals.domain.RequestEvent
 import bank.approvals.protocol.RequestEvents
 import bank.approvals.protocol.chained
 import bank.events.v1.ApprovalEvent.EventCase
-import io.github.matthewjones372.lark.app.use
-import io.github.matthewjones372.lark.assert.shouldBeRight
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.In5
 import io.github.matthewjones372.pelican.In6
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.shouldBeOk
+import io.github.matthewjones372.surefold.app.use
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -67,7 +67,7 @@ class AuditSpec {
         database,
     ).use { connection ->
         connection.prepareStatement(
-            "select bytes from lark_journal where kind = 'request' and id = ? order by seq_nr",
+            "select bytes from surefold_journal where kind = 'request' and id = ? order by seq_nr",
         ).use {
             it.setString(1, id)
             it.executeQuery().use { rows -> generateSequence { if (rows.next()) rows.getBytes(1) else null }.toList() }
@@ -79,7 +79,7 @@ class AuditSpec {
         database,
     ).use { connection ->
         connection.prepareStatement(
-            "update lark_journal set bytes = ? where kind = 'request' and id = ? and seq_nr = ?",
+            "update surefold_journal set bytes = ? where kind = 'request' and id = ? and seq_nr = ?",
         ).use {
             it.setBytes(1, bytes)
             it.setString(2, id)

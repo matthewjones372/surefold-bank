@@ -5,8 +5,8 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <!-- lark's journal, snapshots and offsets: lark-actor-journal-jdbc's own changelog. -->
-    <include file="lark/journal/jdbc/postgres.sql"/>
+    <!-- surefold's journal, snapshots and offsets: surefold-actor-journal-jdbc's own changelog. -->
+    <include file="surefold/journal/jdbc/postgres.sql"/>
 
     <!-- The bank's own read models. -->
     <include file="db/read-models.sql"/>

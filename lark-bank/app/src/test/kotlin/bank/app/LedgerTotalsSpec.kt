@@ -1,7 +1,7 @@
 package bank.app
 
 import bank.domain.AccountEvent
-import io.github.matthewjones372.lark.app.liquibase.migrate
+import io.github.matthewjones372.surefold.app.liquibase.migrate
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.postgresql.ds.PGSimpleDataSource

@@ -311,12 +311,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "lark_cluster_members{status=\"Up\"}",
+          "expr": "surefold_cluster_members{status=\"Up\"}",
           "legendFormat": "{{pod}}"
         },
         {
           "refId": "B",
-          "expr": "lark_cluster_unreachable",
+          "expr": "surefold_cluster_unreachable",
           "legendFormat": "unreachable {{pod}}"
         }
       ]

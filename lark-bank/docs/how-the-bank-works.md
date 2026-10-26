@@ -12,7 +12,7 @@ Seven pictures of Lark Bank. Each shows one idea, and names the spec that decide
 
 ## 1. The whole system
 
-Three nodes form one Lark cluster. Every account and every transfer is an entity that lives on exactly one node,
+Three nodes form one Surefold cluster. Every account and every transfer is an entity that lives on exactly one node,
 wherever the cluster placed its shard. Any node takes any HTTP call and forwards it to the owner. Events go to a
 journal split across two Postgres databases. The read models, spread over the nodes, also publish every event to
 Kafka, for other services to build on (spec 0015); the bank itself reads nothing back.
@@ -21,7 +21,7 @@ Kafka, for other services to build on (spec 0015); the bank itself reads nothing
 flowchart LR
     client([Browser, curl, Proofload]) -->|HTTP| lb{{Service / any node}}
 
-    subgraph cluster[Lark cluster: SWIM membership, 256 shards per kind]
+    subgraph cluster[Surefold cluster: SWIM membership, 256 shards per kind]
         direction TB
         subgraph n1[bank-1]
             h1[Pelican HTTP] --> s1[sharding regions]
@@ -56,7 +56,7 @@ flowchart LR
     kafka -->|lark-bank-events| others([other services])
 ```
 
-Membership is SWIM, joined as `bank.cluster` says through lark-app-cluster (lark spec 0096): static seeds in
+Membership is SWIM, joined as `bank.cluster` says through surefold-app-cluster (surefold spec 0096): static seeds in
 Docker, or the pods API on Kubernetes, where `CLUSTER_JOIN=kubernetes`. A split is settled by the majority side in
 Docker, and by a `Lease` on Kubernetes (spec 0003). A node the others downed ends its process, and is started again.
 
@@ -64,7 +64,7 @@ Docker, and by a `Lease` on Kubernetes (spec 0003). A node the others downed end
 
 An account is a persistent, sharded entity. Only it changes its balance. It decides each command with the pure
 domain and writes the events before it answers. The commands waiting in its mailbox are decided together and
-written in one append, up to 64 (lark spec 0086), so a busy account is not held back by a commit per payment.
+written in one append, up to 64 (surefold spec 0086), so a busy account is not held back by a commit per payment.
 
 An account pays out at most its daily limit in a UTC day, withdrawals and transfers' debits together: 10,000 in its
 currency, or the limit it was opened with (spec 0027). A refund on the same day gives its debit's share back. A
@@ -192,7 +192,7 @@ producer, in the same append as the events.
 ## 6. The read side: journal to ledger and Kafka
 
 Each journal database has its own feed, in its own order. Each database's feed is split into partitions by the
-ids' slices (spec 0014, lark spec 0106), four by default, and each partition of each read model saves its own offset,
+ids' slices (spec 0014, surefold spec 0106), four by default, and each partition of each read model saves its own offset,
 such as `statements@db-1#2`. A worker per database and partition runs its statements, transfer status and Kafka
 publishing; the cluster spreads the workers over the nodes as evenly as they go. The projections write in batches,
 one transaction and one saved offset per batch, and a replayed batch changes nothing: the ledger's totals count only
@@ -235,7 +235,7 @@ saved offset. If the sweeper's node leaves, the singleton moves in the same way.
 ## 7. From a domain event to bytes
 
 The domain knows nothing of serialisation. Wire shapes in `bank.protocol.wire` mirror it case for case. kimney
-derives the mapping both ways at compile time, and a Lark `Kotlinx.oneOf` table writes each sealed shape under fixed
+derives the mapping both ways at compile time, and a Surefold `Kotlinx.oneOf` table writes each sealed shape under fixed
 tags. `schema/bank.proto` is generated from the wire shapes and pinned (spec 0005).
 
 ```mermaid

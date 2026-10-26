@@ -1,7 +1,7 @@
 plugins {
     application
     // Checks every graph in this project on `check`, as lark-bank's does.
-    id("io.github.matthewjones372.lark.wiring")
+    id("io.github.matthewjones372.surefold.wiring")
 }
 
 application {
@@ -9,40 +9,40 @@ application {
     applicationDefaultJvmArgs = listOf("-XX:+UseZGC", "-XX:MaxRAMPercentage=75")
 }
 
-val larkVersion: String = providers.gradleProperty("larkVersion").get()
+val surefoldVersion: String = providers.gradleProperty("surefoldVersion").get()
 val pelicanVersion: String = providers.gradleProperty("pelicanVersion").get()
 val bankVersion: String = providers.gradleProperty("bankVersion").get()
 
-fun lark(module: String) = "io.github.matthewjones372:$module:$larkVersion"
+fun surefold(module: String) = "io.github.matthewjones372:$module:$surefoldVersion"
 
 dependencies {
     constraints {
-        // Lark's client is 3.8, whose SCRAM sign-in asks Subject.getSubject, which JDK 23 and later refuse: on JDK 25
-        // every sign-in to the brokers fails (bank spec 0021). 3.9.2 asks the JDK the new way.
+        // Surefold's client is 3.8, whose SCRAM sign-in asks Subject.getSubject, which JDK 23 and later refuse: on JDK
+        // 25 every sign-in to the brokers fails (bank spec 0021). 3.9.2 asks the JDK the new way.
         implementation("org.apache.kafka:kafka-clients:3.9.2")
     }
     implementation(project(":api"))
     implementation(project(":protocol"))
 
     // The application as a value, its actors as a node, its settings, and its migrations.
-    implementation(lark("lark-app"))
-    implementation(lark("lark-app-actor"))
-    implementation(lark("lark-app-typesafe"))
-    implementation(lark("lark-app-liquibase"))
+    implementation(surefold("surefold-app"))
+    implementation(surefold("surefold-app-actor"))
+    implementation(surefold("surefold-app-typesafe"))
+    implementation(surefold("surefold-app-liquibase"))
 
     // Requests on whichever node owns them, remembered in Postgres.
-    implementation(lark("lark-cluster"))
-    implementation(lark("lark-app-cluster"))
-    runtimeOnly(lark("lark-cluster-kubernetes"))
-    implementation(lark("lark-actor-journal-jdbc"))
-    implementation(lark("lark-slf4j"))
-    // The trace a request arrives in, carried across the actors it reaches (lark spec 0122).
-    implementation(lark("lark-otel"))
+    implementation(surefold("surefold-cluster"))
+    implementation(surefold("surefold-app-cluster"))
+    runtimeOnly(surefold("surefold-cluster-kubernetes"))
+    implementation(surefold("surefold-actor-journal-jdbc"))
+    implementation(surefold("surefold-slf4j"))
+    // The trace a request arrives in, carried across the actors it reaches (surefold spec 0122).
+    implementation(surefold("surefold-otel"))
 
     // Every request's events on Kafka (bank.approval-events): a projection over the journal, as the bank publishes.
-    implementation(lark("lark-actor-projection"))
-    implementation(lark("lark-stream-actors"))
-    implementation(lark("lark-kafka"))
+    implementation(surefold("surefold-actor-projection"))
+    implementation(surefold("surefold-stream-actors"))
+    implementation(surefold("surefold-kafka"))
 
     // Who is calling: tokens from the bank's identity provider (lark-bank spec 0021).
     implementation("io.github.matthewjones372:pelican-oidc:$pelicanVersion")

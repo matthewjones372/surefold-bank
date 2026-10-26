@@ -10,8 +10,8 @@ import bank.domain.Money
 import bank.domain.ScreeningOutcome
 import bank.domain.TransferEvent
 import bank.domain.TransferId
-import io.github.matthewjones372.lark.assert.shouldBeLeft
-import io.github.matthewjones372.lark.assert.shouldBeRight
+import io.github.matthewjones372.surefold.assert.shouldBeLeft
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test

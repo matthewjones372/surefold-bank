@@ -1,7 +1,7 @@
 # Specs
 
 A spec says what should be true when a piece of the bank is done, before any code does. It is the brief the
-implementation gets and what a reviewer checks the diff against. The layout and lifecycle are Lark's and Pelican's:
+implementation gets and what a reviewer checks the diff against. The layout and lifecycle are Surefold's and Pelican's:
 
 1. **Draft.** One page, from [TEMPLATE.md](TEMPLATE.md), numbered `NNNN-kebab-name.md`.
 2. **Edit.** A human cuts it and answers its open questions.
@@ -9,7 +9,7 @@ implementation gets and what a reviewer checks the diff against. The layout and 
 4. **Build.** One pull request per **Stack** entry, bottom-up.
 5. **Close.** Tick each entry as its pull request merges.
 
-This repository also exists to find what Lark and Pelican are missing. A gap found while building the bank is
+This repository also exists to find what Surefold and Pelican are missing. A gap found while building the bank is
 written up as a spec in *that* repository, not worked around here in silence; a spec here names it under
 **Depends on**, with the workaround the bank uses until it lands.
 
@@ -39,12 +39,12 @@ home overlay, by name.
 | [0021](0021-who-may-see-what.md) | who may see what: a verified caller on every endpoint, the rules in one file, support seeing one account or acting as a customer only through an approved grant, every staff look recorded, row-level security, and Kafka, Grafana and the network fenced; built, every entry; the NetworkPolicies and Grafana's sign-in not yet run on a cluster |
 | [0022](0022-who-may-do-what-in-one-place.md) | one place that answers who may do what across the estate: OpenFGA as `bank-access`, relationships derived from events, approvals and Pocket ID groups, added in shadow beside each service's own rules; settled; built to `access-shadow` |
 | [0023](0023-every-log-line-in-one-place.md) | every service's log as JSON, kept in Loki on Garage and read in Grafana; settled; built, every entry; `log-store`, `log-ship` and `log-views` not yet run on a cluster |
-| [0024](0024-a-request-followed-through-the-estate.md) | one trace per request across every node, actor, call and Kafka hop, in Tempo on Garage, linked to the logs; on Lark 0122 and 0123 and Pelican 0064 (built); settled; built, every entry |
+| [0024](0024-a-request-followed-through-the-estate.md) | one trace per request across every node, actor, call and Kafka hop, in Tempo on Garage, linked to the logs; on Surefold 0122 and 0123 and Pelican 0064 (built); settled; built, every entry |
 | [0026](0026-the-estate-on-one-page.md) | the bank adopting Estate, a generic estate dashboard in its own repository: its catalog, its deploy, Alertmanager, and debug through logging ConfigMaps; built; debug for all three services built, its DEBUG lines not yet seen on a cluster |
 | [0027](0027-a-daily-withdrawal-limit.md) | a daily limit on what an account pays out, withdrawals and debits together, per UTC day; built |
-| [0028](0028-the-banks-decisions-tested-in-memory.md) | the account and transfer behaviours run in memory under Lark's test runtime, with seeded faults, so the saga is tested and mutation-tested without a cluster; built to `bank-properties`, `mutate-app-fast` waiting on its build change |
+| [0028](0028-the-banks-decisions-tested-in-memory.md) | the account and transfer behaviours run in memory under Surefold's test runtime, with seeded faults, so the saga is tested and mutation-tested without a cluster; built to `bank-properties`, `mutate-app-fast` waiting on its build change |
 | [0029](0029-a-cluster-that-grows-with-its-load.md) | the bank sized by a HorizontalPodAutoscaler on CPU, three to six nodes, with metrics-server on kind and a load that ramps; draft |
 | [0030](0030-a-leg-refused-stays-refused.md) | a debit or credit an account refused is kept until its transfer closes, so a retry is refused alike and no late retry moves money; built to `leg-refused` |
 | [0031](0031-a-transfer-in-fewer-writes.md) | a transfer in four appends on its path instead of five: no `SourceDebited`, one drive on start, `LegsClosed` batched, no recovery read for a new transfer; built to `legs-closed-batched`, its chaos run not yet run |
 | [0032](0032-the-journals-commits-sized-and-the-rest-cheaper.md) | group commit sized in config, read-model writes not waiting for a durable flush, `ledger_totals` per partition, the access log batched, and a ramp to measure each; built to `ledger-totals-per-partition` |
-| [0033](0033-payrolls-at-the-rate-transfers-run.md) | payroll through several senders per node, and the two changes lark's `Producer` needs; built to `payroll-load-reports-credits` |
+| [0033](0033-payrolls-at-the-rate-transfers-run.md) | payroll through several senders per node, and the two changes surefold's `Producer` needs; built to `payroll-load-reports-credits` |

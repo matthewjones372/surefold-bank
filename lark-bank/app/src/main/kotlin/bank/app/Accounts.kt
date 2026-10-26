@@ -15,26 +15,26 @@ import bank.protocol.AccountMessage
 import bank.protocol.BulkCreditSent
 import bank.protocol.Kinds
 import bank.protocol.WriteClosed
-import io.github.matthewjones372.lark.actor.Behaviour
-import io.github.matthewjones372.lark.actor.Ctx
-import io.github.matthewjones372.lark.actor.JournalConflict
-import io.github.matthewjones372.lark.actor.PersistenceId
-import io.github.matthewjones372.lark.actor.Remembered
-import io.github.matthewjones372.lark.actor.Snapshotting
-import io.github.matthewjones372.lark.actor.delivered
-import io.github.matthewjones372.lark.actor.onStart
-import io.github.matthewjones372.lark.actor.persistent
-import io.github.matthewjones372.lark.clock
-import io.github.matthewjones372.lark.counter
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.fold
-import io.github.matthewjones372.lark.increment
-import io.github.matthewjones372.lark.otel.tracedSpan
+import io.github.matthewjones372.surefold.actor.Behaviour
+import io.github.matthewjones372.surefold.actor.Ctx
+import io.github.matthewjones372.surefold.actor.JournalConflict
+import io.github.matthewjones372.surefold.actor.PersistenceId
+import io.github.matthewjones372.surefold.actor.Remembered
+import io.github.matthewjones372.surefold.actor.Snapshotting
+import io.github.matthewjones372.surefold.actor.delivered
+import io.github.matthewjones372.surefold.actor.onStart
+import io.github.matthewjones372.surefold.actor.persistent
+import io.github.matthewjones372.surefold.clock
+import io.github.matthewjones372.surefold.counter
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.fold
+import io.github.matthewjones372.surefold.increment
+import io.github.matthewjones372.surefold.otel.tracedSpan
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import kotlin.time.Duration
 
-/** The time an event is stamped with: lark's clock, so a test can hold it still. */
+/** The time an event is stamped with: surefold's clock, so a test can hold it still. */
 internal fun now(): Long = clock.get().now().toEpochMilli()
 
 /**
@@ -126,7 +126,7 @@ fun account(
             },
             event = Account::evolve,
             snapshots = snapshots,
-            // A busy account decides the commands waiting for it and writes them in one append (lark spec 0085).
+            // A busy account decides the commands waiting for it and writes them in one append (surefold spec 0085).
             batch = batch,
         ).onStart { closing.clear() },
     )

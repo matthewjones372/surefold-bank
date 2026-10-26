@@ -58,9 +58,9 @@ badly. Recommended: the operator, with synchronous commits.
 
 ## Depends on
 
-Nothing new from Lark or Pelican. Two behaviours are relied on and proven by the chaos run rather than assumed:
+Nothing new from Surefold or Pelican. Two behaviours are relied on and proven by the chaos run rather than assumed:
 
-- **Lark's `JdbcJournal` gap timeout (0075)** reads past an `ordering` a promoted primary skipped. Postgres
+- **Surefold's `JdbcJournal` gap timeout (0075)** reads past an `ordering` a promoted primary skipped. Postgres
   sequences hand out values in batches ahead of the commit, so a failover can leave a hole.
 - **Hikari** drops connections to the old primary and opens new ones through the `-rw` Service, whose endpoint
   the operator moves to the new primary.

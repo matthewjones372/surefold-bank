@@ -27,25 +27,25 @@ import bank.protocol.TransferAsk
 import bank.protocol.TransferEvents
 import bank.protocol.TransferMessage
 import bank.protocol.TransferRequest
-import io.github.matthewjones372.lark.Carriers
-import io.github.matthewjones372.lark.actor.ActorRef
-import io.github.matthewjones372.lark.actor.Address
-import io.github.matthewjones372.lark.actor.Behaviour
-import io.github.matthewjones372.lark.actor.Ctx
-import io.github.matthewjones372.lark.actor.Effects
-import io.github.matthewjones372.lark.actor.JournalConflict
-import io.github.matthewjones372.lark.actor.Next
-import io.github.matthewjones372.lark.actor.PersistenceId
-import io.github.matthewjones372.lark.actor.Remembered
-import io.github.matthewjones372.lark.actor.Reply
-import io.github.matthewjones372.lark.actor.Start
-import io.github.matthewjones372.lark.actor.persistent
-import io.github.matthewjones372.lark.counter
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.fold
-import io.github.matthewjones372.lark.increment
-import io.github.matthewjones372.lark.logDebug
-import io.github.matthewjones372.lark.otel.tracedSpan
+import io.github.matthewjones372.surefold.Carriers
+import io.github.matthewjones372.surefold.actor.ActorRef
+import io.github.matthewjones372.surefold.actor.Address
+import io.github.matthewjones372.surefold.actor.Behaviour
+import io.github.matthewjones372.surefold.actor.Ctx
+import io.github.matthewjones372.surefold.actor.Effects
+import io.github.matthewjones372.surefold.actor.JournalConflict
+import io.github.matthewjones372.surefold.actor.Next
+import io.github.matthewjones372.surefold.actor.PersistenceId
+import io.github.matthewjones372.surefold.actor.Remembered
+import io.github.matthewjones372.surefold.actor.Reply
+import io.github.matthewjones372.surefold.actor.Start
+import io.github.matthewjones372.surefold.actor.persistent
+import io.github.matthewjones372.surefold.counter
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.fold
+import io.github.matthewjones372.surefold.increment
+import io.github.matthewjones372.surefold.logDebug
+import io.github.matthewjones372.surefold.otel.tracedSpan
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import kotlin.time.Duration
@@ -81,7 +81,7 @@ private const val SCREEN = "screen"
  * credit was written debits again, which the account answers as applied (spec 0031). The replies waiting for it to
  * settle are this incarnation's only: after a move they are gone, and the caller's own timeout answers it as still
  * pending. A transfer's id is new when its saga first starts, so it starts assuming new and reads its journal only
- * once a first command shows otherwise (spec 0031, lark spec 0198).
+ * once a first command shows otherwise (spec 0031, surefold spec 0198).
  */
 fun transfer(
     id: TransferId,
@@ -275,7 +275,7 @@ fun transfer(
 
 /**
  * This behaviour, running [handler] with the state its start recovered, after that start and again after each restart:
- * lark's `onStart` is not shown it. Behaviour's public constructor takes no batch, so this is for a behaviour that
+ * surefold's `onStart` is not shown it. Behaviour's public constructor takes no batch, so this is for a behaviour that
  * steps one message at a time, as the saga does.
  */
 private fun <M : Any, S, E> Behaviour<M, S, E>.onRecovered(handler: (ctx: Ctx<M>, recovered: S) -> Unit) =

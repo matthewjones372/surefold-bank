@@ -67,7 +67,7 @@ then full, then a quarter again, so one run shows the HPA going up and coming ba
 it and, beside the report, writes the replica count every 10 s from `kubectl get hpa`.
 
 **Seen on the dashboards.** Grafana's bank board gains "replicas, desired and current", from
-`kube_statefulset_status_replicas` if kube-state-metrics is present, or else from `lark_cluster_members`. The
+`kube_statefulset_status_replicas` if kube-state-metrics is present, or else from `surefold_cluster_members`. The
 runbook gains "The bank is scaling", covering what a scale-up looks like, why scale-down is slow, and how to pin the
 size by hand:
 
@@ -89,8 +89,8 @@ Recommended: CPU now, and request latency as its own spec if the ramp shows CPU 
 
 ## Depends on
 
-Nothing in Lark or Pelican. Joining, leaving and moving shards on a changing membership are already Lark's (lark
-specs 0080, 0096, 0099). `Rebalance.byLoad` (lark spec 0090) would also move busy shards to a new pod, but hash
+Nothing in Surefold or Pelican. Joining, leaving and moving shards on a changing membership are already Surefold's (surefold
+specs 0080, 0096, 0099). `Rebalance.byLoad` (surefold spec 0090) would also move busy shards to a new pod, but hash
 placement already gives it its share, so it is not needed here.
 
 ## Stack

@@ -1,6 +1,6 @@
 package bank.app
 
-import io.github.matthewjones372.lark.app.runApp
+import io.github.matthewjones372.surefold.app.runApp
 import java.nio.file.Path
 import java.security.Security
 import kotlin.system.exitProcess

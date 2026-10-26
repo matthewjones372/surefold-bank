@@ -1,8 +1,8 @@
 package bank.approvals.app
 
-import io.github.matthewjones372.lark.app.Module
-import io.github.matthewjones372.lark.app.typesafe.config
-import io.github.matthewjones372.lark.app.typesafe.loadedConfig
+import io.github.matthewjones372.surefold.app.Module
+import io.github.matthewjones372.surefold.app.typesafe.config
+import io.github.matthewjones372.surefold.app.typesafe.loadedConfig
 import kotlin.time.Duration
 
 data class WebSettings(val host: String, val port: Int)

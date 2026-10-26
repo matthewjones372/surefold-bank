@@ -1,12 +1,15 @@
 package bank.api
 
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.fold
 import io.github.matthewjones372.pelican.ErrorOutput
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.ok
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.fold
 
-/** The domain answers in Lark's [Either]: a `Left` becomes [failure], which supplies the status, and a `Right` is ok. */
+/**
+ * The domain answers in Surefold's [Either]: a `Left` becomes [failure], which supplies the status, and a `Right` is
+ * ok.
+ */
 internal fun <E, A> Either<E, A>.toOutcome(failure: ErrorOutput<E>): Outcome<E, A> = fold({ failure(it) }, { ok(it) })
 
 /**

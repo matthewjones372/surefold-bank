@@ -14,21 +14,21 @@ longer mutation-tested.
 ## Not doing
 
 - **Changing what the saga or an account does,** or the journal's format. This adds tests and moves no behaviour.
-- **Rewriting the saga as a pure decider.** Lark runs the real behaviours in memory (below), so the saga is tested as it
+- **Rewriting the saga as a pure decider.** Surefold runs the real behaviours in memory (below), so the saga is tested as it
   ships. Pulling its decisions into `domain` stays an option if the in-memory specs show it's still hard to test.
 - **The read models** (`ReadModels.kt`, `Projections.kt`): mostly SQL, and a spec of their own.
-- **A simulator of the bank's own.** What Lark lacks is added to Lark (Depends on).
+- **A simulator of the bank's own.** What Surefold lacks is added to Surefold (Depends on).
 
 ## Shape
 
-**The real behaviours, in memory.** Lark's `testActors` (lark-actor) steps actors on the test's thread with an
+**The real behaviours, in memory.** Surefold's `testActors` (surefold-actor) steps actors on the test's thread with an
 in-memory journal and snapshots, timers in test time and a `TestClock`. The bank's `account(...)` and `transfer(...)`
 run there unchanged: the saga reaches accounts through `AccountsById`, which a test points at test actors, and
 screening, which asks on a virtual thread, is a port a test answers synchronously.
 
 ```kotlin
 // app/src/test: no cluster, no Postgres, no threads
-val sim = testActors(order = Ordering.seeded(42), faults = Faults(drop = 0.1, duplicate = 0.1))  // Lark spec 0128
+val sim = testActors(order = Ordering.seeded(42), faults = Faults(drop = 0.1, duplicate = 0.1))  // Surefold spec 0128
 val bank = InMemoryBank(sim)          // the Bank port over account and transfer test actors
 bank.open(a, "ada", gbp(100)); bank.open(b, "bob", gbp(0))
 repeat(50) { bank.transfer(TransferId("t-$it"), a, b, gbp(1)) }
@@ -49,24 +49,24 @@ from it, each removal named with the property that covers it.
 
 ## Why this shape
 
-Running the shipped behaviours under Lark's deterministic runtime tests the saga as it is, not a refactor of it, and
+Running the shipped behaviours under Surefold's deterministic runtime tests the saga as it is, not a refactor of it, and
 `AccountsById` already makes the seam. Seeded faults over properties beat examples here because the saga's bugs are
 orderings (a retry's twin arriving second, a crash between a debit and its credit) that examples rarely reach. The
-alternative, a pure decider with a bank-built simulator, means rewriting the saga first and duplicating what Lark
+alternative, a pure decider with a bank-built simulator, means rewriting the saga first and duplicating what Surefold
 should own.
 
 ## Depends on
 
-**Lark spec 0128, a test runtime that can be unkind** (committed in Lark): `testActors` gains a seeded delivery order,
+**Surefold spec 0128, a test runtime that can be unkind** (committed in Surefold): `testActors` gains a seeded delivery order,
 message drop/duplicate/delay, and crashing an actor so it recovers from its journal. Until it lands, the in-memory
-specs run Lark's first-in-first-out order with a bank-side `AccountsById` wrapper that drops and repeats messages,
+specs run Surefold's first-in-first-out order with a bank-side `AccountsById` wrapper that drops and repeats messages,
 and crash-recovery is left to the cluster specs.
 
 ## Stack
 
 - [x] **`in-memory-bank`** (#32) — `InMemoryBank` over `testActors` in `app`'s tests, and example specs moved from cluster
       specs for the saga's decisions. Done when: the saga's behaviour specs run without a cluster, in under 5 seconds.
-- [x] **`bank-properties`** (after Lark 0128) — seeded property specs with faults and crashes. Done when: 1,000 seeds
+- [x] **`bank-properties`** (after Surefold 0128) — seeded property specs with faults and crashes. Done when: 1,000 seeds
       run in under 10 seconds, conserving money with each leg applied once.
 - [ ] **`mutate-app-fast`** — Pitest in `app` with target tests limited to the in-memory specs. Done when: a check
       touching `Transfers.kt` mutates it in under a minute and kills at least 80% of its mutants.

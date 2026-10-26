@@ -10,10 +10,10 @@ import bank.access.fga.Fga
 import bank.api.Asked
 import bank.api.Caller
 import bank.api.Shadow
-import io.github.matthewjones372.lark.Carriers
-import io.github.matthewjones372.lark.counter
-import io.github.matthewjones372.lark.increment
-import io.github.matthewjones372.lark.logWarn
+import io.github.matthewjones372.surefold.Carriers
+import io.github.matthewjones372.surefold.counter
+import io.github.matthewjones372.surefold.increment
+import io.github.matthewjones372.surefold.logWarn
 import io.micrometer.core.instrument.Metrics
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -101,7 +101,8 @@ class ShadowedAccess(private val access: Access, private val recheckAfter: Durat
             Shadow.none
         } else {
             ShadowedAccess(
-                // Decisions are kept once a rule is answered by bank-access; in shadow, the bank's answer is the one used.
+                // Decisions are kept once a rule is answered by bank-access; in shadow, the bank's answer is the one
+                // used.
                 Access(
                     Fga(settings.url, settings.token, settings.store, Access.BUDGET, carried = ::traceHeaders),
                     Decisions.none,

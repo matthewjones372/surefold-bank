@@ -6,11 +6,11 @@ import bank.domain.TransferEvent
 import bank.domain.TransferId
 import bank.domain.TransferStatus
 import bank.protocol.Kinds
-import io.github.matthewjones372.lark.actor.InMemoryJournal
-import io.github.matthewjones372.lark.actor.Journal
-import io.github.matthewjones372.lark.actor.PersistenceId
-import io.github.matthewjones372.lark.actor.StoredEvent
-import io.github.matthewjones372.lark.assert.shouldBeRight
+import io.github.matthewjones372.surefold.actor.InMemoryJournal
+import io.github.matthewjones372.surefold.actor.Journal
+import io.github.matthewjones372.surefold.actor.PersistenceId
+import io.github.matthewjones372.surefold.actor.StoredEvent
+import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Bank spec 0031's `fresh-entity`: a new transfer's saga starts without reading its journal, which is always empty for
- * an id just numbered (lark spec 0198). A saga started for a transfer that exists still recovers what it wrote.
+ * an id just numbered (surefold spec 0198). A saga started for a transfer that exists still recovers what it wrote.
  */
 class FreshTransferSpec {
     private val ada = AccountId("ada")

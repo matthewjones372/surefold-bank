@@ -263,6 +263,6 @@ Answered 2026-09-30, each taking its recommendation:
   skipped); a request is never slower for it. A disagreement is asked again two seconds later before it counts, as a
   relationship can trail the event it comes from. Its decisions are not recorded: the bank's own access log keeps
   what was decided until the flip.
-- **The bank builds bank-access's client in the same Gradle run**, from `-PaccessSource`, as it does lark and
+- **The bank builds bank-access's client in the same Gradle run**, from `-PaccessSource`, as it does surefold and
   pelican, in CI and in the Nix package alike (bank-access is a flake input). For that the events became a build of
   their own, included by the bank's: Gradle cannot substitute a root build's subproject into an included build.

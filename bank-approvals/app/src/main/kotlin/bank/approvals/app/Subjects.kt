@@ -7,11 +7,11 @@ import bank.approvals.protocol.Release
 import bank.approvals.protocol.SubjectChange
 import bank.approvals.protocol.SubjectEvents
 import bank.approvals.protocol.SubjectMessage
-import io.github.matthewjones372.lark.actor.Behaviour
-import io.github.matthewjones372.lark.actor.JournalConflict
-import io.github.matthewjones372.lark.actor.PersistenceId
-import io.github.matthewjones372.lark.actor.Remembered
-import io.github.matthewjones372.lark.actor.persistent
+import io.github.matthewjones372.surefold.actor.Behaviour
+import io.github.matthewjones372.surefold.actor.JournalConflict
+import io.github.matthewjones372.surefold.actor.PersistenceId
+import io.github.matthewjones372.surefold.actor.Remembered
+import io.github.matthewjones372.surefold.actor.persistent
 
 /** A subject's live request, if it has one: the only request for it anyone is voting on. */
 data class Live(val request: RequestId?) {

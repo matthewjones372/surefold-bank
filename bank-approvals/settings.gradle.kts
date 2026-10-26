@@ -1,5 +1,6 @@
-// Lark and Pelican from checkouts rather than published snapshots, as lark-bank does: set larkSource and
-// pelicanSource (in ~/.gradle/gradle.properties, or -P) to the checkouts' paths. Unset, mavenLocal's snapshots are used.
+// Surefold and Pelican from checkouts rather than published snapshots, as lark-bank does: set larkSource and
+// pelicanSource (in ~/.gradle/gradle.properties, or -P) to the checkouts' paths. Unset, mavenLocal's snapshots are
+// used.
 val larkSource: String? = providers.gradleProperty("larkSource").orNull
 val pelicanSource: String? = providers.gradleProperty("pelicanSource").orNull
 
@@ -10,8 +11,10 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
-    // The wiring plugin ships from lark's own build, at lark's version.
-    plugins { id("io.github.matthewjones372.lark.wiring") version providers.gradleProperty("larkVersion").get() }
+    // The wiring plugin ships from surefold's own build, at surefold's version.
+    plugins {
+        id("io.github.matthewjones372.surefold.wiring") version providers.gradleProperty("surefoldVersion").get()
+    }
 }
 
 plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" }

@@ -27,7 +27,7 @@ name the alternative in a sentence and say which one is recommended.
 
 ## Depends on
 
-What in Lark or Pelican this needs and does not have yet: the spec there that adds it, and what the bank
+What in Surefold or Pelican this needs and does not have yet: the spec there that adds it, and what the bank
 does until it lands. "Nothing" is a fine answer.
 
 ## Stack

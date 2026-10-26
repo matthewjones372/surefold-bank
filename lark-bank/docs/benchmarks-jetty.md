@@ -39,14 +39,14 @@ run collapses (below).
 | HTTP server | `pelican-pekko`, Pekko HTTP 1.3.0 on Pekko 1.2.1 | `pelican-jetty`, Jetty 12.1.13 |
 | Screening client | `pelican-client-pekko`, a pool of 64 connections and 1,024 queued requests | `pelican-client-jetty`, Jetty's `HttpClient` defaults (64 connections, 1,024 queued per destination) |
 | Stand-in check (`loadtest`) | Pelican on Pekko HTTP | Pelican on Jetty |
-| lark | `3dbffec46baa36534502af5dc6840429c837bc53` | `e2710b5bf8740f4243fa78c031ca0ae1e282ef98` (116 commits later) |
+| surefold | `3dbffec46baa36534502af5dc6840429c837bc53` | `e2710b5bf8740f4243fa78c031ca0ae1e282ef98` (116 commits later) |
 | pelican | `a2024349bc5504ab4466a1a7bc0c1f0382c2a14a` | `53efbe3c579a1853f13c6327f9306fd6ccbbba65` (134 commits later) |
 | OpenTelemetry | 1.66.0 | 1.67.0 |
 
 `717fbfa` adds only `lark-bank/loadtest/src/main/resources/logback.xml` (root at INFO, `org.eclipse.jetty` at WARN) to
 `8a5362a`, so the bank's image is the same at both; only the load and the stand-in check differ.
 
-Both builds also differ in everything lark and pelican changed between those commits (among them lark's parked
+Both builds also differ in everything surefold and pelican changed between those commits (among them surefold's parked
 runners, spec 0143, and pelican's Jetty tuning, spec 0085), so a difference below is the whole change, not the server
 alone.
 
@@ -62,7 +62,7 @@ alone.
 
 ## Method
 
-- Built as CI builds the bank: lark and pelican checked out at the pinned revisions and passed as `-PlarkSource`,
+- Built as CI builds the bank: surefold and pelican checked out at the pinned revisions and passed as `-PlarkSource`,
   `-PpelicanSource`, `-PaccessSource=../bank-access`, in `nix develop .#ci`, with
   `-Pkotlin.compiler.execution.strategy=in-process`; then `:app:installDist :loadtest:installDist` and the two images
   from `deploy/docker/`.
@@ -258,7 +258,7 @@ The same harness on main before and after #55, both on the Jetty bank above:
   was answered: `Completed`, or `Debited` or `Pending` when the bank's 1 s `transferWait` ran out first.
 
 The bank's code is the same on both: with whitespace, trailing commas, braces and import order set aside, every file
-under `src/main` but `Load.kt` reads the same, and `application.conf` only adds `TRANSFER_WAIT`, left at 1 s. lark
+under `src/main` but `Load.kt` reads the same, and `application.conf` only adds `TRANSFER_WAIT`, left at 1 s. surefold
 `e2710b5` and pelican `53efbe3` on both. So what differs is how the load calls the bank.
 
 Same machine and method as above, every scenario on a fresh cluster, each twice and `transfers` at 400/s three times,
@@ -405,7 +405,7 @@ measured in one sitting, one after the other:
     left at 64 and 2.
   - #59: payroll goes through four senders on each node (`PAYROLL_SENDERS`), not one.
 
-lark `e2710b5` and pelican `53efbe3` on both. `spread` and `hot` once each, `transfers` at 200/s twice and at 400/s
+surefold `e2710b5` and pelican `53efbe3` on both. `spread` and `hot` once each, `transfers` at 200/s twice and at 400/s
 three times, `payroll` twice at each rate. The load prints `credits a second` (each payroll is 100 credits) on after
 only; for before it is computed the same way, OK payrolls × 100 over the 60 s.
 
@@ -545,11 +545,11 @@ within the noise. `c7fea00` at 200/s was slower in this sitting (p99 1.07–1.15
 
 petshop at `c50e3e02459c628558cba324221c90a043c6414c`, on the same machine after the bank's runs, with JDK 25.
 
-**Before and after are the same lark.** The lark petshop's `main` resolves, `0.10.2-SNAPSHOT` from Central's snapshot
-repository (`0.10.2-20261021.200612-5`, published at 20:06 UTC on 21 October), was published from lark `e2710b5`,
-merged at 19:59 UTC. Every lark jar petshop builds, runs and tests with (`lark`, `lark-actor`, `lark-app` and its
-modules, `lark-app-compiler`, `lark-app-gradle`, `lark-kafka`, `lark-micrometer`, `lark-otel`, `lark-slf4j`,
-`lark-stream`, `lark-stream-forks`, `lark-test`) is identical, entry by entry, to `e2710b5` built here with
+**Before and after are the same surefold.** The surefold petshop's `main` resolves, `0.10.2-SNAPSHOT` from Central's snapshot
+repository (`0.10.2-20261021.200612-5`, published at 20:06 UTC on 21 October), was published from surefold `e2710b5`,
+merged at 19:59 UTC. Every surefold jar petshop builds, runs and tests with (`surefold`, `surefold-actor`, `surefold-app` and its
+modules, `surefold-app-compiler`, `surefold-app-gradle`, `surefold-kafka`, `surefold-micrometer`, `surefold-otel`, `surefold-slf4j`,
+`surefold-stream`, `surefold-stream-forks`, `surefold-test`) is identical, entry by entry, to `e2710b5` built here with
 `publishToMavenLocal` at the version `gradle.properties` names. So the two runs below are the same build twice, and
 show petshop's noise on this machine rather than a change.
 

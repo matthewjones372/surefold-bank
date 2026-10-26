@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The bank in Docker under load while its parts fail one at a time, then the books at rest. Each fault lasts longer
 # than downing's stableAfter (10 s here), so a node cut off or frozen is downed, ends its process, and Docker starts
-# it again as a new life (lark spec 0097). The load goes to bank-1 throughout; bank-1 itself is rolled last, after it.
+# it again as a new life (surefold spec 0097). The load goes to bank-1 throughout; bank-1 itself is rolled last, after it.
 #   scripts/chaos-docker.sh          RATE and SECONDS_OF_LOAD override 200/s for 420 s, long enough for every fault
 #   SCREENING_ENABLED=true scripts/chaos-docker.sh    each transfer screened too, and the check stopped for 20 s
 #   LEAK=1 scripts/chaos-docker.sh   an ops token written to bank-1's log on purpose, which the end's search must find

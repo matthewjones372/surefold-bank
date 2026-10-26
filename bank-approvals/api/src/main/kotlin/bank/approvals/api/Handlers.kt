@@ -12,10 +12,6 @@ import bank.approvals.domain.RequestId
 import bank.approvals.domain.replay
 import bank.approvals.protocol.Act
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.flatMap
-import io.github.matthewjones372.lark.fail.fold
-import io.github.matthewjones372.lark.fail.map
 import io.github.matthewjones372.pelican.Authenticator
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.PageGuard
@@ -27,6 +23,10 @@ import io.github.matthewjones372.pelican.jetty.handledOrFail
 import io.github.matthewjones372.pelican.metrics.otel.openTelemetry
 import io.github.matthewjones372.pelican.ok
 import io.github.matthewjones372.pelican.pages
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.flatMap
+import io.github.matthewjones372.surefold.fail.fold
+import io.github.matthewjones372.surefold.fail.map
 import io.opentelemetry.api.OpenTelemetry
 import java.time.Instant
 import java.time.LocalDate
@@ -273,7 +273,8 @@ fun approvalsApi(
 ) {
     title = "Approvals"
     version = "0.1.0"
-    // The pages beside the endpoints, which always win (Pelican 0059): signed in, or sent to sign in first, and never cached.
+    // The pages beside the endpoints, which always win (Pelican 0059): signed in, or sent to sign in first, and never
+    // cached.
     pages = pages("ui").guardedBy(signing.guard)
     authenticate(bearer, signing.authenticator)
     // A server span per request, continuing the caller's trace (lark-bank spec 0024); outermost, so a refusal is in it.

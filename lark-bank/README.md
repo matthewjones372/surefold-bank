@@ -1,6 +1,6 @@
 # Lark Bank
 
-An event-sourced bank that runs as a cluster, built on [Lark](https://github.com/matthewjones372/lark) and served
+An event-sourced bank that runs as a cluster, built on [Surefold](https://github.com/matthewjones372/lark) and served
 by [Pelican](https://github.com/matthewjones372/pelican). It is one of four services: [the services](docs/services.md)
 says what each does and how they talk, and [how the bank works](docs/how-the-bank-works.md) draws the bank's inside.
 
@@ -33,7 +33,7 @@ account's currency, at the places the bank's registry gives it, so pounds to the
 
 | Module | Holds |
 |---|---|
-| `domain` | accounts, money in currencies, the transfer saga as a pure state machine (lark's `Either` only) |
+| `domain` | accounts, money in currencies, the transfer saga as a pure state machine (surefold's `Either` only) |
 | `protocol` | the wire shapes, mapped to and from the domain by [kimney](https://github.com/matthewjones372/kimney), and the published contract's mapping |
 | `events` | the Protobuf contract on Kafka, published as `lark-bank-events` |
 | `api` | the endpoints, their declared refusals, the handlers (Pelican) |
@@ -41,16 +41,16 @@ account's currency, at the places the bank's registry gives it, so pounds to the
 | `issuer` | a test OIDC issuer for compose, kind and the tests |
 | `loadtest` | five [Proofload](https://github.com/matthewjones372/proofload) scenarios, and a stand-in screening check |
 
-| Lark module | What it does here |
+| Surefold module | What it does here |
 |---|---|
-| `lark-cluster`, `lark-cluster-kubernetes` | SWIM membership, nodes found through the pods API, a `Lease` for splits; accounts and transfers sharded; read models spread over the nodes; the sweeper a singleton |
-| `lark-actor` | every account and transfer is a persistent actor, with snapshots every 100 events and up to 64 commands per append |
-| `lark-actor-journal-jdbc` | the journal on Postgres, split by account across two databases |
-| `lark-actor-projection` | the journal followed into read models, a batch per transaction |
-| `lark-actor-remote(-kotlinx)` | asks and tells between nodes, Protobuf from Kotlin data classes |
-| `lark-stream`, `lark-kafka` | the projections, the sweeper, and publishing with offsets saved once Kafka acknowledges |
-| `lark-app` and its modules | the application as a checked graph: settings, migrations, the cluster, release order on SIGTERM |
-| `lark-micrometer`, `lark-otel`, `lark-slf4j` | metrics, traces across every hop, JSON log lines |
+| `surefold-cluster`, `surefold-cluster-kubernetes` | SWIM membership, nodes found through the pods API, a `Lease` for splits; accounts and transfers sharded; read models spread over the nodes; the sweeper a singleton |
+| `surefold-actor` | every account and transfer is a persistent actor, with snapshots every 100 events and up to 64 commands per append |
+| `surefold-actor-journal-jdbc` | the journal on Postgres, split by account across two databases |
+| `surefold-actor-projection` | the journal followed into read models, a batch per transaction |
+| `surefold-actor-remote(-kotlinx)` | asks and tells between nodes, Protobuf from Kotlin data classes |
+| `surefold-stream`, `surefold-kafka` | the projections, the sweeper, and publishing with offsets saved once Kafka acknowledges |
+| `surefold-app` and its modules | the application as a checked graph: settings, migrations, the cluster, release order on SIGTERM |
+| `surefold-micrometer`, `surefold-otel`, `surefold-slf4j` | metrics, traces across every hop, JSON log lines |
 
 ## What it carries
 
@@ -99,11 +99,11 @@ any; `LEAK=1` writes a real token to a node's log first, to show the search find
 
 ## Versions
 
-Lark `0.7.1-SNAPSHOT`, Pelican `1.0.1-SNAPSHOT`, bank-access-client `0.1.0-SNAPSHOT`, Proofload `0.1.0-rc4`,
+Surefold `0.7.1-SNAPSHOT`, Pelican `1.0.1-SNAPSHOT`, bank-access-client `0.1.0-SNAPSHOT`, Proofload `0.1.0-rc4`,
 Kotlin 2.4.10, JDK 25. The snapshots are unreleased; the build takes them from Maven local or from checkouts beside
 this one:
 
 ```bash
-./gradlew -PlarkSource=../lark -PpelicanSource=../pelican -PaccessSource=../bank-access build :events:build
+./gradlew -PlarkSource=../surefold -PpelicanSource=../pelican -PaccessSource=../bank-access build :events:build
 nix build .#bank                                         # the same, pinned by flake.lock
 ```

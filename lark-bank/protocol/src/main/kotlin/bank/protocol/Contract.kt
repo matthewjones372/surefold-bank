@@ -23,13 +23,13 @@ import bank.events.v1.Screened
 import bank.events.v1.SourceDebited
 import bank.events.v1.SourceRefunded
 import bank.events.v1.Withdrawn
-import io.github.matthewjones372.lark.fail.Either
-import io.github.matthewjones372.lark.fail.Fail
-import io.github.matthewjones372.lark.fail.attempt
-import io.github.matthewjones372.lark.fail.bind
-import io.github.matthewjones372.lark.fail.ensureNotNull
-import io.github.matthewjones372.lark.fail.fail
-import io.github.matthewjones372.lark.fail.mapLeft
+import io.github.matthewjones372.surefold.fail.Either
+import io.github.matthewjones372.surefold.fail.Fail
+import io.github.matthewjones372.surefold.fail.attempt
+import io.github.matthewjones372.surefold.fail.bind
+import io.github.matthewjones372.surefold.fail.ensureNotNull
+import io.github.matthewjones372.surefold.fail.fail
+import io.github.matthewjones372.surefold.fail.mapLeft
 import bank.events.v1.AccountEvent as AccountRecord
 import bank.events.v1.AccountEvent.EventCase as AccountCase
 import bank.events.v1.Money as MoneyRecord

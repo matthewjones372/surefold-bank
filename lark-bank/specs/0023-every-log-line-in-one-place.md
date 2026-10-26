@@ -12,7 +12,7 @@ finding *what* means `kubectl logs` against each pod in turn, before it restarts
 - **The log dies with the pod.** A node that ran out of memory at 03:00 and was restarted has lost the lines that say
   why; the chaos runs in Docker (spec 0009) keep theirs only because the script copies them out first.
 - **The lines are for a person at a terminal.** `HH:mm:ss.SSS LEVEL [thread] logger msg {mdc}` in the JVM services,
-  ZIO's own shape in bank-checks, Lark's `key=value` annotations at the end: no date, no service, and nothing a query
+  ZIO's own shape in bank-checks, Surefold's `key=value` annotations at the end: no date, no service, and nothing a query
   can pick a field out of.
 - **Alerts point at a runbook, not at the lines.** `AccessDisagreed` (spec 0022) says a question was answered
   differently; which one is in one bank node's log, and the runbook says to go and look for it.
@@ -34,16 +34,16 @@ finding *what* means `kubectl logs` against each pod in turn, before it restarts
 **Every service writes one JSON object per line** to stdout, with the same names for the same things:
 
 ```json
-{"ts":"2026-10-02T14:03:11.204Z","level":"WARN","service":"lark-bank","node":"bank-1","logger":"lark",
+{"ts":"2026-10-02T14:03:11.204Z","level":"WARN","service":"lark-bank","node":"bank-1","logger":"surefold",
  "msg":"bank-access disagrees on view-account of acc-1 for eve: the bank says false, bank-access true",
  "trace_id":"4bf92f3577b34da6a3ce929d0e0e4736","span_id":"00f067aa0ba902b7","transfer_id":"t-91"}
 ```
 
-`ts`, `level`, `service`, `msg` always; `node`, `logger`, `thread`, `trace_id`, `span_id` when there are any; Lark's
+`ts`, `level`, `service`, `msg` always; `node`, `logger`, `thread`, `trace_id`, `span_id` when there are any; Surefold's
 annotations and each library's MDC as fields of their own; a stack trace as one `error` field, not forty lines.
 Logback's own `JsonEncoder`-shaped output in the JVM services, the same names from zio-logging in bank-checks.
 
-**The trace id is on every line written inside a span**, from Lark's `logAnnotated`, and is on more of them as spec
+**The trace id is on every line written inside a span**, from Surefold's `logAnnotated`, and is on more of them as spec
 0024 carries the trace across actors, calls and Kafka.
 
 **Loki, one pod, its chunks in Garage.** Loki runs as a single binary (`-target=all`), its index and chunks in a
@@ -81,7 +81,7 @@ that copies logs to network storage, keeps the lines but still leaves nothing to
 
 ## Depends on
 
-- **Lark:** `lark-slf4j` already sends Lark's lines to SLF4J, with the annotations as MDC: nothing new. Its
+- **Surefold:** `surefold-slf4j` already sends Surefold's lines to SLF4J, with the annotations as MDC: nothing new. Its
   `logAnnotated` puts `trace_id` and `span_id` on lines inside a span, which this uses as it is.
 - **Pelican:** nothing. Carrying the trace on its client's calls is spec 0024's, on Pelican spec 0064.
 - **bank-checks, bank-approvals and bank-access** each take the `log-json` change in their own repositories.

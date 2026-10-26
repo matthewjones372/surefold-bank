@@ -16,7 +16,7 @@ teams:
 services:
   - name: lark-bank
     category: Bank
-    description: Accounts and transfers, on three nodes of one Lark cluster
+    description: Accounts and transfers, on three nodes of one Surefold cluster
     owner: bank
     repository: github:matthewjones372/tweet-street
     build: { github: { workflow: build.yml } }
