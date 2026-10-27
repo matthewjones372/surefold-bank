@@ -278,7 +278,7 @@ class Publishing(val publisher: Publisher?)
 private val clustered: Module =
     actors() +
         single { actors: Actors, data: DataSource, _: Migrated, settings: JournalSettings, others: JournalDatabases ->
-            // Set on the flock before any entity starts: a persistent entity reads its journal from the flock.
+            // Set on the scope before any entity starts: a persistent entity reads its journal from the scope.
             val databases = listOf(settings.primary to data) + others.others
             actors.within {
                 // Which database owns which slices is a table in the primary (surefold spec 0105), written on first
@@ -347,7 +347,7 @@ private val clustered: Module =
             }
         } +
         single { actors: Actors, entities: Entities, settings: PayrollSettings ->
-            // Drained when the flock closes, before the node leaves: a credit sent is a credit confirmed.
+            // Drained when the scope closes, before the node leaves: a credit sent is a credit confirmed.
             actors.within {
                 val producers = (0 until settings.senders).map { sender ->
                     entities.accounts.reliable("payroll-$sender", keep = settings.window)
