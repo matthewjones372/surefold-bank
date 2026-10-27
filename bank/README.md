@@ -99,8 +99,9 @@ any; `LEAK=1` writes a real token to a node's log first, to show the search find
 
 ## Versions
 
-Surefold `0.7.1-SNAPSHOT`, Pelican `1.0.1-SNAPSHOT`, bank-access-client `0.1.0-SNAPSHOT`, Proofload `0.1.0-rc4`,
-Kotlin 2.4.10, JDK 25. The snapshots are unreleased; the build takes them from Maven local or from checkouts beside
+Surefold `0.14.0`, Pelican `1.2.0`, bank-access-client `0.1.0-SNAPSHOT`, Proofload `0.1.0-rc4`,
+Kotlin 2.4.10, JDK 25. Surefold and Pelican are releases on Maven Central, and CI builds them from the tags
+`flake.lock` pins; the snapshot is unreleased. The build takes any of them from Maven local or from checkouts beside
 this one:
 
 ```bash

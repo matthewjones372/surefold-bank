@@ -12,23 +12,6 @@
       },
       "parent": []
     },
-    "surefold": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1792972424,
-        "narHash": "sha256-5kLQVdxDwW31MfivDqF6AfFwC75tbWiZzHxn2hgirk4=",
-        "ref": "refs/heads/main",
-        "rev": "c0aeb3d4868bf3fba5d041d6833e34bb2aef15e9",
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/matthewjones372/surefold"
-      },
-      "original": {
-        "shallow": true,
-        "type": "git",
-        "url": "https://github.com/matthewjones372/surefold"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1790450978,
@@ -45,15 +28,16 @@
     "pelican": {
       "flake": false,
       "locked": {
-        "lastModified": 1792576907,
-        "narHash": "sha256-wToivD59/8cRAWvWoIVmSOhdagJPBQhUoLbLjLLao84=",
-        "ref": "refs/heads/main",
-        "rev": "53efbe3c579a1853f13c6327f9306fd6ccbbba65",
+        "lastModified": 1793108810,
+        "narHash": "sha256-kFF87v6PZJOnbHikNCPPCplnL+rNovNPzfY5kGL6RxA=",
+        "ref": "refs/tags/v1.2.0",
+        "rev": "16f1f0a2ddd63d6d7fd259c9958583e18ba472f9",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/matthewjones372/pelican"
       },
       "original": {
+        "ref": "refs/tags/v1.2.0",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/matthewjones372/pelican"
@@ -62,9 +46,27 @@
     "root": {
       "inputs": {
         "bank-access": "bank-access",
-        "surefold": "surefold",
         "nixpkgs": "nixpkgs",
-        "pelican": "pelican"
+        "pelican": "pelican",
+        "surefold": "surefold"
+      }
+    },
+    "surefold": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793105987,
+        "narHash": "sha256-RdIzE+OxlN9HpwLZdl1qxRh9wdq5SUt86KGTwSmzIg8=",
+        "ref": "refs/tags/v0.14.0",
+        "rev": "dbddbffb4ccd6f31601a5e2452e0c343f1fc7e00",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/matthewjones372/surefold"
+      },
+      "original": {
+        "ref": "refs/tags/v0.14.0",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/matthewjones372/surefold"
       }
     }
   },
