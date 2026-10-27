@@ -4,8 +4,8 @@
 
   inputs = {
     nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.xz";
-    surefold = { url = "git+https://github.com/matthewjones372/surefold?shallow=1"; flake = false; };
-    pelican = { url = "git+https://github.com/matthewjones372/pelican?shallow=1"; flake = false; };
+    surefold = { url = "git+https://github.com/matthewjones372/surefold?ref=refs/tags/v0.14.0&shallow=1"; flake = false; };
+    pelican = { url = "git+https://github.com/matthewjones372/pelican?ref=refs/tags/v1.2.0&shallow=1"; flake = false; };
     # bank-access's client (bank spec 0022), from the folder beside this one, built in the same Gradle run as surefold and
     # pelican. A relative path input: Nix 2.26 or later.
     bank-access = { url = "path:../bank-access"; flake = false; };

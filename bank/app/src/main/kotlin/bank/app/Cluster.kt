@@ -35,7 +35,7 @@ fun readModelsSingleton(
     start: () -> ReadModelRuns,
 ): Behaviour<WhereAreReadModels, ReadModelRuns?, Nothing> = Behaviour(
     initial = null,
-    step = { _, _, asked ->
+    turn = { _, _, asked ->
         asked.reply(node)
         stay()
     },

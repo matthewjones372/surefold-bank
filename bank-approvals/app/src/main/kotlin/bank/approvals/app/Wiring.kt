@@ -100,7 +100,7 @@ class Entities(val requests: Sharded<RequestMessage>, val subjects: Sharded<Subj
 private val clustered: Module =
     actors() +
         single { actors: Actors, data: DataSource, _: Migrated ->
-            // Set on the flock before any entity starts: a persistent entity reads its journal from the flock.
+            // Set on the scope before any entity starts: a persistent entity reads its journal from the scope.
             val journal = JdbcJournal(data)
             actors.within {
                 journal(journal)
@@ -131,7 +131,7 @@ private val clustered: Module =
             }
         }
 
-/** The journal set on the flock: what the entities wait for, and what the publishers follow. */
+/** The journal set on the scope: what the entities wait for, and what the publishers follow. */
 class JournalReady(val journal: JdbcJournal)
 
 // ---- every event published (bank spec 0019) ----
