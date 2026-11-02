@@ -3,5 +3,5 @@
 # failure if there is one. scripts/up.sh runs it before applying anything.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-image="${ESTATE_IMAGE:-ghcr.io/matthewjones372/estate:main}"
+image="${ESTATE_IMAGE:-ghcr.io/surefold/estate:main}"
 docker run --rm -v "$PWD/deploy/k8s/estate:/catalog:ro" "$image" check /catalog/catalog.yaml
