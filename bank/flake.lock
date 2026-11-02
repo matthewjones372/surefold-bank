@@ -34,13 +34,13 @@
         "rev": "16f1f0a2ddd63d6d7fd259c9958583e18ba472f9",
         "shallow": true,
         "type": "git",
-        "url": "https://github.com/matthewjones372/pelican"
+        "url": "https://github.com/surefold/pelican"
       },
       "original": {
         "ref": "refs/tags/v1.2.0",
         "shallow": true,
         "type": "git",
-        "url": "https://github.com/matthewjones372/pelican"
+        "url": "https://github.com/surefold/pelican"
       }
     },
     "root": {
@@ -60,13 +60,13 @@
         "rev": "dbddbffb4ccd6f31601a5e2452e0c343f1fc7e00",
         "shallow": true,
         "type": "git",
-        "url": "https://github.com/matthewjones372/surefold"
+        "url": "https://github.com/surefold/surefold"
       },
       "original": {
         "ref": "refs/tags/v0.14.0",
         "shallow": true,
         "type": "git",
-        "url": "https://github.com/matthewjones372/surefold"
+        "url": "https://github.com/surefold/surefold"
       }
     }
   },
