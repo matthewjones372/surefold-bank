@@ -610,4 +610,4 @@ Nothing differs between the builds, so this is the noise: browsing below 4,000/s
 and from 10,000/s up the generator's own slipping widens the tail by up to three times; the adoption ladder within
 a few milliseconds and ending on the same rung; and the heavy hold within 1% on answers a second and 25% on p99.
 
-[performance.md]: https://github.com/matthewjones372/petshop/blob/main/docs/performance.md
+[performance.md]: https://github.com/surefold/petshop/blob/main/docs/performance.md

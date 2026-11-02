@@ -1,7 +1,7 @@
 # Surefold Bank
 
-An event-sourced bank that runs as a cluster, built on [Surefold](https://github.com/matthewjones372/surefold) and served
-by [Pelican](https://github.com/matthewjones372/pelican). It is one of four services: [the services](docs/services.md)
+An event-sourced bank that runs as a cluster, built on [Surefold](https://github.com/surefold/surefold) and served
+by [Pelican](https://github.com/surefold/pelican). It is one of four services: [the services](docs/services.md)
 says what each does and how they talk, and [how the bank works](docs/how-the-bank-works.md) draws the bank's inside.
 
 ```bash
@@ -34,7 +34,7 @@ account's currency, at the places the bank's registry gives it, so pounds to the
 | Module | Holds |
 |---|---|
 | `domain` | accounts, money in currencies, the transfer saga as a pure state machine (surefold's `Either` only) |
-| `protocol` | the wire shapes, mapped to and from the domain by [kimney](https://github.com/matthewjones372/kimney), and the published contract's mapping |
+| `protocol` | the wire shapes, mapped to and from the domain by [kimney](https://github.com/surefold/kimney), and the published contract's mapping |
 | `events` | the Protobuf contract on Kafka, published as `surefold-bank-events` |
 | `api` | the endpoints, their declared refusals, the handlers (Pelican) |
 | `app` | entities, the cluster, read models, Kafka, sign-in, the application graph |

@@ -1,6 +1,6 @@
 # surefold-bank
 
-[![build](https://github.com/matthewjones372/surefold-bank/actions/workflows/build.yml/badge.svg)](https://github.com/matthewjones372/surefold-bank/actions/workflows/build.yml)
+[![build](https://github.com/surefold/surefold-bank/actions/workflows/build.yml/badge.svg)](https://github.com/surefold/surefold-bank/actions/workflows/build.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white)
 ![Scala](https://img.shields.io/badge/Scala-3-DC322F?logo=scala&logoColor=white)
@@ -9,14 +9,14 @@
 A small bank, built to see whether a handful of Kotlin and Scala libraries hold up when the money has to add up. It
 is four services: the bank itself on a three-node cluster, transfer screening, changes that need two people to
 agree, and fine-grained access control. The name is Wall Street for birds, since it runs on
-[Surefold](https://github.com/matthewjones372/surefold).
+[Surefold](https://github.com/surefold/surefold).
 
 It is a personal project, not a real bank. It holds no real money, and the credentials in it are development values
 for running it on your own machine.
 
 ## What it does
 
-- **Every account is an actor** on a three-node [Surefold](https://github.com/matthewjones372/surefold) cluster. It owns its
+- **Every account is an actor** on a three-node [Surefold](https://github.com/surefold/surefold) cluster. It owns its
   balance, writes its events to a Postgres journal before it answers, and lives on whichever node holds its shard.
 - **A transfer is a saga.** It debits one account, credits the other, and refunds the first if the credit is
   refused. If the node running it dies part way through, another node picks it up from its last event.
@@ -26,7 +26,7 @@ for running it on your own machine.
   and freezes Kafka, all under 200 transfers a second. Afterwards the ledger still balances, and every failed request
   was a 503 or a timeout that is safe to retry.
 - **Each transfer is screened** by [bank-checks](bank-checks), against rules an admin writes in a web wizard in
-  [verdict](https://github.com/matthewjones372/verdict)'s rule language.
+  [verdict](https://github.com/surefold/verdict)'s rule language.
 - **Some changes need two people.** A new screening rule, or support looking at a customer's account, goes through
   [bank-approvals](bank-approvals), which keeps its audit trail as a hash chain. The customer can see each time
   support looked.
@@ -97,14 +97,14 @@ Transfers run clean, under 1 in 1,000 failed and a p99 under 1 s, up to 250 to 3
 | Folder | What it is |
 |---|---|
 | [`bank/`](surefold-bank) | The bank. Accounts, payments and transfers as event-sourced actors on a three-node Surefold cluster, journaled to Postgres and published to Kafka. Kotlin. It also holds the docker compose and kind setups that run all four services together. |
-| [`bank-checks/`](bank-checks) | Screens each transfer before money moves and flags movements after, by rules an admin writes in a web wizard. Scala 3 and ZIO, with rules in [verdict](https://github.com/matthewjones372/verdict)'s language. |
+| [`bank-checks/`](bank-checks) | Screens each transfer before money moves and flags movements after, by rules an admin writes in a web wizard. Scala 3 and ZIO, with rules in [verdict](https://github.com/surefold/verdict)'s language. |
 | [`bank-approvals/`](bank-approvals) | Changes that more than one person agrees to before they take effect, with an audit trail kept as a hash chain. Kotlin on Surefold and Pelican. |
 | [`bank-access/`](bank-access) | Who may do what, in one place: an OpenFGA model, a service that derives relationships from events, and the client the other services ask. |
 
-It is built on four libraries of mine: [Surefold](https://github.com/matthewjones372/surefold) for actors, clustering, event
-sourcing and streams, [Pelican](https://github.com/matthewjones372/pelican) for HTTP endpoints and pages,
+It is built on four libraries of mine: [Surefold](https://github.com/surefold/surefold) for actors, clustering, event
+sourcing and streams, [Pelican](https://github.com/surefold/pelican) for HTTP endpoints and pages,
 [Proofload](https://github.com/matthewjones372/proofload) for the load tests, and
-[kimney](https://github.com/matthewjones372/kimney) for mapping between the wire and the domain.
+[kimney](https://github.com/surefold/kimney) for mapping between the wire and the domain.
 
 ## Running it locally
 
@@ -114,8 +114,8 @@ The bank builds against snapshots of Surefold and Pelican that are not on Maven 
 repository and tell Gradle where they are, once, in `~/.gradle/gradle.properties`:
 
 ```bash
-git clone https://github.com/matthewjones372/surefold ../surefold
-git clone https://github.com/matthewjones372/pelican ../pelican
+git clone https://github.com/surefold/surefold ../surefold
+git clone https://github.com/surefold/pelican ../pelican
 cat >> ~/.gradle/gradle.properties <<PROPS
 surefoldSource=$(cd ../surefold && pwd)
 pelicanSource=$(cd ../pelican && pwd)

@@ -3,5 +3,5 @@
 # without one, it clones surefold, which is private, so git needs credentials for it.
 set -euo pipefail
 surefold="${SUREFOLD_DIR:-../surefold}"
-[ -d "$surefold" ] || git clone https://github.com/matthewjones372/surefold "$surefold"
+[ -d "$surefold" ] || git clone https://github.com/surefold/surefold "$surefold"
 (cd "$surefold" && ./gradlew publishToMavenLocal -x test -x check)

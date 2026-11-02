@@ -8,17 +8,17 @@ setup:
     run: "pin() { nix eval --impure --raw --expr \"(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev\"; }\necho \"surefold=$(pin surefold)\" >> \"$GITHUB_OUTPUT\"\necho \"pelican=$(pin pelican)\" >> \"$GITHUB_OUTPUT\"\n"
   - uses: actions/checkout@v5
     with: 
-      repository: matthewjones372/surefold
+      repository: surefold/surefold
       ref: "${{ steps.pins.outputs.surefold }}"
       path: deps/surefold
   - uses: actions/checkout@v5
     with: 
-      repository: matthewjones372/pelican
+      repository: surefold/pelican
       ref: "${{ steps.pins.outputs.pelican }}"
       path: deps/pelican
   - uses: actions/checkout@v5
     with: 
-      repository: matthewjones372/verdict
+      repository: surefold/verdict
       path: deps/verdict
   - name: "verdict, surefold-bank-events and surefold-bank-issuer, published locally"
     run: "(cd bank-checks && nix develop -c bash -c 'cd ../deps/verdict && sbt -batch publishLocal')\n(cd bank && nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican \\\n  :events:publishToMavenLocal :issuer:publishToMavenLocal)\n"

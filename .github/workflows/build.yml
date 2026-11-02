@@ -67,9 +67,9 @@ jobs:
           echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
+        with: { repository: surefold/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
+        with: { repository: surefold/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
       - name: Build and test
         working-directory: bank
         run: |
@@ -120,16 +120,16 @@ jobs:
           key: sbt-${{ runner.os }}-${{ hashFiles('bank-checks/**/*.sbt', 'bank-checks/project/build.properties') }}
           restore-keys: sbt-${{ runner.os }}-
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/verdict, path: deps/verdict }
+        with: { repository: surefold/verdict, path: deps/verdict }
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev"; }
           echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
+        with: { repository: surefold/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
+        with: { repository: surefold/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
       - name: verdict, surefold-bank-events and surefold-bank-issuer, published locally
         run: |
           (cd bank-checks && nix develop -c bash -c 'cd ../deps/verdict && sbt -batch publishLocal')
@@ -174,9 +174,9 @@ jobs:
           echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
+        with: { repository: surefold/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
+        with: { repository: surefold/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
       - name: surefold-bank-events and surefold-bank-issuer, published locally
         working-directory: bank
         run: |
@@ -235,9 +235,9 @@ jobs:
           echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
+        with: { repository: surefold/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
-        with: { repository: matthewjones372/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
+        with: { repository: surefold/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
       - name: surefold-bank-events, published locally
         working-directory: bank
         run: nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican :events:publishToMavenLocal
