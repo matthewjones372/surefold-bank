@@ -35,7 +35,7 @@ The bank: accounts, money in currencies, and transfers between accounts. This re
 
 | | |
 |---|---|
-| Built with | Kotlin on [Surefold](https://github.com/matthewjones372/surefold) and [Pelican](https://github.com/matthewjones372/pelican), JDK 25 |
+| Built with | Kotlin on [Surefold](https://github.com/surefold/surefold) and [Pelican](https://github.com/surefold/pelican), JDK 25 |
 | Runs as | three nodes in one Surefold cluster; any node takes any call and forwards it to the entity's node |
 | Serves | the API and its docs (`/api-docs`), customer pages (`/`), the ops page (`/ops`), on 8080 |
 | Keeps | an event journal split by account across two Postgres databases, and the read models beside the first |
@@ -55,7 +55,7 @@ them and disagreements are counted, until it takes over. [How the bank works](ho
 
 | | |
 |---|---|
-| Built with | Scala 3, ZIO, zio-http; rules in [verdict](https://github.com/matthewjones372/verdict)'s language |
+| Built with | Scala 3, ZIO, zio-http; rules in [verdict](https://github.com/surefold/verdict)'s language |
 | Serves | `POST /screen` and the admins' rule wizard, on 8090 |
 | Keeps | rules and their versions, decisions and flags, in its own Postgres |
 | Reads | `bank.account-events` (monitoring), `bank.approval-events` (its own rule changes) |

@@ -10,17 +10,17 @@ teams:
   - name: bank
     title: The bank
     links:
-      repository: https://github.com/matthewjones372/surefold-bank
-      runbook: https://github.com/matthewjones372/surefold-bank/blob/main/bank/docs/runbook.md
+      repository: https://github.com/surefold/surefold-bank
+      runbook: https://github.com/surefold/surefold-bank/blob/main/bank/docs/runbook.md
 
 services:
   - name: surefold-bank
     category: Bank
     description: Accounts and transfers, on three nodes of one Surefold cluster
     owner: bank
-    repository: github:matthewjones372/surefold-bank
+    repository: github:surefold/surefold-bank
     build: { github: { workflow: build.yml } }
-    runbook: https://github.com/matthewjones372/surefold-bank/blob/main/bank/docs/runbook.md#the-bank-answers-503
+    runbook: https://github.com/surefold/surefold-bank/blob/main/bank/docs/runbook.md#the-bank-answers-503
     environments: [ kind ]
     kubernetes: { namespace: surefold-bank, workloads: [ { kind: StatefulSet, name: surefold-bank } ] }
     deploy: { flux: { kustomization: apps, imagePolicy: surefold-bank } }
@@ -38,9 +38,9 @@ services:
     category: Checks
     description: Screens each transfer before its money moves, and watches every account for what looks wrong
     owner: bank
-    repository: github:matthewjones372/surefold-bank
+    repository: github:surefold/surefold-bank
     build: { github: { workflow: build.yml } }
-    runbook: https://github.com/matthewjones372/surefold-bank/blob/main/bank/docs/runbook.md#screening-is-slow-or-unanswered
+    runbook: https://github.com/surefold/surefold-bank/blob/main/bank/docs/runbook.md#screening-is-slow-or-unanswered
     environments: [ kind ]
     kubernetes: { namespace: surefold-bank, workloads: [ { kind: Deployment, name: checks } ] }
     deploy: { flux: { kustomization: apps, imagePolicy: bank-checks } }
@@ -53,7 +53,7 @@ services:
     category: Access
     description: Staff ask for access to a customer's account, and someone else approves it
     owner: bank
-    repository: github:matthewjones372/surefold-bank
+    repository: github:surefold/surefold-bank
     build: { github: { workflow: build.yml } }
     environments: [ kind ]
     kubernetes: { namespace: surefold-bank, workloads: [ { kind: Deployment, name: bank-approvals } ] }
@@ -69,9 +69,9 @@ services:
     category: Access
     description: Who may do what to which account, asked of OpenFGA and kept in step by access-sync
     owner: bank
-    repository: github:matthewjones372/surefold-bank
+    repository: github:surefold/surefold-bank
     build: { github: { workflow: build.yml } }
-    runbook: https://github.com/matthewjones372/surefold-bank/blob/main/bank/docs/runbook.md#bank-access-is-down-or-slow
+    runbook: https://github.com/surefold/surefold-bank/blob/main/bank/docs/runbook.md#bank-access-is-down-or-slow
     environments: [ kind ]
     kubernetes:
       namespace: surefold-bank
