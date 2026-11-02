@@ -108,7 +108,7 @@ from the start. The bank asks it in shadow only; nothing is decided by it yet (s
 | Logs | one JSON object per line from every service, with `trace_id` where there is one; Fluent Bit on each machine sends them to Loki, which keeps them in Garage for 30 days; the dashboard's Logs row and each alert's `logs` query read them, each `trace_id` a link to its trace |
 | Traces | every service exports to Tempo over OTLP; one request is one trace across HTTP, actors and Kafka |
 | Metrics | Prometheus, and Grafana's dashboards; what fires goes to Alertmanager, which keeps silences and tells no one yet |
-| The estate | [Estate](https://github.com/matthewjones372/estate), two runners: alerts with notes and silences, each service's health, versions, load and lines, and the bank's debug switch, from the catalog in `deploy/k8s/estate/` |
+| The estate | [Estate](https://github.com/surefold/estate), two runners: alerts with notes and silences, each service's health, versions, load and lines, and the bank's debug switch, from the catalog in `deploy/k8s/estate/` |
 | The cluster | Headlamp, signed in to with `kubectl create token` on kind; what each person may do is Kubernetes RBAC |
 
 ## Where it runs
