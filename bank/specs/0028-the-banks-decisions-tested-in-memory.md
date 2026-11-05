@@ -134,6 +134,6 @@ settings reach a node through the cases kept, which run with it on.
 ## Open questions
 
 - Seeds per check? Recommended: 200 on every check, 10,000 nightly on `main`, failures printing their seed.
-- Tag the cluster specs (JUnit `@Tag("cluster")`) so Pitest and Gauntlet's test selection (Gauntlet spec 0013) can
+- Tag the cluster specs (JUnit `@Tag("cluster")`) so Pitest can
   leave them out? Recommended: yes, in `in-memory-bank`.
 - The daily limit's properties in the first property PR? Recommended: yes, it's the first rule that depends on retries.

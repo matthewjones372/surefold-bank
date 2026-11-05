@@ -19,7 +19,7 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlinx.kover")
     apply(plugin = "dev.detekt")
 
-    // Gauntlet reads detekt's SARIF and ratchets on it; existing findings don't fail the build.
+    // Existing findings don't fail the build.
     extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
         buildUponDefaultConfig.set(true)
         ignoreFailures.set(true)
