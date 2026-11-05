@@ -4,9 +4,9 @@ import bank.approvals.api.NewRequest
 import bank.approvals.api.ask
 import bank.events.v1.ApprovalEvent.EventCase
 import com.sun.net.httpserver.HttpServer
+import dev.surefold.app.use
+import dev.surefold.assert.shouldBeRight
 import io.github.matthewjones372.pelican.test.shouldBeOk
-import io.github.matthewjones372.surefold.app.use
-import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream

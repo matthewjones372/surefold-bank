@@ -2,3 +2,7 @@ ktlint:
   # `{ -> x }` picks surefold's zero-argument closingOf overload; without the arrow the call is ambiguous.
   FunctionLiteral:
     active: false
+  # A test's name is the sentence it states, and several of those sentences are longer than a line. The detekt
+  # MaxLineLength rule still sees them; this only stops the ktlint wrapper reporting the same line a second time.
+  MaximumLineLength:
+    ignoreBackTickedIdentifier: true

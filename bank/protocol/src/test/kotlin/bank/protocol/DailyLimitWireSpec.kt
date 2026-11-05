@@ -5,9 +5,9 @@ import bank.domain.AccountCommand
 import bank.domain.AccountError
 import bank.domain.AccountEvent
 import bank.v1.Bank
-import io.github.matthewjones372.surefold.actor.Address
-import io.github.matthewjones372.surefold.actor.Reply
-import io.github.matthewjones372.surefold.fail.Either
+import dev.surefold.actor.Address
+import dev.surefold.actor.Reply
+import dev.surefold.fail.Either
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 

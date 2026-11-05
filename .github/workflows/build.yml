@@ -1,8 +1,8 @@
 name: build
 
-# Each service built and tested on GitHub's runners, never a self-hosted one. Surefold and Pelican come from their public
-# repositories at the revisions bank/flake.lock pins, verdict from its main, and the bank's events (and its test
-# issuer) are published to Maven local before the services that read them are built.
+# Each service built and tested on GitHub's runners, never a self-hosted one. Surefold is the published release on
+# Maven Central. Pelican comes from its public repository at the revision bank/flake.lock pins, verdict from its main,
+# and the bank's events (and its test issuer) are published to Maven local before the services that read them are built.
 on:
   push: { branches: [ main ] }
   pull_request:
@@ -64,16 +64,13 @@ jobs:
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev"; }
-          echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v5
-        with: { repository: surefold/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
         with: { repository: surefold/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
       - name: Build and test
         working-directory: bank
         run: |
-          nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican -PaccessSource=../bank-access \
+          nix develop .#ci -c ./gradlew -PpelicanSource=../deps/pelican -PaccessSource=../bank-access \
             -Porg.gradle.java.installations.fromEnv=JDK25,JDK21 -Porg.gradle.java.installations.auto-download=false \
             -Pkotlin.compiler.execution.strategy=in-process build :events:build --stacktrace koverXmlReport
       - name: Keep the test and coverage reports for Gauntlet
@@ -124,17 +121,14 @@ jobs:
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev"; }
-          echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v5
-        with: { repository: surefold/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
         with: { repository: surefold/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
       - name: verdict, surefold-bank-events and surefold-bank-issuer, published locally
         run: |
           (cd bank-checks && nix develop -c bash -c 'cd ../deps/verdict && sbt -batch publishLocal')
           (cd bank && nix develop .#ci -c ./gradlew --no-daemon -Pkotlin.compiler.execution.strategy=in-process \
-            -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican :events:publishToMavenLocal :issuer:publishToMavenLocal)
+            -PpelicanSource=../deps/pelican :events:publishToMavenLocal :issuer:publishToMavenLocal)
       - name: Build and test
         working-directory: bank-checks
         run: nix develop -c sbt -batch compile coverage test coverageReport scalafmtCheckAll
@@ -171,21 +165,18 @@ jobs:
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev"; }
-          echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v5
-        with: { repository: surefold/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
         with: { repository: surefold/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
       - name: surefold-bank-events and surefold-bank-issuer, published locally
         working-directory: bank
         run: |
           nix develop .#ci -c ./gradlew --no-daemon -Pkotlin.compiler.execution.strategy=in-process \
-            -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican :events:publishToMavenLocal :issuer:publishToMavenLocal
+            -PpelicanSource=../deps/pelican :events:publishToMavenLocal :issuer:publishToMavenLocal
       - name: Build and test
         working-directory: bank-approvals
         run: |
-          nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican \
+          nix develop .#ci -c ./gradlew -PpelicanSource=../deps/pelican \
             -Pkotlin.compiler.execution.strategy=in-process build --stacktrace koverXmlReport
       - name: Keep the test and coverage reports for Gauntlet
         if: always()
@@ -232,15 +223,12 @@ jobs:
       - id: pins
         run: |
           pin() { nix eval --impure --raw --expr "(builtins.fromJSON (builtins.readFile ./bank/flake.lock)).nodes.$1.locked.rev"; }
-          echo "surefold=$(pin surefold)" >> "$GITHUB_OUTPUT"
           echo "pelican=$(pin pelican)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v5
-        with: { repository: surefold/surefold, ref: "${{ steps.pins.outputs.surefold }}", path: deps/surefold }
       - uses: actions/checkout@v5
         with: { repository: surefold/pelican, ref: "${{ steps.pins.outputs.pelican }}", path: deps/pelican }
       - name: surefold-bank-events, published locally
         working-directory: bank
-        run: nix develop .#ci -c ./gradlew -PsurefoldSource=../deps/surefold -PpelicanSource=../deps/pelican :events:publishToMavenLocal
+        run: nix develop .#ci -c ./gradlew -PpelicanSource=../deps/pelican :events:publishToMavenLocal
       - name: Build and test access-sync and the client
         working-directory: bank-access
         run: nix develop -c ./gradlew build koverXmlReport

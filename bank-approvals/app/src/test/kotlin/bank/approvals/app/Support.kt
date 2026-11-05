@@ -4,6 +4,12 @@ import bank.approvals.domain.RequestEvent
 import bank.approvals.domain.RequestId
 import bank.events.v1.ApprovalEvent
 import bank.issuer.TestIssuer
+import dev.surefold.app.Module
+import dev.surefold.app.single
+import dev.surefold.app.typesafe.overridingConfig
+import dev.surefold.app.use
+import dev.surefold.cluster.Cluster
+import dev.surefold.fail.onLeft
 import io.apicurio.registry.serde.protobuf.ProtobufKafkaDeserializer
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.jetty.PelicanServer
@@ -13,12 +19,6 @@ import io.github.matthewjones372.pelican.test.ResponseSpec
 import io.github.matthewjones372.pelican.test.Transport
 import io.github.matthewjones372.pelican.test.apiClient
 import io.github.matthewjones372.pelican.test.signedInAs
-import io.github.matthewjones372.surefold.app.Module
-import io.github.matthewjones372.surefold.app.single
-import io.github.matthewjones372.surefold.app.typesafe.overridingConfig
-import io.github.matthewjones372.surefold.app.use
-import io.github.matthewjones372.surefold.cluster.Cluster
-import io.github.matthewjones372.surefold.fail.onLeft
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.KafkaConsumer

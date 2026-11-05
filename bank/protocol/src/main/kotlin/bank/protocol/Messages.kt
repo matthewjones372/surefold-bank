@@ -9,10 +9,10 @@ import bank.domain.ScreeningDecision
 import bank.domain.Step
 import bank.domain.TransferError
 import bank.domain.TransferView
-import io.github.matthewjones372.surefold.actor.Delivered
-import io.github.matthewjones372.surefold.actor.Delivery
-import io.github.matthewjones372.surefold.actor.Reply
-import io.github.matthewjones372.surefold.fail.Either
+import dev.surefold.actor.Delivered
+import dev.surefold.actor.Delivery
+import dev.surefold.actor.Reply
+import dev.surefold.fail.Either
 
 /** What an account answers: its balance, or why not. */
 typealias AccountAnswer = Either<AccountError, Balance>

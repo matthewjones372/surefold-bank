@@ -2,9 +2,9 @@ package bank.app
 
 import bank.domain.AccountId
 import bank.domain.TransferId
-import io.github.matthewjones372.surefold.app.use
-import io.github.matthewjones372.surefold.assert.shouldBeRight
-import io.github.matthewjones372.surefold.parMap
+import dev.surefold.app.use
+import dev.surefold.assert.shouldBeRight
+import dev.surefold.parMap
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test

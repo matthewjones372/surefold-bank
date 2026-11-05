@@ -99,12 +99,11 @@ any; `LEAK=1` writes a real token to a node's log first, to show the search find
 
 ## Versions
 
-Surefold `0.14.0`, Pelican `1.2.0`, bank-access-client `0.1.0-SNAPSHOT`, Proofload `0.1.0-rc4`,
-Kotlin 2.4.10, JDK 25. Surefold and Pelican are releases on Maven Central, and CI builds them from the tags
-`flake.lock` pins; the snapshot is unreleased. The build takes any of them from Maven local or from checkouts beside
-this one:
+Surefold core `0.18.1` and its integration modules `0.18.0` (`dev.surefold`, from Maven Central), Pelican `1.2.0`,
+bank-access-client `0.1.0-SNAPSHOT`, Proofload `0.1.0-rc4`, Kotlin 2.4.20, JDK 25. Pelican's CI build is the tag
+`flake.lock` pins. A checkout replaces a published artifact:
 
 ```bash
-./gradlew -PsurefoldSource=../surefold -PpelicanSource=../pelican -PaccessSource=../bank-access build :events:build
-nix build .#bank                                         # the same, pinned by flake.lock
+./gradlew -PpelicanSource=../pelican -PaccessSource=../bank-access build :events:build
+nix build .#bank                                         # the same, once nix/deps.json holds the 0.18 artifacts
 ```

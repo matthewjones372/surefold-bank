@@ -6,36 +6,33 @@ import bank.domain.TransferEvent
 import bank.domain.TransferId
 import bank.protocol.AccountEvents
 import bank.protocol.Kinds
-import bank.protocol.Nudge
 import bank.protocol.TransferEvents
-import bank.protocol.TransferMessage
 import bank.protocol.toContract
-import io.github.matthewjones372.surefold.Schedule
-import io.github.matthewjones372.surefold.actor.ActorRef
-import io.github.matthewjones372.surefold.actor.EventCodec
-import io.github.matthewjones372.surefold.actor.Journal
-import io.github.matthewjones372.surefold.actor.OffsetStore
-import io.github.matthewjones372.surefold.actor.PersistenceId
-import io.github.matthewjones372.surefold.actor.ShardedJournal
-import io.github.matthewjones372.surefold.actor.SlicedFeed
-import io.github.matthewjones372.surefold.actor.projection.Followed
-import io.github.matthewjones372.surefold.actor.projection.Projection
-import io.github.matthewjones372.surefold.actor.projection.runProjecting
-import io.github.matthewjones372.surefold.counter
-import io.github.matthewjones372.surefold.gauge
-import io.github.matthewjones372.surefold.increment
-import io.github.matthewjones372.surefold.logWarn
-import io.github.matthewjones372.surefold.stream.Running
-import io.github.matthewjones372.surefold.stream.Stream
-import io.github.matthewjones372.surefold.stream.StreamBackend
-import io.github.matthewjones372.surefold.stream.groupedWithin
-import io.github.matthewjones372.surefold.stream.map
-import io.github.matthewjones372.surefold.stream.mapAsync
-import io.github.matthewjones372.surefold.stream.restartOnDefect
-import io.github.matthewjones372.surefold.stream.runFold
-import io.github.matthewjones372.surefold.stream.start
-import io.github.matthewjones372.surefold.stream.tick
-import io.github.matthewjones372.surefold.timed
+import dev.surefold.Schedule
+import dev.surefold.actor.EventCodec
+import dev.surefold.actor.Journal
+import dev.surefold.actor.OffsetStore
+import dev.surefold.actor.PersistenceId
+import dev.surefold.actor.ShardedJournal
+import dev.surefold.actor.SlicedFeed
+import dev.surefold.actor.projection.Followed
+import dev.surefold.actor.projection.Projection
+import dev.surefold.actor.projection.runProjecting
+import dev.surefold.counter
+import dev.surefold.gauge
+import dev.surefold.increment
+import dev.surefold.logWarn
+import dev.surefold.stream.Running
+import dev.surefold.stream.Stream
+import dev.surefold.stream.StreamBackend
+import dev.surefold.stream.groupedWithin
+import dev.surefold.stream.map
+import dev.surefold.stream.mapAsync
+import dev.surefold.stream.restartOnDefect
+import dev.surefold.stream.runFold
+import dev.surefold.stream.start
+import dev.surefold.stream.tick
+import dev.surefold.timed
 import kotlin.time.Duration.Companion.seconds
 
 /** The read models' names, which are also the offsets they save and what pruning waits for. */
@@ -179,11 +176,11 @@ class TransferParties(private val journal: Journal, private val remembered: Int 
 }
 
 /** Wakes every saga that has not moved for a while: the ones whose node went away mid-transfer. */
-fun sweeper(reads: JdbcReadModels, transfers: (String) -> ActorRef<TransferMessage>, settings: ReadModelSettings) =
+fun sweeper(reads: JdbcReadModels, wake: (String) -> Unit, settings: ReadModelSettings) =
     Stream.tick(settings.sweepEvery, Unit)
         .map { _ ->
             val stuck = reads.stuck(now() - settings.stuckAfter.inWholeMilliseconds, limit = 1_000)
-            stuck.forEach { id -> transfers(id).tell(Nudge) }
+            stuck.forEach(wake)
             counter("bank.sweeper.nudged").increment(stuck.size.toDouble())
             stuck.size
         }
@@ -249,7 +246,7 @@ fun startReadModels(
 /** The sweeper, run once in the cluster: it reads the read models, not a feed. */
 fun startSweeper(
     reads: JdbcReadModels,
-    transfers: (String) -> ActorRef<TransferMessage>,
+    wake: (String) -> Unit,
     settings: ReadModelSettings,
     backend: StreamBackend,
-): ReadModelRuns = ReadModelRuns(listOf(sweeper(reads, transfers, settings).start(backend)))
+): ReadModelRuns = ReadModelRuns(listOf(sweeper(reads, wake, settings).start(backend)))

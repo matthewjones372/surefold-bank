@@ -6,12 +6,13 @@
     nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.xz";
     surefold = { url = "git+https://github.com/surefold/surefold?ref=refs/tags/v0.14.0&shallow=1"; flake = false; };
     pelican = { url = "git+https://github.com/surefold/pelican?ref=refs/tags/v1.2.0&shallow=1"; flake = false; };
-    # bank-access's client (bank spec 0022), from the folder beside this one, built in the same Gradle run as surefold and
-    # pelican. A relative path input: Nix 2.26 or later.
+    # bank-access's client (bank spec 0022), from the folder beside this one, built in the same Gradle run as pelican.
+    # A relative path input: Nix 2.26 or later. The surefold input stays so flake.lock's pin is still a node; the
+    # package resolves dev.surefold from Maven Central.
     bank-access = { url = "path:../bank-access"; flake = false; };
   };
 
-  outputs = { self, nixpkgs, surefold, pelican, bank-access }:
+  outputs = { self, nixpkgs, pelican, bank-access, ... }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       forEach = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
@@ -23,7 +24,7 @@
           ./domain ./events ./protocol ./api ./app ./issuer ./loadtest
         ];
       };
-      bankFor = pkgs: pkgs.callPackage ./nix/package.nix { inherit src surefold pelican; access = bank-access; };
+      bankFor = pkgs: pkgs.callPackage ./nix/package.nix { inherit src pelican; access = bank-access; };
     in
     {
       packages = forEach (pkgs: rec {

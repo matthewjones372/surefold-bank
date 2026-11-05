@@ -2,16 +2,16 @@ package bank.app
 
 import bank.domain.Bank
 import bank.issuer.TestIssuer
+import dev.surefold.app.Module
+import dev.surefold.app.single
+import dev.surefold.app.typesafe.overridingConfig
+import dev.surefold.app.use
+import dev.surefold.cluster.Cluster
+import dev.surefold.fail.fold
+import dev.surefold.fail.onLeft
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.signedInAs
-import io.github.matthewjones372.surefold.app.Module
-import io.github.matthewjones372.surefold.app.single
-import io.github.matthewjones372.surefold.app.typesafe.overridingConfig
-import io.github.matthewjones372.surefold.app.use
-import io.github.matthewjones372.surefold.cluster.Cluster
-import io.github.matthewjones372.surefold.fail.fold
-import io.github.matthewjones372.surefold.fail.onLeft
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.io.IOException

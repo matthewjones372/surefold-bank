@@ -5,9 +5,9 @@ import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.joran.JoranConfigurator
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.matthewjones372.surefold.assert.shouldBeRight
-import io.github.matthewjones372.surefold.logAnnotated
-import io.github.matthewjones372.surefold.logWarn
+import dev.surefold.assert.shouldBeRight
+import dev.surefold.logAnnotated
+import dev.surefold.logWarn
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe

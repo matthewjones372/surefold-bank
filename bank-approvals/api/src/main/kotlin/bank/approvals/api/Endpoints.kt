@@ -230,7 +230,8 @@ val verify = endpoint {
 
 val listQuery = queryParam<String>(
     "list",
-    description = "waiting: requests the caller may approve and has not; mine: asked by the caller; recent: everything they may read",
+    description = "waiting: requests the caller may approve and has not; " +
+        "mine: asked by the caller; recent: everything they may read",
 )
 
 val requests = endpoint(listQuery) {

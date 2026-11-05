@@ -5,8 +5,8 @@ import bank.domain.TransferError
 import bank.domain.TransferId
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.matthewjones372.surefold.assert.shouldBeLeft
-import io.github.matthewjones372.surefold.assert.shouldBeRight
+import dev.surefold.assert.shouldBeLeft
+import dev.surefold.assert.shouldBeRight
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -44,6 +44,16 @@ class TraceActorsSpec {
         return Held(spans)
     }
 
+    /** Accounts opened, so the traced transfers find their shards already placed. */
+    private fun opened(first: TestNode) {
+        (1..6).forEach { n ->
+            val from = "from-$n-$run"
+            val to = "to-$n-$run"
+            first.bank.open(AccountId(from), "ada", gbp(5_000), "open:$from").shouldBeRight()
+            first.bank.open(AccountId(to), "bob", gbp(0), "open:$to").shouldBeRight()
+        }
+    }
+
     @Test
     fun `a transfer's trace holds its debit and credit, made on the nodes the accounts live on`() {
         val config = """
@@ -53,24 +63,15 @@ class TraceActorsSpec {
         """.trimIndent()
         TestCluster(3, extra = config).running { nodes ->
             val first = nodes.first()
-            // A message that reaches a shard still being handed to the node that just joined is kept and sent on
-            // later, outside the trace it came in (surefold's sharding keeps the message, not what it carried). So the
-            // traced requests wait until every shard they touch has settled where it will stay.
             withClue("every node sees three members up") {
                 eventually {
                     nodes.all { node -> node.cluster.view.members.count { it.status.name == "Up" } == 3 }
-                } shouldBe
-                    true
+                } shouldBe true
             }
+            opened(first)
             (1..6).forEach { n ->
-                val from = "from-$n-$run"
-                val to = "to-$n-$run"
-                // Each answered by its account, or by its saga as not yet started: their shards are in place.
-                first.bank.open(AccountId(from), "ada", gbp(5_000), "open:$from").shouldBeRight()
-                first.bank.open(AccountId(to), "bob", gbp(0), "open:$to").shouldBeRight()
-                first.bank.transferStatus(
-                    TransferId("t-$n-$run"),
-                ).shouldBeLeft() shouldBe TransferError.NoSuchTransfer("t-$n-$run")
+                first.bank.transferStatus(TransferId("t-$n-$run")).shouldBeLeft() shouldBe
+                    TransferError.NoSuchTransfer("t-$n-$run")
             }
             val traces = (1..6).map { n ->
                 val from = "from-$n-$run"
@@ -92,7 +93,6 @@ class TraceActorsSpec {
                 status shouldBe 200
                 trace
             }
-
             // Each node exports its spans on its own schedule, so wait for every span the trace is checked for, not
             // only the last ones made: the request's own spans can reach Tempo after the accounts' do.
             val expected = listOf(

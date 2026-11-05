@@ -3,8 +3,8 @@ package bank.app
 import bank.domain.AccountId
 import bank.domain.TransferId
 import bank.domain.TransferStatus
-import io.github.matthewjones372.surefold.assert.shouldBeRight
-import io.github.matthewjones372.surefold.parMap
+import dev.surefold.assert.shouldBeRight
+import dev.surefold.parMap
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -53,7 +53,8 @@ class ConservationSpec {
         withClue("every transfer settles and the read models catch up: ${reads.transfers()} ${reads.ledger()}") {
             eventually(60) {
                 val counts = reads.transfers()
-                counts.pending == 0L && counts.completed + counts.rejected + counts.refunded == transfers.size.toLong() &&
+                counts.pending == 0L &&
+                    counts.completed + counts.rejected + counts.refunded == transfers.size.toLong() &&
                     reads.ledger().conserved
             } shouldBe true
         }

@@ -9,16 +9,16 @@ import bank.approvals.protocol.wire.History
 import bank.approvals.protocol.wire.Linked
 import bank.approvals.protocol.wire.Refused
 import bank.approvals.protocol.wire.SubjectEvent
-import io.github.matthewjones372.surefold.actor.EventCodec
-import io.github.matthewjones372.surefold.actor.remote.Codecs
-import io.github.matthewjones372.surefold.actor.remote.MessageCodec
-import io.github.matthewjones372.surefold.actor.remote.WireException
-import io.github.matthewjones372.surefold.actor.remote.WireIn
-import io.github.matthewjones372.surefold.actor.remote.WireOut
-import io.github.matthewjones372.surefold.actor.remote.kotlinx.Kotlinx
-import io.github.matthewjones372.surefold.actor.versioned
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.fold
+import dev.surefold.actor.EventCodec
+import dev.surefold.actor.remote.Codecs
+import dev.surefold.actor.remote.MessageCodec
+import dev.surefold.actor.remote.WireException
+import dev.surefold.actor.remote.WireIn
+import dev.surefold.actor.remote.WireOut
+import dev.surefold.actor.remote.kotlinx.Kotlinx
+import dev.surefold.actor.versioned
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.protobuf.ProtoBuf
 import bank.approvals.protocol.wire.Act as WireAct

@@ -5,24 +5,24 @@ import bank.api.OpsNode
 import bank.api.OpsSnapshot
 import bank.domain.Currencies
 import bank.protocol.wire.NodeSnapshot
-import io.github.matthewjones372.surefold.Reading
-import io.github.matthewjones372.surefold.actor.OffsetStore
-import io.github.matthewjones372.surefold.actor.ShardedJournal
-import io.github.matthewjones372.surefold.actor.Topic
-import io.github.matthewjones372.surefold.cluster.Cluster
-import io.github.matthewjones372.surefold.gauge
-import io.github.matthewjones372.surefold.logWarn
-import io.github.matthewjones372.surefold.readings
-import io.github.matthewjones372.surefold.stream.Running
-import io.github.matthewjones372.surefold.stream.Stream
-import io.github.matthewjones372.surefold.stream.StreamBackend
-import io.github.matthewjones372.surefold.stream.map
-import io.github.matthewjones372.surefold.stream.mapPar
-import io.github.matthewjones372.surefold.stream.restartOnDefect
-import io.github.matthewjones372.surefold.stream.runFold
-import io.github.matthewjones372.surefold.stream.start
-import io.github.matthewjones372.surefold.stream.tick
-import io.github.matthewjones372.surefold.stream.toSequence
+import dev.surefold.Reading
+import dev.surefold.actor.OffsetStore
+import dev.surefold.actor.ShardedJournal
+import dev.surefold.actor.Topic
+import dev.surefold.cluster.Cluster
+import dev.surefold.gauge
+import dev.surefold.logWarn
+import dev.surefold.readings
+import dev.surefold.stream.Running
+import dev.surefold.stream.Stream
+import dev.surefold.stream.StreamBackend
+import dev.surefold.stream.map
+import dev.surefold.stream.mapPar
+import dev.surefold.stream.restartOnDefect
+import dev.surefold.stream.runFold
+import dev.surefold.stream.start
+import dev.surefold.stream.tick
+import dev.surefold.stream.toSequence
 import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.concurrent.ConcurrentHashMap
@@ -102,7 +102,7 @@ fun opsPublisher(meter: NodeMeter, topic: Topic<NodeSnapshot>, backend: StreamBa
             topic.publish(meter.snapshot())
             1L
         }
-        .restartOnDefect(io.github.matthewjones372.surefold.Schedule.spaced(1.seconds))
+        .restartOnDefect(dev.surefold.Schedule.spaced(1.seconds))
         .runFold(0L) { published, now -> published + now }
         .start(backend)
 
@@ -227,7 +227,7 @@ fun bookGauges(
     val first = read()
     return Stream.tick(every, Unit)
         .map { _ -> read() }
-        .restartOnDefect(io.github.matthewjones372.surefold.Schedule.spaced(every))
+        .restartOnDefect(dev.surefold.Schedule.spaced(every))
         .runFold(first) { total, now -> total + now }
         .start(backend)
 }

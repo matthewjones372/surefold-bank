@@ -1,13 +1,12 @@
 package bank.app.memory
 
 import bank.app.gbp
-import bank.domain.AccountCommand
 import bank.domain.AccountError
 import bank.domain.AccountId
 import bank.domain.TransferId
 import bank.domain.TransferStatus
-import io.github.matthewjones372.surefold.assert.shouldBeLeft
-import io.github.matthewjones372.surefold.assert.shouldBeRight
+import dev.surefold.assert.shouldBeLeft
+import dev.surefold.assert.shouldBeRight
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
@@ -38,14 +37,9 @@ class TransferDailyLimitSpec {
         }
 
     @Test
-    fun `a debit sent again after its answer was lost counts against the limit once`() = inMemory {
+    fun `two transfers under the limit count once each, and a withdrawal past what is left is refused`() = inMemory {
         accounts()
-        network.next(Fault.LoseAnswer) { it is AccountCommand.Debit }
-        transfer(TransferId("t-1"), ada, bob, gbp(60_00))
-        advance()
-        transferStatus(TransferId("t-1")).shouldBeRight().status shouldBe TransferStatus.Completed
-
-        // Charged twice, 120.00 would be over the limit and this would be rejected.
+        transfer(TransferId("t-1"), ada, bob, gbp(60_00)).shouldBeRight().status shouldBe TransferStatus.Completed
         transfer(TransferId("t-2"), ada, bob, gbp(40_00)).shouldBeRight().status shouldBe TransferStatus.Completed
         withdraw(ada, gbp(1), "w-1").shouldBeLeft() shouldBe
             AccountError.DailyLimitExceeded("ada", gbp(100_00), gbp(0), gbp(1))

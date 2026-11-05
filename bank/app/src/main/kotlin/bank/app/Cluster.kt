@@ -2,19 +2,19 @@ package bank.app
 
 import bank.api.ClusterView
 import bank.api.Member
-import io.github.matthewjones372.surefold.actor.ActorRef
-import io.github.matthewjones372.surefold.actor.Behaviour
-import io.github.matthewjones372.surefold.actor.Reply
-import io.github.matthewjones372.surefold.actor.Signal
-import io.github.matthewjones372.surefold.actor.ask
-import io.github.matthewjones372.surefold.actor.become
-import io.github.matthewjones372.surefold.actor.remote.Codecs
-import io.github.matthewjones372.surefold.actor.remote.MessageCodec
-import io.github.matthewjones372.surefold.actor.remote.Node
-import io.github.matthewjones372.surefold.actor.remote.WireIn
-import io.github.matthewjones372.surefold.actor.remote.WireOut
-import io.github.matthewjones372.surefold.actor.stay
-import io.github.matthewjones372.surefold.cluster.Cluster
+import dev.surefold.actor.ActorRef
+import dev.surefold.actor.Behaviour
+import dev.surefold.actor.Reply
+import dev.surefold.actor.Signal
+import dev.surefold.actor.ask
+import dev.surefold.actor.become
+import dev.surefold.actor.remote.Codecs
+import dev.surefold.actor.remote.MessageCodec
+import dev.surefold.actor.remote.Node
+import dev.surefold.actor.remote.WireIn
+import dev.surefold.actor.remote.WireOut
+import dev.surefold.actor.stay
+import dev.surefold.cluster.Cluster
 import kotlin.time.Duration.Companion.seconds
 
 /** Where the singleton runs, and with it the sweeper, asked of it wherever it is. */

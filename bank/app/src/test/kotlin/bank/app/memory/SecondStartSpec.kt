@@ -1,17 +1,26 @@
 package bank.app.memory
 
+import bank.app.Screener
+import bank.app.Screening
 import bank.app.gbp
-import bank.domain.AccountCommand
 import bank.domain.AccountId
+import bank.domain.ScreeningDecision
+import bank.domain.ScreeningOutcome
 import bank.domain.TransferError
 import bank.domain.TransferId
 import bank.domain.TransferStatus
-import io.github.matthewjones372.surefold.assert.shouldBeLeft
-import io.github.matthewjones372.surefold.assert.shouldBeRight
-import io.kotest.matchers.collections.shouldBeEmpty
+import bank.domain.WhenUnanswered
+import dev.surefold.assert.shouldBeLeft
+import dev.surefold.assert.shouldBeRight
+import dev.surefold.fail.right
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 
 /** A start with an id the saga already has: a caller's retry, the id reused for another transfer, or one mid-way. */
 class SecondStartSpec {
@@ -48,27 +57,52 @@ class SecondStartSpec {
     }
 
     @Test
-    fun `a start while the first is still moving waits for it, and both are answered once it settles`() = inMemory {
-        opened(ada, gbp(10_00))
-        opened(bob, gbp(0))
-        // The first debit is lost on the way, so the saga is still pending until its leg timer sends it again.
-        network.next(Fault.Drop) { it is AccountCommand.Debit }
+    fun `a different transfer under an id still moving is refused, and the same one waits for it`() {
+        val asked = AtomicInteger()
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val screening = Screening.On(
+            Screener { _, _ ->
+                asked.incrementAndGet()
+                entered.countDown()
+                release.await(5, TimeUnit.SECONDS)
+                ScreeningDecision(ScreeningOutcome.Approved, null, null, "ok").right()
+            },
+            5.seconds,
+            WhenUnanswered.Approve,
+        )
+        inMemory(screening = screening) {
+            opened(ada, gbp(10_00))
+            opened(bob, gbp(0))
+            val first = CompletableFuture<Unit>()
+            Thread.ofVirtual().start {
+                try {
+                    transfer(t1, ada, bob, gbp(7_00)).shouldBeRight()
+                    first.complete(Unit)
+                } catch (failed: Throwable) {
+                    first.completeExceptionally(failed)
+                }
+            }
+            check(entered.await(5, TimeUnit.SECONDS)) { "the transfer did not reach screening" }
 
-        val first = start(t1, ada, bob, gbp(7_00))
-        val second = start(t1, ada, bob, gbp(7_00))
-        val reused = start(t1, ada, bob, gbp(1))
+            transfer(t1, ada, bob, gbp(1)).shouldBeLeft() shouldBe TransferError.TransferIdReused("t-1")
+            val same = CompletableFuture<Unit>()
+            Thread.ofVirtual().start {
+                try {
+                    transfer(t1, ada, bob, gbp(7_00)).shouldBeRight()
+                    same.complete(Unit)
+                } catch (failed: Throwable) {
+                    same.completeExceptionally(failed)
+                }
+            }
+            release.countDown()
+            first.get(10, TimeUnit.SECONDS)
+            same.get(10, TimeUnit.SECONDS)
 
-        first.answers.shouldBeEmpty()
-        second.answers.shouldBeEmpty()
-        // A different transfer under the id is refused at once, moving or not.
-        reused.answers.single().shouldBeLeft() shouldBe TransferError.TransferIdReused("t-1")
-        transferStatus(t1).shouldBeRight().status shouldBe TransferStatus.Pending
-
-        advance()
-
-        first.answers.single().shouldBeRight().status shouldBe TransferStatus.Completed
-        second.answers.single() shouldBe first.answers.single()
-        transferEvents(t1).kinds() shouldBe listOf("Requested", "DestinationCredited")
-        balanceOf(ada) shouldBe gbp(3_00)
+            asked.get() shouldBe 1
+            transfer(t1, ada, bob, gbp(7_00)).shouldBeRight().status shouldBe TransferStatus.Completed
+            transferEvents(t1).kinds() shouldBe listOf("Requested", "Screened", "DestinationCredited")
+            balanceOf(ada) shouldBe gbp(3_00)
+        }
     }
 }

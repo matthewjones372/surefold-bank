@@ -3,7 +3,7 @@ package bank.app
 import bank.api.Caller
 import bank.domain.AccountId
 import bank.domain.TransferId
-import io.github.matthewjones372.surefold.assert.shouldBeRight
+import dev.surefold.assert.shouldBeRight
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe

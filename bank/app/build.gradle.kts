@@ -1,7 +1,7 @@
 plugins {
     application
     // Checks every graph in this project on `check`, and draws each one.
-    id("io.github.matthewjones372.surefold.wiring")
+    id("dev.surefold.wiring")
 }
 
 application {
@@ -10,9 +10,25 @@ application {
 }
 
 val surefoldVersion: String = providers.gradleProperty("surefoldVersion").get()
+val surefoldIntegrationsVersion: String = providers.gradleProperty("surefoldIntegrationsVersion").get()
 val pelicanVersion: String = providers.gradleProperty("pelicanVersion").get()
 
-fun surefold(module: String) = "io.github.matthewjones372:$module:$surefoldVersion"
+// Integration modules shipped at 0.18.0; everything else in dev.surefold, including the durable saga, is core 0.18.1.
+private val integrationModules = setOf(
+    "surefold-app-typesafe",
+    "surefold-app-liquibase",
+    "surefold-app-cluster",
+    "surefold-cluster-kubernetes",
+    "surefold-kafka",
+    "surefold-slf4j",
+    "surefold-micrometer",
+    "surefold-otel",
+)
+
+fun surefold(module: String): String {
+    val version = if (module in integrationModules) surefoldIntegrationsVersion else surefoldVersion
+    return "dev.surefold:$module:$version"
+}
 
 dependencies {
     constraints {
@@ -33,6 +49,7 @@ dependencies {
 
     // Entities on whichever node owns them, remembered in Postgres, and read back into read models.
     implementation(surefold("surefold-cluster"))
+    implementation(surefold("surefold-cluster-saga"))
     implementation(surefold("surefold-app-cluster"))
     // Found by `join = kubernetes` at start (surefold spec 0096); nothing here compiles against it.
     runtimeOnly(surefold("surefold-cluster-kubernetes"))

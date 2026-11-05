@@ -5,10 +5,10 @@ import bank.domain.Currency
 import bank.domain.Listed
 import bank.domain.WhenUnanswered
 import com.typesafe.config.Config
-import io.github.matthewjones372.surefold.app.Module
-import io.github.matthewjones372.surefold.app.single
-import io.github.matthewjones372.surefold.app.typesafe.config
-import io.github.matthewjones372.surefold.app.typesafe.loadedConfig
+import dev.surefold.app.Module
+import dev.surefold.app.single
+import dev.surefold.app.typesafe.config
+import dev.surefold.app.typesafe.loadedConfig
 import kotlin.time.Duration
 
 data class WebSettings(val host: String, val port: Int)

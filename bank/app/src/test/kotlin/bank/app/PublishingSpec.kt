@@ -6,8 +6,8 @@ import bank.domain.TransferStatus
 import bank.events.v1.AccountEvent
 import bank.events.v1.TransferEvent
 import com.fasterxml.jackson.databind.ObjectMapper
+import dev.surefold.assert.shouldBeRight
 import io.apicurio.registry.serde.protobuf.ProtobufKafkaDeserializer
-import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.shouldBe

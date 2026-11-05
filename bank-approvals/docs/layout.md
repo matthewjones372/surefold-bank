@@ -67,7 +67,7 @@ bank-approvals/
 
 | From | What | How |
 |---|---|---|
-| Surefold | entities, journal, timers, Kafka, cluster | mavenLocal snapshot, or `-PsurefoldSource` |
+| Surefold | entities, journal, timers, Kafka, cluster | Maven Central: core `0.18.1`, integrations `0.18.0` |
 | Pelican | endpoints, pages, pelican-oidc, pelican-test | mavenLocal snapshot, or `-PpelicanSource` |
 | surefold-bank | `surefold-bank-events`, which gains `bank.approval-events` (approvals-published) | `publishToMavenLocal` |
 | surefold-bank | the test issuer (bank spec 0021), for tests and compose | published as `surefold-bank-issuer` beside the events |

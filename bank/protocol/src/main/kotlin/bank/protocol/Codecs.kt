@@ -5,18 +5,18 @@ import bank.domain.AccountEvent
 import bank.domain.TransferEvent
 import bank.protocol.wire.GetBalance
 import bank.protocol.wire.NodeSnapshot
-import io.github.matthewjones372.surefold.actor.EventCodec
-import io.github.matthewjones372.surefold.actor.StateCodec
-import io.github.matthewjones372.surefold.actor.remote.MessageCodec
-import io.github.matthewjones372.surefold.actor.remote.WireException
-import io.github.matthewjones372.surefold.actor.remote.WireIn
-import io.github.matthewjones372.surefold.actor.remote.WireOut
-import io.github.matthewjones372.surefold.actor.remote.delivery
-import io.github.matthewjones372.surefold.actor.remote.kotlinx.Kotlinx
-import io.github.matthewjones372.surefold.actor.versioned
-import io.github.matthewjones372.surefold.actor.versionedState
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.fold
+import dev.surefold.actor.EventCodec
+import dev.surefold.actor.StateCodec
+import dev.surefold.actor.remote.MessageCodec
+import dev.surefold.actor.remote.WireException
+import dev.surefold.actor.remote.WireIn
+import dev.surefold.actor.remote.WireOut
+import dev.surefold.actor.remote.delivery
+import dev.surefold.actor.remote.kotlinx.Kotlinx
+import dev.surefold.actor.versioned
+import dev.surefold.actor.versionedState
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
 import kotlinx.serialization.SerializationException
 import bank.protocol.wire.Account as WireAccount
 import bank.protocol.wire.AccountCommand as WireAccountCommand

@@ -38,66 +38,39 @@ class ApiSpec {
                 val client = anyone.calling("ada")
                 val bob = anyone.calling("bob")
                 val ops = anyone.calling("olga", "ops")
-                client.outcome(
-                    openAccount,
-                    In2("ada", OpenAccount("GBP", "10.00")),
-                ).shouldBeOk().balance shouldBe pounds("10.00")
+                client.outcome(openAccount, In2("ada", OpenAccount("GBP", "10.00"))).shouldBeOk().balance shouldBe
+                    pounds("10.00")
                 bob.outcome(openAccount, In2("bob", OpenAccount("GBP"))).shouldBeOk()
-
-                client.outcome(
-                    openAccount,
-                    In2("ada", OpenAccount("GBP", "10.00")),
-                ).shouldBeOk().balance shouldBe pounds("10.00")
+                client.outcome(openAccount, In2("ada", OpenAccount("GBP", "10.00"))).shouldBeOk().balance shouldBe
+                    pounds("10.00")
                 val clash = anyone.calling("eve").outcome(openAccount, In2("ada", OpenAccount("GBP", "10.00")))
                 (clash as Outcome.Err).error.shouldBeInstanceOf<AccountError.AlreadyOpen>()
-
-                client.outcome(
-                    deposit,
-                    In2("ada", Movement(pounds("5"), "pay-1")),
-                ).shouldBeOk().balance shouldBe pounds("15.00")
-                client.outcome(
-                    deposit,
-                    In2("ada", Movement(pounds("5"), "pay-1")),
-                ).shouldBeOk().balance shouldBe pounds("15.00")
-
+                client.outcome(deposit, In2("ada", Movement(pounds("5"), "pay-1"))).shouldBeOk().balance shouldBe
+                    pounds("15.00")
+                client.outcome(deposit, In2("ada", Movement(pounds("5"), "pay-1"))).shouldBeOk().balance shouldBe
+                    pounds("15.00")
                 val short = bob.outcome(withdraw, In2("bob", Movement(pounds("0.01"), "w-1")))
                 (short as Outcome.Err).error shouldBe
                     InsufficientFunds("bob", pounds("0.00"), pounds("0.01"), "Account bob has 0.00 GBP, not 0.01 GBP")
-
                 val missing = client.outcome(getAccount, "nobody")
                 (missing as Outcome.Err).error shouldBe AccountError.NoSuchAccount("nobody")
-
-                val moved = client.outcome(
-                    transfer,
-                    In2("t-1", TransferRequest("ada", "bob", pounds("7.00"))),
-                ).shouldBeOk()
+                val moved = client.outcome(transfer, In2("t-1", TransferRequest("ada", "bob", pounds("7.00"))))
+                    .shouldBeOk()
                 moved.status shouldBe "Completed"
                 moved.amount shouldBe pounds("7.00")
-                client.outcome(
-                    transfer,
-                    In2("t-1", TransferRequest("ada", "bob", pounds("7.00"))),
-                ).shouldBeOk().status shouldBe
-                    "Completed"
+                client.outcome(transfer, In2("t-1", TransferRequest("ada", "bob", pounds("7.00")))).shouldBeOk()
+                    .status shouldBe "Completed"
                 val reused = client.outcome(transfer, In2("t-1", TransferRequest("ada", "bob", pounds("0.01"))))
                 (reused as Outcome.Err).error shouldBe TransferError.TransferIdReused("t-1")
-                (
-                    client.outcome(
-                        getTransfer,
-                        "t-404",
-                    ) as Outcome.Err
-                    ).error shouldBe TransferError.NoSuchTransfer("t-404")
-
+                (client.outcome(getTransfer, "t-404") as Outcome.Err).error shouldBe
+                    TransferError.NoSuchTransfer("t-404")
                 client.outcome(getAccount, "ada").shouldBeOk().balance shouldBe pounds("8.00")
                 bob.outcome(getAccount, "bob").shouldBeOk().balance shouldBe pounds("7.00")
-
                 eventually { ops.call(ledger, Unit).let { it.conserved && it.eventsProjected >= 5 } } shouldBe true
-                client.call(
-                    statement,
-                    In3("ada", 10, null),
-                ).map { it.kind } shouldBe listOf("debited", "deposited", "opened")
+                client.call(statement, In3("ada", 10, null)).map { it.kind } shouldBe
+                    listOf("debited", "deposited", "opened")
                 // The next page is the lines before the last one seen.
                 client.call(statement, In3("ada", 10, 3L)).map { it.kind } shouldBe listOf("deposited", "opened")
-
                 // OpenMetrics, a byte stream to Pelican's client: read as text, as Prometheus does.
                 val scraped = java.net.http.HttpClient.newHttpClient().send(
                     java.net.http.HttpRequest.newBuilder(java.net.URI.create("${node.server.baseUrl}/metrics")).build(),

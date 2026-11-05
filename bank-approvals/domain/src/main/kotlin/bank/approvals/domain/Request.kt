@@ -1,8 +1,8 @@
 package bank.approvals.domain
 
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.left
-import io.github.matthewjones372.surefold.fail.right
+import dev.surefold.fail.Either
+import dev.surefold.fail.left
+import dev.surefold.fail.right
 import java.time.Instant
 
 // A request for approval as a saga (bank spec 0019): each step an event, the next read off the state. Every act

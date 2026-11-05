@@ -131,7 +131,8 @@ private fun RequestEvent.origin(): ApprovalEvent.Origin? = when (this) {
 
     is RequestEvent.ApplyFailed -> origin
 
-    is RequestEvent.AutoApproved, is RequestEvent.AwaitingApproval, is RequestEvent.ApprovalGiven, is RequestEvent.Superseded,
+    is RequestEvent.AutoApproved, is RequestEvent.AwaitingApproval,
+    is RequestEvent.ApprovalGiven, is RequestEvent.Superseded,
     is RequestEvent.Expired,
     -> null
 }?.takeIf { it != Origin.NONE }?.let {

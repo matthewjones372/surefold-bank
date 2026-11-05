@@ -1,54 +1,65 @@
 package bank.app
 
 import bank.domain.AccountCommand
+import bank.domain.AccountEvent
 import bank.domain.AccountId
+import bank.domain.Currency
+import bank.domain.Money
+import bank.domain.ScreeningDecision
 import bank.domain.Step
 import bank.domain.Transfer
 import bank.domain.TransferError
 import bank.domain.TransferEvent
 import bank.domain.TransferId
-import bank.domain.after
+import bank.domain.TransferStatus
+import bank.domain.TransferView
+import bank.domain.Unavailable
+import bank.domain.WhenUnanswered
 import bank.domain.evolve
-import bank.domain.next
 import bank.domain.screened
 import bank.domain.unanswered
 import bank.domain.view
 import bank.protocol.AccountAnswer
 import bank.protocol.AccountAsk
+import bank.protocol.AccountEvents
 import bank.protocol.AccountMessage
 import bank.protocol.Kinds
-import bank.protocol.LegAnswered
-import bank.protocol.LegTimedOut
-import bank.protocol.Nudge
-import bank.protocol.ScreeningAnswered
-import bank.protocol.ScreeningUnanswered
-import bank.protocol.TransferAnswer
-import bank.protocol.TransferAsk
 import bank.protocol.TransferEvents
-import bank.protocol.TransferMessage
-import bank.protocol.TransferRequest
-import io.github.matthewjones372.surefold.Carriers
-import io.github.matthewjones372.surefold.actor.ActorRef
-import io.github.matthewjones372.surefold.actor.Address
-import io.github.matthewjones372.surefold.actor.Behaviour
-import io.github.matthewjones372.surefold.actor.Ctx
-import io.github.matthewjones372.surefold.actor.Effects
-import io.github.matthewjones372.surefold.actor.JournalConflict
-import io.github.matthewjones372.surefold.actor.Next
-import io.github.matthewjones372.surefold.actor.PersistenceId
-import io.github.matthewjones372.surefold.actor.Remembered
-import io.github.matthewjones372.surefold.actor.Reply
-import io.github.matthewjones372.surefold.actor.Start
-import io.github.matthewjones372.surefold.actor.persistent
-import io.github.matthewjones372.surefold.counter
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.fold
-import io.github.matthewjones372.surefold.increment
-import io.github.matthewjones372.surefold.logDebug
-import io.github.matthewjones372.surefold.otel.tracedSpan
-import io.opentelemetry.api.OpenTelemetry
+import dev.surefold.Settled
+import dev.surefold.actor.ActorRef
+import dev.surefold.actor.AskFailure
+import dev.surefold.actor.Journal
+import dev.surefold.actor.PersistenceId
+import dev.surefold.actor.StateCodec
+import dev.surefold.actor.ask
+import dev.surefold.actor.events
+import dev.surefold.cluster.saga.Diverged
+import dev.surefold.cluster.saga.Durable
+import dev.surefold.cluster.saga.DurableScope
+import dev.surefold.cluster.saga.Overtaken
+import dev.surefold.cluster.saga.Sagas
+import dev.surefold.cluster.saga.Stuck
+import dev.surefold.cluster.saga.Unsettled
+import dev.surefold.cluster.saga.durableSaga
+import dev.surefold.cluster.saga.run
+import dev.surefold.counter
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.left
+import dev.surefold.fail.right
+import dev.surefold.increment
+import dev.surefold.logDebug
+import dev.surefold.otel.tracedSpan
+import dev.surefold.timeoutOrNull
 import io.opentelemetry.api.trace.Tracer
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.math.BigDecimal
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /** Where an account entity is, by id, on whichever node asks. */
 fun interface AccountsById {
@@ -56,275 +67,515 @@ fun interface AccountsById {
 }
 
 /**
- * An account's answer to one leg, turned into a message to the saga itself. It is registered as a pending reply when
- * it crosses to another node, and invoked there when the answer comes back.
+ * What one transfer is asked to do. [whenUnanswered] null means this transfer is not screened: it is part of the
+ * journalled input, so a node that resumes the saga takes the same steps even if screening has since been switched.
  */
-private class LegReply(private val saga: ActorRef<TransferMessage>, private val step: Step) : Reply<AccountAnswer> {
-    override val address: Address get() = saga.address
-
-    override fun invoke(answer: AccountAnswer) = saga.tell(LegAnswered(step, answer))
-}
-
-/** Where an account's answer to a close goes: nowhere, since a close lost only leaves a leg open (spec 0013). */
-private class Unheeded(private val saga: ActorRef<TransferMessage>) : Reply<AccountAnswer> {
-    override val address: Address get() = saga.address
-
-    override fun invoke(answer: AccountAnswer) = Unit
-}
-
-private const val LEG = "leg"
-private const val SCREEN = "screen"
+internal data class TransferInput(
+    val from: AccountId,
+    val to: AccountId,
+    val amount: Money,
+    val whenUnanswered: WhenUnanswered?,
+)
 
 /**
- * One transfer, as a saga (spec 0001): each step but a debit heard is an event, and the next step is read off the
- * state, so a saga recovered on another node carries on from where its last event left it. One recovered before its
- * credit was written debits again, which the account answers as applied (spec 0031). The replies waiting for it to
- * settle are this incarnation's only: after a move they are gone, and the caller's own timeout answers it as still
- * pending. A transfer's id is new when its saga first starts, so it starts assuming new and reads its journal only
- * once a first command shows otherwise (spec 0031, surefold spec 0198).
+ * Why a transfer's saga stopped short of completing. The HTTP API still answers a view: the events written on the
+ * way say whether it was rejected or refunded. A declared failure is what makes the debit's undo run.
  */
-fun transfer(
-    id: TransferId,
+internal enum class TransferHalt { Rejected, Refunded }
+
+/**
+ * The saga's own journal. Not [Kinds.TRANSFER]: that stream is the published transfer events, which a projection reads.
+ */
+internal const val TRANSFER_SAGA = "bank.transfer"
+
+/** The input claimed for an id, so a second start with different details is refused before the saga is asked. */
+private const val TRANSFER_CLAIM = "transfer-claim"
+
+/**
+ * One transfer as a durable saga (spec 0034): each step is journalled, and a run that dies resumes from the last
+ * step that ended. The accounts stay the bank's own actors. The debit is not a transfer event — the account's
+ * `Debited` is that record (spec 0031) — and a credit the destination refuses fails the saga so the debit's undo
+ * gives the money back.
+ */
+internal fun transferSaga(
+    journal: Journal,
     accounts: AccountsById,
     legTimeout: Duration,
-    screening: Screening = Screening.Off,
-    tracer: Tracer = OpenTelemetry.noop().getTracer("surefold-bank"),
-): Behaviour<TransferMessage, Remembered<Transfer>, JournalConflict> {
-    val waiting = ArrayList<Reply<TransferAnswer>>()
-    val screens = screening is Screening.On
-    // A saga can be driven twice at once, by its start and by the sweeper's nudge: harmless for a leg, which is
-    // idempotent, but one call to the check each is enough. The timer always ends the wait.
-    var asking = false
+    screening: Screening,
+    tracer: Tracer,
+): Durable<TransferInput, TransferHalt, TransferView> = durableSaga(
+    TRANSFER_SAGA,
+    Inputs,
+    Halts,
+    Views,
+) { input ->
+    TransferBody(this, input, journal, accounts, legTimeout, screening, tracer).move()
+}
 
-    // The leg this incarnation has sent and is waiting on. Its timer sends it again, so a nudge that finds the saga
-    // still on it sends nothing.
-    var sent: Step? = null
+/** Starts, resumes and reads transfers. [runs] is the cluster's; tests drive [saga] on the calling thread. */
+class DurableTransfers internal constructor(
+    private val journal: Journal,
+    private val screening: Screening,
+    private val askTimeout: Duration,
+    private val saga: Durable<TransferInput, TransferHalt, TransferView>,
+    private val runs: Sagas<TransferInput, TransferHalt, TransferView>? = null,
+) : TransferMoves {
+    private val gates = ConcurrentHashMap<String, Any>()
 
-    // Where the saga is ahead of its journal: a debit it has heard but not written (spec 0031). The account's own
-    // `Debited` is the record, so a saga that restarts without this sends the debit again and hears it applied.
-    var heard: Transfer? = null
-
-    /** The check asked, and its answer, or its silence, told to [saga]. */
-    fun screened(on: Screening.On, step: Step.Screen, saga: ActorRef<TransferMessage>) =
-        on.screener.screen(id, step).fold(
-            { none ->
-                logDebug("transfer ${id.value}: screening gave no decision: ${none.why}")
-                saga.tell(ScreeningUnanswered)
-            },
-            { decision -> saga.tell(ScreeningAnswered(decision)) },
-        )
-
-    // The check is asked on a virtual thread, and its answer comes back as a message, as an account's does. The timer
-    // decides for it if it is slow; a failure decides at once. A saga that moves asks again, and gets the same answer.
-    fun Ctx<TransferMessage>.screen(on: Screening.On, step: Step.Screen) {
-        if (asking) return
-        asking = true
-        timers.after(SCREEN, on.timeout, ScreeningUnanswered)
-        val saga = self
-        // A thread of its own takes nothing from this one: what the saga carries is handed over, so the call to the
-        // check is in the transfer's trace (bank spec 0024).
-        val carried = Carriers.capture()
-        Thread.ofVirtual().name("screen-${id.value}").start {
-            Carriers.within(carried) { screened(on, step, saga) }
-        }
-    }
-
-    fun Ctx<TransferMessage>.sendLeg(step: Step, account: AccountId, command: AccountCommand) {
-        // The timer first: a leg that cannot be sent now is sent again when it fires, as one whose answer was lost is.
-        timers.after(LEG, legTimeout, LegTimedOut(step))
-        sent = step
-        try {
-            // Sent inside a span of its own, so the account's handling of it is that span's child (bank spec 0024).
-            tracer.tracedSpan("transfer ${step::class.simpleName?.lowercase()}") {
-                accounts.entity(account.value).tell(AccountAsk(command, LegReply(self, step)))
-            }
-        } catch (full: IllegalStateException) {
-            // A tell from a step throws when the region's mailbox is full, as it is when a node rejoins and every saga
-            // it recovers sends a leg at once. Failing the step would stop the saga with its money in flight.
-            counter("bank.transfer.legs_deferred").increment()
-            logDebug("transfer ${id.value}: ${full.message}; the leg goes again in $legTimeout")
-        }
-    }
-
-    // Settled, no leg of this transfer can be sent again: each account may forget the legs it applied (spec 0013).
-    // Sent on every drive that finds the saga settled, and on recovering one; a second close writes nothing.
-    fun Ctx<TransferMessage>.close(moving: Transfer.Moving) = listOf(moving.from, moving.to).forEach { account ->
-        try {
-            accounts.entity(account.value).tell(AccountAsk(AccountCommand.Close(id), Unheeded(self)))
-        } catch (full: IllegalStateException) {
-            logDebug("transfer ${id.value}: its close to $account was not sent: ${full.message}")
-        }
-    }
-
-    // A restart takes the timers with it, so a leg sent before it is waited on no longer: an incarnation that recovers
-    // a transfer still moving drives it. A new one is driven by its start alone, and sends its debit once (spec 0031).
-    fun Ctx<TransferMessage>.started(recovered: Transfer) {
-        sent = null
-        heard = null
-        if (recovered is Transfer.Moving) if (recovered.settled) close(recovered) else self.tell(Nudge)
-    }
-
-    fun Ctx<TransferMessage>.drive(written: Transfer) {
-        val state = heard ?: written
-        when (val step = state.next(id, screens)) {
-            is Step.Screen -> when (screening) {
-                is Screening.On -> screen(screening, step)
-
-                // Screening off never asks for this step.
-                Screening.Off -> Unit
-            }
-
-            Step.Done -> {
-                if (state is Transfer.Moving) {
-                    val answer: TransferAnswer = Either.Right(state.view(id))
-                    waiting.forEach { it(answer) }
-                    waiting.clear()
-                    close(state)
-                }
-                timers.cancel(LEG)
-            }
-
-            is Step.DebitSource -> sendLeg(step, step.account, step.command)
-
-            is Step.CreditDestination -> sendLeg(step, step.account, step.command)
-
-            is Step.RefundSource -> sendLeg(step, step.account, step.command)
-        }
-    }
-
-    // A step the saga has taken, counted by its event: a debit is only heard, and every other step is written before
-    // the saga goes on.
-    fun Effects<TransferEvent, Transfer>.took(
-        event: TransferEvent,
-        moving: Transfer.Moving,
-        ctx: Ctx<TransferMessage>,
-    ) = run {
-        counter("bank.transfer.steps", "event" to event::class.simpleName.orEmpty()).increment()
-        if (event is TransferEvent.SourceDebited) {
-            heard = moving.evolve(event)
-            none().then { after -> ctx.drive(after) }
+    override fun transfer(
+        id: TransferId,
+        from: AccountId,
+        to: AccountId,
+        amount: Money,
+        wait: Duration,
+    ): Either<TransferError, TransferView> {
+        val input = TransferInput(from, to, amount, (screening as? Screening.On)?.whenUnanswered)
+        claim(id.value, input).onLeft { return it.left() }
+        val cluster = runs
+        return if (cluster == null) {
+            directly(id.value, input)
         } else {
-            persist(event).then { after ->
-                heard = null
-                ctx.drive(after)
-            }
+            across(cluster, id, input, wait)
         }
     }
 
-    return persistent<TransferMessage, TransferEvent, Transfer>(
-        id = PersistenceId(Kinds.TRANSFER, id.value),
-        empty = Transfer.Unrequested,
-        codec = TransferEvents,
-        command = { ctx, written, message ->
-            val state = heard ?: written
-            when (message) {
-                is TransferAsk -> asked(id, state, message, waiting) { after -> ctx.drive(after) }
+    override fun status(id: TransferId): Either<TransferError, TransferView> = standing(id.value)
 
-                Nudge -> if (state.next(id, screens) == sent) none() else none().then { after -> ctx.drive(after) }
+    /**
+     * A transfer the read model still has open. Starting is idempotent, and `await` with nothing to wait for resumes
+     * a saga whose runner died: the waker does this when a node leaves, and the sweeper does it for one that stopped
+     * moving while its node is still up.
+     */
+    override fun wake(id: String) {
+        val cluster = runs ?: return
+        val events = transferEvents(id)
+        val requested = events.filterIsInstance<TransferEvent.Requested>().firstOrNull()
+        val folded = events.fold<TransferEvent, Transfer>(Transfer.Unrequested, Transfer::evolve)
+        val settled = (folded as? Transfer.Moving)?.settled == true
+        if (requested != null && !settled) {
+            val input = TransferInput(
+                requested.from,
+                requested.to,
+                requested.amount,
+                (screening as? Screening.On)?.whenUnanswered,
+            )
+            cluster.start(id, input, askTimeout)
+            cluster.await(id, 1.milliseconds)
+        }
+    }
 
-                is LegAnswered -> {
-                    val moving = state as? Transfer.Moving
-                    // An answer to a leg the saga has moved past: a retry's twin, arriving second.
-                    if (moving == null || moving.next(id, screens) != message.step) {
-                        none()
-                    } else {
-                        val refusal = message.answer.leftOrNull()
-                        when (val event = moving.after(message.step, refusal, now())) {
-                            null -> none()
-                            else -> took(event, moving, ctx)
-                        }
-                    }
-                }
+    private fun directly(id: String, input: TransferInput): Either<TransferError, TransferView> =
+        synchronized(gates.computeIfAbsent(id) { Any() }) {
+            val ended = try {
+                saga.run(journal, id, input)
+            } catch (stuck: Stuck) {
+                return unavailable(stuck.message, id).left()
+            } catch (unsettled: Unsettled) {
+                return unavailable(unsettled.message, id).left()
+            } catch (diverged: Diverged) {
+                return unavailable(diverged.message, id).left()
+            } catch (overtaken: Overtaken) {
+                return unavailable(overtaken.message, id).left()
+            }
+            ended.fold({ standing(id) }, { it.right() })
+        }
 
-                is LegTimedOut ->
-                    if (state.next(id, screens) == message.step) none().then { after -> ctx.drive(after) } else none()
+    private fun across(
+        cluster: Sagas<TransferInput, TransferHalt, TransferView>,
+        id: TransferId,
+        input: TransferInput,
+        wait: Duration,
+    ): Either<TransferError, TransferView> = cluster.start(id.value, input, askTimeout).fold(
+        { failure ->
+            when (failure) {
+                // Started may be on its way. If the journal has nothing of the saga, the same id again is safe.
+                AskFailure.TimedOut -> unstarted(id.value, standing(id.value), sagaStarted(id.value))
 
-                // Either is for a saga still waiting on screening; a second, or one after a move, is ignored.
-                is ScreeningAnswered ->
-                    if (state.next(id, screens) !is Step.Screen) {
-                        none().also { asking = false }
-                    } else {
-                        screened(message.decision.screened(now())) { after ->
-                            asking = false
-                            ctx.timers.cancel(SCREEN)
-                            ctx.drive(after)
-                        }
-                    }
-
-                ScreeningUnanswered -> when (screening) {
-                    is Screening.On ->
-                        if (state.next(id, screens) !is Step.Screen) {
-                            none().also { asking = false }
-                        } else {
-                            screened(unanswered(screening.whenUnanswered, now())) { after ->
-                                asking = false
-                                counter("bank.transfer.screened_unanswered").increment()
-                                ctx.timers.cancel(SCREEN)
-                                ctx.drive(after)
-                            }
-                        }
-
-                    Screening.Off -> none()
-                }
+                AskFailure.Stopped, AskFailure.Unreachable -> unavailable("transfer $id", failure).left()
             }
         },
-        event = Transfer::evolve,
-        start = Start.assumingNew,
-    ).onRecovered { ctx, recovered -> ctx.started(recovered.value) }
+        {
+            when (val outcome = cluster.await(id.value, wait)) {
+                is Durable.Outcome.Done -> outcome.value.right()
+
+                // The undo has finished, so the events fold to rejected or refunded.
+                is Durable.Outcome.Refused -> standing(id.value)
+
+                is Durable.Outcome.Running -> standing(id.value)
+
+                is Durable.Outcome.Stuck -> Unavailable(outcome.reason).left()
+
+                Durable.Outcome.Forgotten -> unstarted(id.value, standing(id.value), sagaStarted(id.value))
+            }
+        },
+    )
+
+    private fun sagaStarted(id: String): Boolean = journal.read(PersistenceId(TRANSFER_SAGA, id)).isNotEmpty()
+
+    private fun standing(id: String): Either<TransferError, TransferView> {
+        val moving = transferEvents(id).fold<TransferEvent, Transfer>(Transfer.Unrequested, Transfer::evolve)
+        val claimed = if (moving is Transfer.Moving) null else claimed(id)
+        return when {
+            moving is Transfer.Moving -> moving.view(TransferId(id)).right()
+
+            claimed != null ->
+                TransferView(id, claimed.from.value, claimed.to.value, claimed.amount, TransferStatus.Pending, null)
+                    .right()
+
+            else -> TransferError.NoSuchTransfer(id).left()
+        }
+    }
+
+    private fun transferEvents(id: String): List<TransferEvent> =
+        journal.events(PersistenceId(Kinds.TRANSFER, id), TransferEvents)
+
+    /**
+     * The same input twice is one transfer. A different one under an id already claimed is refused, and not started.
+     */
+    private fun claim(id: String, input: TransferInput): Either<TransferError.TransferIdReused, Unit> {
+        fun stored(): TransferInput? = journal.read(PersistenceId(TRANSFER_CLAIM, id)).firstOrNull()
+            ?.let { Inputs.decode(it.bytes) }
+
+        stored()?.let { kept ->
+            return if (kept == input) Unit.right() else TransferError.TransferIdReused(id).left()
+        }
+        return journal.append(PersistenceId(TRANSFER_CLAIM, id), 0, listOf(Inputs.encode(input))).fold(
+            {
+                val kept = stored()
+                if (kept == input) Unit.right() else TransferError.TransferIdReused(id).left()
+            },
+            { Unit.right() },
+        )
+    }
+
+    private fun claimed(id: String): TransferInput? =
+        journal.read(PersistenceId(TRANSFER_CLAIM, id)).firstOrNull()?.let { Inputs.decode(it.bytes) }
+}
+
+/** What the bank asks of its transfers, in place of an actor per id. */
+interface TransferMoves {
+    fun transfer(
+        id: TransferId,
+        from: AccountId,
+        to: AccountId,
+        amount: Money,
+        wait: Duration,
+    ): Either<TransferError, TransferView>
+
+    fun status(id: TransferId): Either<TransferError, TransferView>
+
+    fun wake(id: String)
 }
 
 /**
- * This behaviour, running [handler] with the state its start recovered, after that start and again after each restart:
- * surefold's `onStart` is not shown it. Behaviour's public constructor takes no batch, so this is for a behaviour that
- * steps one message at a time, as the saga does.
+ * A start that never landed. The caller sends the same id again; it is not a transfer that does not exist.
  */
-private fun <M : Any, S, E> Behaviour<M, S, E>.onRecovered(handler: (ctx: Ctx<M>, recovered: S) -> Unit) =
-    Behaviour(initial, step, signal, { ctx, state ->
-        val next = start?.invoke(this, ctx, state) ?: Next.Stay
-        handler(ctx, (next as? Next.Become)?.state ?: state)
-        next
-    })
-
-/** Screening's decision, or the bank's for it, written down; then the saga carries on from it. */
-private fun Effects<TransferEvent, Transfer>.screened(event: TransferEvent.Screened, then: (Transfer) -> Unit) = run {
-    counter("bank.transfer.steps", "event" to "Screened").increment()
-    persist(event).then(then)
+internal fun unstarted(
+    id: String,
+    standing: Either<TransferError, TransferView>,
+    sagaStarted: Boolean,
+): Either<TransferError, TransferView> {
+    if (sagaStarted) return standing
+    val pending = standing is Either.Right && standing.value.status == TransferStatus.Pending
+    val missing = standing is Either.Left && standing.value is TransferError.NoSuchTransfer
+    return if (pending || missing) {
+        Unavailable("transfer $id did not start in time; send it again with the same id").left()
+    } else {
+        standing
+    }
 }
 
-/** A start, or a question about how far it has got. The same start twice is one transfer. */
-private fun Effects<TransferEvent, Transfer>.asked(
-    id: TransferId,
-    state: Transfer,
-    message: TransferAsk,
-    waiting: MutableList<Reply<TransferAnswer>>,
-    drive: (Transfer) -> Unit,
-) = when (val request = message.request) {
-    is TransferRequest.Start ->
-        when (state) {
-            Transfer.Unrequested ->
-                persist(TransferEvent.Requested(request.from, request.to, request.amount, now()))
-                    .then { after ->
-                        waiting += message.reply
-                        drive(after)
-                    }
+private fun unavailable(message: String?, id: String) = Unavailable(message ?: "transfer $id stopped")
 
-            is Transfer.Moving ->
-                if (state.from != request.from || state.to != request.to || state.amount != request.amount) {
-                    none().then { message.reply(Either.Left(TransferError.TransferIdReused(id.value))) }
-                } else if (state.settled) {
-                    none().then { message.reply(Either.Right(state.view(id))) }
-                } else {
-                    none().then { waiting += message.reply }
+private fun unavailable(what: String, failure: AskFailure) = Unavailable(
+    when (failure) {
+        AskFailure.TimedOut -> "$what did not answer in time"
+        AskFailure.Stopped -> "$what stopped before answering"
+        AskFailure.Unreachable -> "$what is on a node that cannot be reached"
+    },
+)
+
+private class TransferBody(
+    private val scope: DurableScope<TransferHalt>,
+    private val input: TransferInput,
+    private val journal: Journal,
+    private val accounts: AccountsById,
+    private val legTimeout: Duration,
+    private val screening: Screening,
+    private val tracer: Tracer,
+) {
+    private val transfer = TransferId(scope.id)
+    private val log = TransferLog(journal, transfer)
+
+    fun move(): TransferView {
+        val requestedAt = scope.step(
+            "request",
+            Longs,
+            action = { _ ->
+                log.requested()?.atMillis ?: now().also { at ->
+                    log.append(TransferEvent.Requested(input.from, input.to, input.amount, at))
                 }
-        }
-
-    TransferRequest.Status ->
-        none().then {
-            message.reply(
-                when (state) {
-                    Transfer.Unrequested -> Either.Left(TransferError.NoSuchTransfer(id.value))
-                    is Transfer.Moving -> Either.Right(state.view(id))
-                },
+            },
+            check = { _ ->
+                log.requested()?.let { Settled.Happened(it.atMillis) } ?: Settled.DidNot
+            },
+        )
+        val policy = input.whenUnanswered
+        if (policy != null) {
+            scope.step(
+                "screen",
+                Units,
+                action = { _ -> screen(policy, requestedAt) },
+                check = { _ -> if (log.screened() != null) Settled.Happened(Unit) else Settled.DidNot },
             )
+            val moving = log.moving()
+            if (moving.status == TransferStatus.Rejected) {
+                closeBoth()
+                return moving.view(transfer)
+            }
         }
+        scope.step(
+            "debit",
+            Units,
+            action = { _ -> debit() },
+            check = { _ ->
+                when {
+                    log.has<TransferEvent.Rejected>() -> Settled.DidNot
+                    debited() -> Settled.Happened(Unit)
+                    else -> Settled.DidNot
+                }
+            },
+            undo = { _, _, _ -> refund() },
+        )
+        scope.step(
+            "credit",
+            Units,
+            action = { _ -> credit() },
+            check = { _ ->
+                when {
+                    log.has<TransferEvent.CreditRefused>() -> Settled.DidNot
+                    log.has<TransferEvent.DestinationCredited>() -> Settled.Happened(Unit)
+                    else -> Settled.DidNot
+                }
+            },
+        )
+        closeBoth()
+        return log.moving().view(transfer)
+    }
+
+    private fun screen(policy: WhenUnanswered, requestedAt: Long) {
+        val proposed = Step.Screen(input.from, input.to, input.amount, requestedAt)
+        val on = screening as? Screening.On
+        val decision = if (on == null) {
+            null
+        } else {
+            scope.timeoutOrNull(on.timeout) { on.screener.screen(transfer, proposed) }
+        }
+        val parsed: ScreeningDecision? = decision?.fold({ null }, { it })
+        if (parsed == null) counter("bank.transfer.screened_unanswered").increment()
+        val at = now()
+        if (log.screened() == null) log.append(parsed?.screened(at) ?: unanswered(policy, at))
+    }
+
+    private fun debit() {
+        if (log.has<TransferEvent.Rejected>()) scope.fail(TransferHalt.Rejected)
+        leg(input.from, AccountCommand.Debit(transfer, input.amount)).fold(
+            { refusal ->
+                if (!log.has<TransferEvent.Rejected>()) log.append(TransferEvent.Rejected(refusal.message, now()))
+                closeBoth()
+                scope.fail(TransferHalt.Rejected)
+            },
+            {
+                // Heard, not written (spec 0031): the account's Debited is the durable record of the debit.
+                counter("bank.transfer.steps", "event" to "SourceDebited").increment()
+            },
+        )
+    }
+
+    /** Gives the debit back. A refusal is tried again: the money stays in flight until the account takes it. */
+    private fun refund() {
+        val command = AccountCommand.Refund(transfer, input.amount)
+        while (leg(input.from, command) is Either.Left) pause()
+        if (!log.has<TransferEvent.SourceRefunded>()) log.append(TransferEvent.SourceRefunded(now()))
+        closeBoth()
+    }
+
+    private fun credit() {
+        if (log.has<TransferEvent.CreditRefused>()) scope.fail(TransferHalt.Refunded)
+        leg(input.to, AccountCommand.Credit(transfer, input.amount)).fold(
+            { refusal ->
+                if (!log.has<TransferEvent.CreditRefused>()) {
+                    log.append(TransferEvent.CreditRefused(refusal.message, now()))
+                }
+                scope.fail(TransferHalt.Refunded)
+            },
+            {
+                if (!log.has<TransferEvent.DestinationCredited>()) {
+                    log.append(TransferEvent.DestinationCredited(now()))
+                }
+            },
+        )
+    }
+
+    /** The account already applied this transfer's debit, so a step that began and never ended is not sent again. */
+    private fun debited(): Boolean = journal.events(PersistenceId(Kinds.ACCOUNT, input.from.value), AccountEvents)
+        .any { it is AccountEvent.Debited && it.transfer == transfer }
+
+    private fun leg(account: AccountId, command: AccountCommand): AccountAnswer {
+        while (true) {
+            val asked = try {
+                tracer.tracedSpan("transfer ${command::class.simpleName?.lowercase()}") {
+                    accounts.entity(account.value).ask<AccountMessage, AccountAnswer>(legTimeout) {
+                        AccountAsk(command, it)
+                    }
+                }
+            } catch (full: IllegalStateException) {
+                // A tell from the saga's turn throws when the account's mailbox is full, rather than waiting.
+                counter("bank.transfer.legs_deferred").increment()
+                logDebug("transfer ${scope.id}: ${full.message}; the leg goes again in $legTimeout")
+                pause()
+                continue
+            }
+            when (asked) {
+                is Either.Right -> return asked.value
+                is Either.Left -> pause()
+            }
+        }
+    }
+
+    /** A close lost only leaves a leg open (spec 0013), so a failure here does not fail the transfer. */
+    private fun closeBoth() {
+        listOf(input.from, input.to).forEach { account ->
+            try {
+                accounts.entity(account.value).ask<AccountMessage, AccountAnswer>(legTimeout) {
+                    AccountAsk(AccountCommand.Close(transfer), it)
+                }
+            } catch (_: IllegalStateException) {
+                Unit
+            }
+        }
+    }
+
+    private fun pause() {
+        try {
+            Thread.sleep(legTimeout.inWholeMilliseconds.coerceAtLeast(1))
+        } catch (interrupted: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw interrupted
+        }
+    }
+}
+
+/** The transfer's own events, on [Kinds.TRANSFER], beside the saga's step journal. */
+private class TransferLog(private val journal: Journal, private val id: TransferId) {
+    private val events = journal.events(PersistenceId(Kinds.TRANSFER, id.value), TransferEvents).toMutableList()
+
+    fun requested(): TransferEvent.Requested? = events.filterIsInstance<TransferEvent.Requested>().firstOrNull()
+
+    fun screened(): TransferEvent.Screened? = events.filterIsInstance<TransferEvent.Screened>().firstOrNull()
+
+    inline fun <reified T : TransferEvent> has(): Boolean = events.any { it is T }
+
+    fun moving(): Transfer.Moving {
+        val folded = events.fold<TransferEvent, Transfer>(Transfer.Unrequested, Transfer::evolve)
+        return folded as? Transfer.Moving ?: error("transfer ${id.value} has no request")
+    }
+
+    fun append(event: TransferEvent) {
+        val last = journal.read(PersistenceId(Kinds.TRANSFER, id.value)).lastOrNull()?.sequence ?: 0L
+        journal.append(PersistenceId(Kinds.TRANSFER, id.value), last, listOf(TransferEvents.encode(event))).fold(
+            { conflict -> error("transfer ${id.value} was written elsewhere: $conflict") },
+            { events += event },
+        )
+        if (event !is TransferEvent.Requested) {
+            counter("bank.transfer.steps", "event" to event::class.simpleName.orEmpty()).increment()
+        }
+    }
+}
+
+private object Inputs : StateCodec<TransferInput> {
+    override fun encode(state: TransferInput): ByteArray = bytes {
+        writeUTF(state.from.value)
+        writeUTF(state.to.value)
+        writeMoney(state.amount)
+        val policy = state.whenUnanswered
+        writeBoolean(policy != null)
+        if (policy != null) writeUTF(policy.name)
+    }
+
+    override fun decode(bytes: ByteArray): TransferInput = bytes.read {
+        TransferInput(
+            AccountId(readUTF()),
+            AccountId(readUTF()),
+            readMoney(),
+            if (readBoolean()) WhenUnanswered.valueOf(readUTF()) else null,
+        )
+    }
+}
+
+private object Halts : StateCodec<TransferHalt> {
+    override fun encode(state: TransferHalt): ByteArray = bytes { writeByte(state.ordinal) }
+
+    override fun decode(bytes: ByteArray): TransferHalt = bytes.read { TransferHalt.entries[readUnsignedByte()] }
+}
+
+private object Views : StateCodec<TransferView> {
+    override fun encode(state: TransferView): ByteArray = bytes {
+        writeUTF(state.id)
+        writeUTF(state.from)
+        writeUTF(state.to)
+        writeMoney(state.amount)
+        writeUTF(state.status.name)
+        writeBoolean(state.reason != null)
+        state.reason?.let { writeUTF(it) }
+    }
+
+    override fun decode(bytes: ByteArray): TransferView = bytes.read {
+        TransferView(
+            readUTF(),
+            readUTF(),
+            readUTF(),
+            readMoney(),
+            TransferStatus.valueOf(readUTF()),
+            if (readBoolean()) readUTF() else null,
+        )
+    }
+}
+
+private object Longs : StateCodec<Long> {
+    override fun encode(state: Long): ByteArray = bytes { writeLong(state) }
+
+    override fun decode(bytes: ByteArray): Long = bytes.read { readLong() }
+}
+
+private object Units : StateCodec<Unit> {
+    override fun encode(state: Unit): ByteArray = ByteArray(0)
+
+    override fun decode(bytes: ByteArray) = Unit
+}
+
+private fun DataOutputStream.writeMoney(money: Money) {
+    writeUTF(money.amount.toPlainString())
+    writeUTF(money.currency.code)
+    writeInt(money.currency.exponent)
+}
+
+private fun DataInputStream.readMoney(): Money {
+    val amount = BigDecimal(readUTF())
+    val currency = Currency(readUTF(), readInt())
+    return Money(amount.setScale(currency.exponent), currency)
+}
+
+private fun bytes(write: DataOutputStream.() -> Unit): ByteArray {
+    val stream = ByteArrayOutputStream()
+    DataOutputStream(stream).use { it.write() }
+    return stream.toByteArray()
+}
+
+private fun <A> ByteArray.read(read: DataInputStream.() -> A): A = DataInputStream(ByteArrayInputStream(this)).use(read)
+
+private inline fun Either<TransferError.TransferIdReused, Unit>.onLeft(
+    handle: (TransferError.TransferIdReused) -> Nothing,
+) {
+    if (this is Either.Left) handle(value)
 }

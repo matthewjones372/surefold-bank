@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.google.protobuf.Message
-import io.github.matthewjones372.surefold.kafka.Kafka
-import io.github.matthewjones372.surefold.kafka.Producer
-import io.github.matthewjones372.surefold.kafka.carrying
-import io.github.matthewjones372.surefold.kafka.producer
+import dev.surefold.kafka.Kafka
+import dev.surefold.kafka.Producer
+import dev.surefold.kafka.carrying
+import dev.surefold.kafka.producer
 import org.apache.kafka.clients.admin.Admin
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.producer.ProducerConfig

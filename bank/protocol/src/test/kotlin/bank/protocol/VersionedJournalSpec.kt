@@ -1,9 +1,9 @@
 package bank.protocol
 
 import bank.domain.AccountEvent
-import io.github.matthewjones372.surefold.actor.UnreadableEvent
-import io.github.matthewjones372.surefold.actor.Upgrade
-import io.github.matthewjones372.surefold.actor.versioned
+import dev.surefold.actor.UnreadableEvent
+import dev.surefold.actor.Upgrade
+import dev.surefold.actor.versioned
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe

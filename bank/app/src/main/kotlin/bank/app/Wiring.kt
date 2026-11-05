@@ -11,7 +11,6 @@ import bank.domain.AccountId
 import bank.domain.Bank
 import bank.domain.Currencies
 import bank.domain.Money
-import bank.domain.TransferId
 import bank.protocol.AccountMessage
 import bank.protocol.AccountMessages
 import bank.protocol.AccountStates
@@ -19,59 +18,58 @@ import bank.protocol.BulkCredit
 import bank.protocol.BulkCreditSent
 import bank.protocol.Kinds
 import bank.protocol.NodeSnapshots
-import bank.protocol.TransferMessage
-import bank.protocol.TransferMessages
 import bank.protocol.wire.NodeSnapshot
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import dev.surefold.actor.ActorRef
+import dev.surefold.actor.Producer
+import dev.surefold.actor.Prune
+import dev.surefold.actor.ShardedJournal
+import dev.surefold.actor.ShardedSnapshots
+import dev.surefold.actor.behaviour
+import dev.surefold.actor.every
+import dev.surefold.actor.journal
+import dev.surefold.actor.journal.jdbc.GroupCommit
+import dev.surefold.actor.journal.jdbc.JdbcJournal
+import dev.surefold.actor.journal.jdbc.JdbcOffsets
+import dev.surefold.actor.journal.jdbc.JdbcSliceTable
+import dev.surefold.actor.journal.jdbc.JdbcSnapshots
+import dev.surefold.actor.projection.Projection
+import dev.surefold.actor.remote.node
+import dev.surefold.actor.snapshots
+import dev.surefold.actor.spawn
+import dev.surefold.actor.stay
+import dev.surefold.app.Health
+import dev.surefold.app.HealthRegistry
+import dev.surefold.app.Module
+import dev.surefold.app.SurefoldApp
+import dev.surefold.app.actor.Actors
+import dev.surefold.app.actor.actors
+import dev.surefold.app.actor.spawn
+import dev.surefold.app.boundTo
+import dev.surefold.app.closingOf
+import dev.surefold.app.cluster.cluster
+import dev.surefold.app.liquibase.Migrated
+import dev.surefold.app.liquibase.migrations
+import dev.surefold.app.single
+import dev.surefold.app.singleOf
+import dev.surefold.cluster.Cluster
+import dev.surefold.cluster.Sharded
+import dev.surefold.cluster.saga.on
+import dev.surefold.cluster.sharding
+import dev.surefold.cluster.singleton
+import dev.surefold.cluster.spread
+import dev.surefold.cluster.topic
+import dev.surefold.fail.Either
+import dev.surefold.fail.onLeft
+import dev.surefold.logInfo
+import dev.surefold.stream.Running
+import dev.surefold.stream.StreamBackend
 import io.github.matthewjones372.pelican.Api
 import io.github.matthewjones372.pelican.client.jetty.JettyHttpTransport
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.jetty.docs.startWithDocs
 import io.github.matthewjones372.pelican.openapi.docs
-import io.github.matthewjones372.surefold.actor.ActorRef
-import io.github.matthewjones372.surefold.actor.Producer
-import io.github.matthewjones372.surefold.actor.Prune
-import io.github.matthewjones372.surefold.actor.ShardedJournal
-import io.github.matthewjones372.surefold.actor.ShardedSnapshots
-import io.github.matthewjones372.surefold.actor.behaviour
-import io.github.matthewjones372.surefold.actor.every
-import io.github.matthewjones372.surefold.actor.journal
-import io.github.matthewjones372.surefold.actor.journal.jdbc.GroupCommit
-import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcJournal
-import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcOffsets
-import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcSliceTable
-import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcSnapshots
-import io.github.matthewjones372.surefold.actor.projection.Projection
-import io.github.matthewjones372.surefold.actor.remote.node
-import io.github.matthewjones372.surefold.actor.snapshots
-import io.github.matthewjones372.surefold.actor.spawn
-import io.github.matthewjones372.surefold.actor.stay
-import io.github.matthewjones372.surefold.app.Health
-import io.github.matthewjones372.surefold.app.HealthRegistry
-import io.github.matthewjones372.surefold.app.Module
-import io.github.matthewjones372.surefold.app.SurefoldApp
-import io.github.matthewjones372.surefold.app.actor.Actors
-import io.github.matthewjones372.surefold.app.actor.actors
-import io.github.matthewjones372.surefold.app.actor.spawn
-import io.github.matthewjones372.surefold.app.boundTo
-import io.github.matthewjones372.surefold.app.closingOf
-import io.github.matthewjones372.surefold.app.cluster.cluster
-import io.github.matthewjones372.surefold.app.liquibase.Migrated
-import io.github.matthewjones372.surefold.app.liquibase.migrations
-import io.github.matthewjones372.surefold.app.single
-import io.github.matthewjones372.surefold.app.singleOf
-import io.github.matthewjones372.surefold.cluster.Cluster
-import io.github.matthewjones372.surefold.cluster.Sharded
-import io.github.matthewjones372.surefold.cluster.sharding
-import io.github.matthewjones372.surefold.cluster.singleton
-import io.github.matthewjones372.surefold.cluster.spread
-import io.github.matthewjones372.surefold.cluster.topic
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.onLeft
-import io.github.matthewjones372.surefold.logInfo
-import io.github.matthewjones372.surefold.stream.Running
-import io.github.matthewjones372.surefold.stream.StreamBackend
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.Meter
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -109,7 +107,7 @@ import liquibase.ui.LoggerUIService
 import org.slf4j.bridge.SLF4JBridgeHandler
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
-import io.github.matthewjones372.surefold.stream.Actors as StreamActors
+import dev.surefold.stream.Actors as StreamActors
 import io.micrometer.core.instrument.Metrics as MicrometerRegistries
 
 // ---- storage ----
@@ -266,10 +264,10 @@ private val SERVICE_INSTANCE_ID = AttributeKey.stringKey("service.instance.id")
 
 // ---- the cluster and its entities ----
 
-class Entities(val accounts: Sharded<AccountMessage>, val transfers: Sharded<TransferMessage>) {
+class Entities(val accounts: Sharded<AccountMessage>, val transfers: DurableTransfers) {
     fun account(id: String): ActorRef<AccountMessage> = accounts.entity(id)
 
-    fun transfer(id: String): ActorRef<TransferMessage> = transfers.entity(id)
+    fun wake(id: String) = transfers.wake(id)
 }
 
 /** Where the read models publish every event (spec 0015), when Kafka is on. */
@@ -335,15 +333,21 @@ private val clustered: Module =
                     val closeAfter = settings.closeAfter.takeIf { it.isPositive() }
                     account(AccountId(id), snapshots, settings.batch, tracer, closeAfter)
                 }
-                val transfers = cluster.sharding(
-                    Kinds.TRANSFER,
-                    TransferMessages,
-                    settings.passivateAfter,
-                    settings.shards,
-                ) { id ->
-                    transfer(TransferId(id), AccountsById(accounts::entity), settings.legTimeout, screening, tracer)
-                }
-                Entities(accounts, transfers)
+                // The transfer is a durable saga (spec 0034). Its journal is the same one the accounts write, so a
+                // step and the transfer events it appends are one history. `on` binds the clock and metrics of this
+                // scope, which is the cluster's.
+                val saga = transferSaga(
+                    persistence.journal,
+                    AccountsById(accounts::entity),
+                    settings.legTimeout,
+                    screening,
+                    tracer,
+                )
+                val runs = saga.on(cluster, settings.passivateAfter)
+                Entities(
+                    accounts,
+                    DurableTransfers(persistence.journal, screening, settings.askTimeout, saga, runs),
+                )
             }
         } +
         single { actors: Actors, entities: Entities, settings: PayrollSettings ->
@@ -400,7 +404,7 @@ fun interface ClusterViews {
 private val theBank: Module =
     single { entities: Entities, settings: EntitySettings, tracer: Tracer ->
         TracedBank(
-            ShardedBank(entities::account, entities::transfer, settings.askTimeout, settings.transferWait),
+            ShardedBank(entities::account, entities.transfers, settings.askTimeout, settings.transferWait),
             tracer,
         )
     }.boundTo<Bank>() +
@@ -446,7 +450,7 @@ private val theBank: Module =
                 cluster.singleton("read-models", WhereAreReadModelsCodec) {
                     readModelsSingleton(node.name) {
                         logInfo("the sweeper starting on ${node.name}")
-                        startSweeper(reads, entities::transfer, side.settings, side.backend)
+                        startSweeper(reads, entities::wake, side.settings, side.backend)
                     }
                 }
             }
