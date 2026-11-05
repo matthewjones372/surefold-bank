@@ -3,6 +3,8 @@ package bank.access.client
 import bank.events.v1.AccessDecision
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import dev.surefold.fail.Either
+import dev.surefold.fail.onLeft
 import org.apache.kafka.clients.admin.Admin
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -68,9 +70,9 @@ class KafkaDecisions(settings: DecisionSettings, private val service: String) :
 
     init {
         Admin.create(settings.client).use { admin ->
-            try {
+            Either.catchOrThrow<ExecutionException, Unit> {
                 admin.createTopics(listOf(NewTopic(DECISIONS, PARTITIONS, settings.replication))).all().get()
-            } catch (failed: ExecutionException) {
+            }.onLeft { failed ->
                 if (failed.cause !is TopicExistsException) throw failed
             }
         }

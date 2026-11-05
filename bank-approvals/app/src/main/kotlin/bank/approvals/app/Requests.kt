@@ -20,20 +20,21 @@ import bank.approvals.protocol.SubjectMessage
 import bank.approvals.protocol.Wake
 import bank.approvals.protocol.chained
 import bank.approvals.protocol.command
-import io.github.matthewjones372.surefold.actor.ActorRef
-import io.github.matthewjones372.surefold.actor.Behaviour
-import io.github.matthewjones372.surefold.actor.Ctx
-import io.github.matthewjones372.surefold.actor.JournalConflict
-import io.github.matthewjones372.surefold.actor.PersistenceId
-import io.github.matthewjones372.surefold.actor.Remembered
-import io.github.matthewjones372.surefold.actor.onStart
-import io.github.matthewjones372.surefold.actor.persistent
-import io.github.matthewjones372.surefold.clock
-import io.github.matthewjones372.surefold.counter
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.fold
-import io.github.matthewjones372.surefold.increment
-import io.github.matthewjones372.surefold.logWarn
+import dev.surefold.actor.ActorRef
+import dev.surefold.actor.Behaviour
+import dev.surefold.actor.Ctx
+import dev.surefold.actor.JournalConflict
+import dev.surefold.actor.PersistenceId
+import dev.surefold.actor.Remembered
+import dev.surefold.actor.onStart
+import dev.surefold.actor.persistent
+import dev.surefold.clock
+import dev.surefold.counter
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.onLeft
+import dev.surefold.increment
+import dev.surefold.logWarn
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -91,10 +92,10 @@ fun request(
                 timers.cancel(EXPIRE)
                 timers.after(APPLY, applyEvery, AskOwnerAgain)
                 if (asking) {
-                    try {
+                    Either.catchOrThrow<RuntimeException, Unit> {
                         owners.askAgain(id, tracked.history)
                         counter("approvals.apply_asked").increment()
-                    } catch (failed: RuntimeException) {
+                    }.onLeft { failed ->
                         // Asked again when the timer next fires; an owner out of reach is not the request's failure.
                         logWarn("request ${id.value}: its owner could not be asked to apply it: ${failed.message}")
                     }

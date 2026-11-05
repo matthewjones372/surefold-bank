@@ -1,0 +1,5 @@
+ktlint:
+  # A test's name is the sentence it states. The detekt MaxLineLength rule still sees those lines; this stops the
+  # ktlint wrapper reporting the same line a second time.
+  MaximumLineLength:
+    ignoreBackTickedIdentifier: true

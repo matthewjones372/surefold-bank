@@ -6,8 +6,10 @@ import bank.domain.TransferStatus
 import bank.events.v1.AccountEvent
 import bank.events.v1.TransferEvent
 import com.fasterxml.jackson.databind.ObjectMapper
+import dev.surefold.assert.shouldBeRight
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
 import io.apicurio.registry.serde.protobuf.ProtobufKafkaDeserializer
-import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.shouldBe
@@ -15,7 +17,6 @@ import io.kotest.matchers.string.shouldContain
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
-import org.junit.jupiter.api.Test
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.kafka.KafkaContainer
@@ -83,95 +84,121 @@ object TestKafka {
 }
 
 /** Bank spec 0015: every event published, as a contract Apicurio holds. */
-class PublishingSpec {
-    private val run = UUID.randomUUID().toString().take(8)
+object PublishingSpec : Suite() {
+    init {
+        test("a transfer's events arrive on both topics, and Apicurio's own deserializer reads them") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val (from, to, transfer) = Triple(
+                        AccountId("pub-a-$run"),
+                        AccountId("pub-b-$run"),
+                        TransferId("pub-t-$run"),
+                    )
+                    TestCluster(1, extra = TestKafka.config).running { (node) ->
+                        node.bank.open(from, "Ada", gbp(10_000), "open:$from").shouldBeRight()
+                        node.bank.open(to, "Bob", gbp(0), "open:$to").shouldBeRight()
+                        node.bank.transfer(transfer, from, to, gbp(2_500)).shouldBeRight()
+                        eventually {
+                            node.bank.transferStatus(
+                                transfer,
+                            ).getOrNull()?.status == TransferStatus.Completed
+                        } shouldBe true
 
-    @Test
-    fun `a transfer's events arrive on both topics, and Apicurio's own deserializer reads them`() {
-        val (from, to, transfer) = Triple(AccountId("pub-a-$run"), AccountId("pub-b-$run"), TransferId("pub-t-$run"))
-        TestCluster(1, extra = TestKafka.config).running { (node) ->
-            node.bank.open(from, "Ada", gbp(10_000), "open:$from").shouldBeRight()
-            node.bank.open(to, "Bob", gbp(0), "open:$to").shouldBeRight()
-            node.bank.transfer(transfer, from, to, gbp(2_500)).shouldBeRight()
-            eventually {
-                node.bank.transferStatus(
-                    transfer,
-                ).getOrNull()?.status == TransferStatus.Completed
-            } shouldBe true
+                        val transfers = TestKafka.read<TransferEvent>(
+                            EventStream.TRANSFERS.topic,
+                            setOf(transfer.value),
+                        ) { it.size >= 2 }
+                        transfers.map { it.eventCase } shouldBe listOf(
+                            TransferEvent.EventCase.REQUESTED,
+                            TransferEvent.EventCase.DESTINATION_CREDITED,
+                        )
+                        transfers.map { it.sequence } shouldBe listOf(1L, 2L)
+                        transfers.forEach { event ->
+                            event.fromAccount shouldBe from.value
+                            event.toAccount shouldBe to.value
+                        }
+                        transfers.first().requested.amount.amount shouldBe "25.00"
 
-            val transfers = TestKafka.read<TransferEvent>(
-                EventStream.TRANSFERS.topic,
-                setOf(transfer.value),
-            ) { it.size >= 2 }
-            transfers.map { it.eventCase } shouldBe listOf(
-                TransferEvent.EventCase.REQUESTED,
-                TransferEvent.EventCase.DESTINATION_CREDITED,
-            )
-            transfers.map { it.sequence } shouldBe listOf(1L, 2L)
-            transfers.forEach { event ->
-                event.fromAccount shouldBe from.value
-                event.toAccount shouldBe to.value
+                        val accounts = TestKafka.read<AccountEvent>(
+                            EventStream.ACCOUNTS.topic,
+                            setOf(from.value, to.value),
+                        ) { seen ->
+                            seen.any { it.hasCredited() } && seen.any { it.hasDebited() }
+                        }
+                        accounts.filter { it.accountId == from.value }.map { it.eventCase } shouldContainAll
+                            listOf(AccountEvent.EventCase.OPENED, AccountEvent.EventCase.DEBITED)
+                        val credited = accounts.single { it.hasCredited() }
+                        credited.accountId shouldBe to.value
+                        credited.credited.transferId shouldBe transfer.value
+                        credited.credited.amount.amount shouldBe "25.00"
+                    }
+                }
             }
-            transfers.first().requested.amount.amount shouldBe "25.00"
-
-            val accounts = TestKafka.read<AccountEvent>(
-                EventStream.ACCOUNTS.topic,
-                setOf(from.value, to.value),
-            ) { seen ->
-                seen.any { it.hasCredited() } && seen.any { it.hasDebited() }
+        }
+        test("a publisher stopped mid-run and started again sends what it had not, and skips nothing") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val account = AccountId("pub-r-$run")
+                    val database = TestPostgres.fresh()
+                    TestCluster(1, database = database, extra = TestKafka.config).running { (node) ->
+                        node.bank.open(account, "Cy", gbp(0), "open:$account").shouldBeRight()
+                        // Stopped straight after, while the publisher is still sending some of these.
+                        (1..40).forEach { node.bank.deposit(account, gbp(it.toLong()), "d-$it").shouldBeRight() }
+                    }
+                    TestCluster(1, database = database, extra = TestKafka.config).running { (node) ->
+                        (41..60).forEach { node.bank.deposit(account, gbp(it.toLong()), "d-$it").shouldBeRight() }
+                        val published = TestKafka.read<AccountEvent>(
+                            EventStream.ACCOUNTS.topic,
+                            setOf(account.value),
+                        ) { seen ->
+                            seen.map { it.sequence }.toSet().size >= 61
+                        }
+                        // At least once: resent events are the same (account, sequence), and none is missing.
+                        published.map { it.sequence }.toSet() shouldBe (1L..61L).toSet()
+                        published.groupBy { it.sequence }.values.forEach { copies -> copies.distinct().size shouldBe 1 }
+                    }
+                }
             }
-            accounts.filter { it.accountId == from.value }.map { it.eventCase } shouldContainAll
-                listOf(AccountEvent.EventCase.OPENED, AccountEvent.EventCase.DEBITED)
-            val credited = accounts.single { it.hasCredited() }
-            credited.accountId shouldBe to.value
-            credited.credited.transferId shouldBe transfer.value
-            credited.credited.amount.amount shouldBe "25.00"
+        }
+        test("a schema that breaks the published one is refused, and nothing publishes with it") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val registry = Apicurio(TestKafka.registry)
+                    registry.registerAll()
+                    val money = registry.register(
+                        EventStream.MONEY.replace('/', '.'),
+                        resource(EventStream.MONEY),
+                        references = emptyList(),
+                    )
+                    val reference = ObjectMapper().createObjectNode().put(
+                        "groupId",
+                        "default",
+                    ).put("artifactId", money.artifact)
+                        .put("version", money.version).put("name", EventStream.MONEY)
+                    // Retyped: a sequence as a string, which no earlier reader can read.
+                    val broken = resource(
+                        EventStream.ACCOUNTS.schema,
+                    ).replace("int64 sequence = 2;", "string sequence = 2;")
+                    val refused = shouldThrow<SchemaRefused> {
+                        registry.register(
+                            EventStream.ACCOUNTS.artifact,
+                            broken,
+                            listOf(reference),
+                        )
+                    }
+                    refused.message shouldContain EventStream.ACCOUNTS.artifact
+                }
+            }
         }
     }
 
-    @Test
-    fun `a publisher stopped mid-run and started again sends what it had not, and skips nothing`() {
-        val account = AccountId("pub-r-$run")
-        val database = TestPostgres.fresh()
-        TestCluster(1, database = database, extra = TestKafka.config).running { (node) ->
-            node.bank.open(account, "Cy", gbp(0), "open:$account").shouldBeRight()
-            // Stopped straight after, while the publisher is still sending some of these.
-            (1..40).forEach { node.bank.deposit(account, gbp(it.toLong()), "d-$it").shouldBeRight() }
-        }
-        TestCluster(1, database = database, extra = TestKafka.config).running { (node) ->
-            (41..60).forEach { node.bank.deposit(account, gbp(it.toLong()), "d-$it").shouldBeRight() }
-            val published = TestKafka.read<AccountEvent>(EventStream.ACCOUNTS.topic, setOf(account.value)) { seen ->
-                seen.map { it.sequence }.toSet().size >= 61
-            }
-            // At least once: resent events are the same (account, sequence), and none is missing.
-            published.map { it.sequence }.toSet() shouldBe (1L..61L).toSet()
-            published.groupBy { it.sequence }.values.forEach { copies -> copies.distinct().size shouldBe 1 }
-        }
-    }
+    private class Fixture {
+        val run = UUID.randomUUID().toString().take(8)
 
-    @Test
-    fun `a schema that breaks the published one is refused, and nothing publishes with it`() {
-        val registry = Apicurio(TestKafka.registry)
-        registry.registerAll()
-        val money = registry.register(
-            EventStream.MONEY.replace('/', '.'),
-            resource(EventStream.MONEY),
-            references = emptyList(),
-        )
-        val reference = ObjectMapper().createObjectNode().put("groupId", "default").put("artifactId", money.artifact)
-            .put("version", money.version).put("name", EventStream.MONEY)
-        // Retyped: a sequence as a string, which no earlier reader can read.
-        val broken = resource(EventStream.ACCOUNTS.schema).replace("int64 sequence = 2;", "string sequence = 2;")
-        val refused = shouldThrow<SchemaRefused> {
-            registry.register(
-                EventStream.ACCOUNTS.artifact,
-                broken,
-                listOf(reference),
-            )
-        }
-        refused.message shouldContain EventStream.ACCOUNTS.artifact
+        fun resource(path: String): String =
+            checkNotNull(javaClass.classLoader.getResourceAsStream(path)).use { String(it.readAllBytes()) }
     }
-
-    private fun resource(path: String): String =
-        checkNotNull(javaClass.classLoader.getResourceAsStream(path)).use { String(it.readAllBytes()) }
 }

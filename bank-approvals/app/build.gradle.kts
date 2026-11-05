@@ -1,7 +1,7 @@
 plugins {
     application
     // Checks every graph in this project on `check`, as surefold-bank's does.
-    id("io.github.matthewjones372.surefold.wiring")
+    id("dev.surefold.wiring")
 }
 
 application {
@@ -10,10 +10,25 @@ application {
 }
 
 val surefoldVersion: String = providers.gradleProperty("surefoldVersion").get()
+val surefoldIntegrationsVersion: String = providers.gradleProperty("surefoldIntegrationsVersion").get()
 val pelicanVersion: String = providers.gradleProperty("pelicanVersion").get()
 val bankVersion: String = providers.gradleProperty("bankVersion").get()
 
-fun surefold(module: String) = "io.github.matthewjones372:$module:$surefoldVersion"
+// Integration modules shipped at 0.18.0; the rest of dev.surefold is core 0.18.1.
+private val integrationModules = setOf(
+    "surefold-app-typesafe",
+    "surefold-app-liquibase",
+    "surefold-app-cluster",
+    "surefold-cluster-kubernetes",
+    "surefold-kafka",
+    "surefold-slf4j",
+    "surefold-otel",
+)
+
+fun surefold(module: String): String {
+    val version = if (module in integrationModules) surefoldIntegrationsVersion else surefoldVersion
+    return "dev.surefold:$module:$version"
+}
 
 dependencies {
     constraints {
@@ -25,6 +40,7 @@ dependencies {
     implementation(project(":protocol"))
 
     // The application as a value, its actors as a node, its settings, and its migrations.
+    implementation(surefold("surefold-cache"))
     implementation(surefold("surefold-app"))
     implementation(surefold("surefold-app-actor"))
     implementation(surefold("surefold-app-typesafe"))

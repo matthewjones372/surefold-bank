@@ -17,6 +17,7 @@ The bank is built the way Surefold and Pelican are.
 - **Diagrams are mermaid,** in a fence in the doc, so GitHub draws them. Check one draws before committing it
   (`mmdc`, from `@mermaid-js/mermaid-cli`). [The services](docs/services.md) is the overview of the estate; keep it
   true when a service changes.
-- **Tests are sentences in backticks**, Kotest matchers, JUnit 5. The failing test comes first.
+- **Tests are sentences in a suite**, Kotest matchers recorded with `holds`, run by surefold-junit. A wait is
+  `eventually`. The failing test comes first.
 - **Verify before saying done:** `./gradlew build`, and quote the result. Run it in `nix develop .#ci`, which has the
   JDKs, the Chromium the page tests drive, and the buf and protoc the events' schemas need, as CI runs it.

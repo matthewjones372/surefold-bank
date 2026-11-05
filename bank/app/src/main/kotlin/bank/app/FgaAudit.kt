@@ -5,7 +5,13 @@ import bank.access.fga.FgaUnavailable
 import bank.access.fga.Tuple
 import bank.api.Audit
 import bank.api.Because
-import io.github.matthewjones372.surefold.logWarn
+import dev.surefold.fail.Either
+import dev.surefold.fail.Fail
+import dev.surefold.fail.attempt
+import dev.surefold.fail.bind
+import dev.surefold.fail.fold
+import dev.surefold.fail.map
+import dev.surefold.logWarn
 import java.time.Instant
 
 /**
@@ -22,14 +28,15 @@ class FgaAudit(
 ) : Audit {
     override fun viewers(account: String): List<Because>? = answered {
         val at = now()
-        fga.read(obj = "account:$account").filter { it.lives(at) }.flatMap { tuple ->
+        val tuples = fga.read(obj = "account:$account").bind().filter { it.lives(at) }
+        tuples.flatMap { tuple ->
             when (tuple.relation) {
                 "owner" -> listOf(owner(tuple.user.id, account))
 
                 "supporter" -> listOf(supporter(tuple.user.id, account, tuple.expires))
 
-                "bank" -> auditing(tuple.user).flatMap { group ->
-                    members(group).map { auditor(it, account, group) }
+                "bank" -> auditing(tuple.user).bind().flatMap { group ->
+                    members(group).bind().map { auditor(it, account, group) }
                 }
 
                 else -> emptyList()
@@ -40,11 +47,13 @@ class FgaAudit(
     override fun sees(person: String): List<Because>? = answered {
         val at = now()
         val user = "person:$person"
-        val owns = fga.read(user = user, relation = "owner", obj = "account:").map { owner(person, it.obj.id) }
-        val supports = fga.read(user = user, relation = "supporter", obj = "account:").filter { it.lives(at) }
+        val owns = fga.read(user = user, relation = "owner", obj = "account:").bind()
+            .map { owner(person, it.obj.id) }
+        val supports = fga.read(user = user, relation = "supporter", obj = "account:").bind()
+            .filter { it.lives(at) }
             .map { supporter(person, it.obj.id, it.expires) }
-        val audits = fga.read(user = user, relation = "member", obj = "group:").flatMap { membership ->
-            fga.read(user = "${membership.obj}#member", relation = "auditor", obj = "bank:").map { audited ->
+        val audits = fga.read(user = user, relation = "member", obj = "group:").bind().flatMap { membership ->
+            fga.read(user = "${membership.obj}#member", relation = "auditor", obj = "bank:").bind().map { audited ->
                 Because(person, null, "auditor", "every account of ${audited.obj.id}, as one of ${membership.obj.id}")
             }
         }
@@ -76,25 +85,28 @@ class FgaAudit(
         Because(person, account, "auditor", "audits the bank, as one of ${group.id}")
 
     /** The groups whose members audit [bank]: `group:auditor#member` names `group:auditor`. */
-    private fun auditing(bank: String): List<String> = fga.read(
+    private fun auditing(bank: String): Either<FgaUnavailable, List<String>> = fga.read(
         obj = bank,
         relation = "auditor",
-    ).map { it.user.substringBefore('#') }.filter { it.startsWith("group:") }
+    ).map { tuples -> tuples.map { it.user.substringBefore('#') }.filter { it.startsWith("group:") } }
 
-    private fun members(group: String): List<String> =
-        fga.read(obj = group, relation = "member").map { it.user }.filter { it.startsWith("person:") }.map { it.id }
+    private fun members(group: String): Either<FgaUnavailable, List<String>> =
+        fga.read(obj = group, relation = "member").map { tuples ->
+            tuples.map { it.user }.filter { it.startsWith("person:") }.map { it.id }
+        }
 
     /** A relationship without a condition always lives; one with an expiry lives until then. */
     private fun Tuple.lives(at: Instant) = expires?.isAfter(at) ?: true
 
     private val String.id get() = substringAfter(':')
 
-    private fun <A> answered(work: () -> A): A? = try {
-        work()
-    } catch (unanswered: FgaUnavailable) {
-        logWarn("bank-access did not answer an auditor's question: ${unanswered.message}")
-        null
-    }
+    private fun <A> answered(work: context(Fail<FgaUnavailable>) () -> A): A? = attempt { work() }.fold(
+        { unanswered ->
+            logWarn("bank-access did not answer an auditor's question: ${unanswered.message}")
+            null
+        },
+        { it },
+    )
 
     companion object {
         private val ORDER = listOf("owner", "supporter", "auditor")

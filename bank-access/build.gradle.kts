@@ -19,7 +19,7 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlinx.kover")
     apply(plugin = "dev.detekt")
 
-    // Gauntlet reads detekt's SARIF and ratchets on it; existing findings don't fail the build.
+    // Existing findings don't fail the build.
     extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
         buildUponDefaultConfig.set(true)
         ignoreFailures.set(true)
@@ -42,6 +42,9 @@ subprojects {
         "testImplementation"(kotlin("test"))
         "testImplementation"("org.junit.jupiter:junit-jupiter:6.1.3")
         "testImplementation"("io.kotest:kotest-assertions-core:6.2.4")
+        "testImplementation"("dev.surefold:surefold-assert:0.18.1")
+        "testImplementation"("dev.surefold:surefold-junit:0.18.1")
+        "testImplementation"("dev.surefold:surefold-test:0.18.1")
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 

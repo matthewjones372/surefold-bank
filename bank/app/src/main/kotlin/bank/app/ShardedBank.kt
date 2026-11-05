@@ -13,18 +13,13 @@ import bank.domain.Unavailable
 import bank.protocol.AccountAnswer
 import bank.protocol.AccountAsk
 import bank.protocol.AccountMessage
-import bank.protocol.TransferAnswer
-import bank.protocol.TransferAsk
-import bank.protocol.TransferMessage
-import bank.protocol.TransferRequest
-import io.github.matthewjones372.surefold.actor.ActorRef
-import io.github.matthewjones372.surefold.actor.AskFailure
-import io.github.matthewjones372.surefold.actor.ask
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.fold
-import io.github.matthewjones372.surefold.fail.left
-import io.github.matthewjones372.surefold.fail.mapLeft
-import io.github.matthewjones372.surefold.timed
+import dev.surefold.actor.ActorRef
+import dev.surefold.actor.AskFailure
+import dev.surefold.actor.ask
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.left
+import dev.surefold.timed
 import kotlin.time.Duration
 
 /**
@@ -34,7 +29,7 @@ import kotlin.time.Duration
  */
 class ShardedBank(
     private val accounts: (String) -> ActorRef<AccountMessage>,
-    private val transfers: (String) -> ActorRef<TransferMessage>,
+    private val transfers: TransferMoves,
     private val askTimeout: Duration,
     private val transferWait: Duration,
 ) : Bank {
@@ -63,8 +58,8 @@ class ShardedBank(
         }
 
     /**
-     * Waits [transferWait] for the saga to settle. One that has not is asked where it has got to, and answered as
-     * pending, debited or refunding: still moving, and safe to ask about again.
+     * Waits [transferWait] for the saga to settle. One that has not is answered as far as it has got: pending,
+     * debited or refunding, still moving, and safe to ask about again.
      */
     override fun transfer(
         id: TransferId,
@@ -77,36 +72,12 @@ class ShardedBank(
         !amount.isPositive -> TransferError.InvalidTransferAmount(amount).left()
 
         else -> timed("bank.ask.duration", "entity" to "transfer") {
-            transfers(id.value).ask<TransferMessage, TransferAnswer>(transferWait) {
-                TransferAsk(TransferRequest.Start(from, to, amount), it)
-            }.fold(
-                { failure ->
-                    when (failure) {
-                        // Not heard of means the start has not landed yet, lost with a node or still on its way:
-                        // the same id again is safe, so it is Unavailable and not a transfer that does not exist.
-                        AskFailure.TimedOut -> transferStatus(id).mapLeft { refusal ->
-                            if (refusal is TransferError.NoSuchTransfer) {
-                                Unavailable("transfer $id did not start in time; send it again with the same id")
-                            } else {
-                                refusal
-                            }
-                        }
-
-                        AskFailure.Stopped, AskFailure.Unreachable -> unavailable("transfer $id", failure).left()
-                    }
-                },
-                { it },
-            )
+            transfers.transfer(id, from, to, amount, transferWait)
         }
     }
 
     override fun transferStatus(id: TransferId): Either<TransferError, TransferView> =
-        timed("bank.ask.duration", "entity" to "transfer") {
-            transfers(
-                id.value,
-            ).ask<TransferMessage, TransferAnswer>(askTimeout) { TransferAsk(TransferRequest.Status, it) }
-                .fold({ failure -> unavailable("transfer $id", failure).left() }, { it })
-        }
+        timed("bank.ask.duration", "entity" to "transfer") { transfers.status(id) }
 }
 
 private fun unavailable(what: String, failure: AskFailure) = Unavailable(

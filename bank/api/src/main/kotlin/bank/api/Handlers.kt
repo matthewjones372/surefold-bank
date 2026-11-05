@@ -10,6 +10,14 @@ import bank.domain.Money
 import bank.domain.TransferError
 import bank.domain.TransferId
 import bank.domain.Unavailable
+import dev.surefold.Shared
+import dev.surefold.cache.Cache
+import dev.surefold.fail.Either
+import dev.surefold.fail.flatMap
+import dev.surefold.fail.fold
+import dev.surefold.fail.map
+import dev.surefold.fail.mapLeft
+import dev.surefold.fail.onRight
 import io.github.matthewjones372.pelican.ApiException
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.api
@@ -22,16 +30,9 @@ import io.github.matthewjones372.pelican.metrics.metrics
 import io.github.matthewjones372.pelican.metrics.otel.openTelemetry
 import io.github.matthewjones372.pelican.ok
 import io.github.matthewjones372.pelican.pages
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.flatMap
-import io.github.matthewjones372.surefold.fail.fold
-import io.github.matthewjones372.surefold.fail.map
-import io.github.matthewjones372.surefold.fail.mapLeft
-import io.github.matthewjones372.surefold.fail.onRight
 import io.micrometer.core.instrument.MeterRegistry
 import io.opentelemetry.api.OpenTelemetry
-import java.util.concurrent.ConcurrentHashMap
-
+import kotlin.time.Duration
 /**
  * What the read models answer. The app answers from Postgres; a test from a list. What a customer's request reads is
  * read as [Caller] (bank spec 0021): the database returns only what they may see, whatever the query asks.
@@ -396,7 +397,10 @@ fun bankApi(
 
 // ---- amounts, in and out (bank spec 0011) ----
 
-/** An amount the caller wrote, read in a currency the bank keeps: refused rather than rounded if it has too many places. */
+/**
+ * An amount the caller wrote, read in a currency the bank keeps: refused rather than rounded if it has too many
+ * places.
+ */
 fun Currencies.amount(amount: Amount): Either<InvalidAmount, Money> =
     of(amount.currency).mapLeft { InvalidAmount(it.message) }
         .flatMap { currency -> Money.parse(amount.value, currency).mapLeft { InvalidAmount(it.message) } }
@@ -422,19 +426,23 @@ private fun visible(rules: Rules, who: Caller, account: Balance): Either<Account
  * source account twice, and a transfer's p50 rose by a fifth.
  */
 class Owners(private val bank: Bank, private val most: Int = 200_000) {
-    private val known = ConcurrentHashMap<String, String>()
+    // Opened here before anyone asks, so the next check does not ask the account. A miss still asks it.
+    private val planted = Shared(emptyMap<String, String>(), "bank.owners")
+    private val known = Cache<String, AccountError, String>(
+        ttl = { answer -> if (answer is Either.Right) Duration.INFINITE else Duration.ZERO },
+        capacity = most,
+        onEvict = { id, _ -> planted.update { held -> held - id } },
+        lookup = { id -> planted.peek()[id]?.let { Either.Right(it) } ?: bank.balance(AccountId(id)).map { it.owner } },
+    )
 
-    fun of(id: String): Either<AccountError, String> =
-        known[id]?.let { Either.Right(it) } ?: bank.balance(AccountId(id)).map { it.owner }.onRight { owner ->
-            // Crude, and enough: a node that has seen this many accounts starts again rather than growing.
-            if (known.size >= most) known.clear()
-            known[id] = owner
-        }
+    fun of(id: String): Either<AccountError, String> = known.get(id)
 
     /** The owner, as the account answered it when it opened: the node that opened it never asks. */
     fun remember(opened: Balance) {
-        if (known.size >= most) known.clear()
-        known[opened.id] = opened.owner
+        planted.update { held ->
+            val next = held + (opened.id to opened.owner)
+            if (next.size <= most) next else mapOf(opened.id to opened.owner)
+        }
     }
 
     /** Someone else's account is missing, exactly as one that does not exist. */

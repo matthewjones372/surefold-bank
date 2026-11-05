@@ -10,7 +10,7 @@ import zio.http.*
 
 import java.nio.file.{Files, Path}
 
-// Spec 0018's p99 under 20 ms, as a Gauntlet budget: a timing is only fair run alone, so not among the unit tests.
+// Spec 0018's p99 under 20 ms. A timing is only fair run alone, so not among the unit tests.
 object ScreeningLatency extends ZIOAppDefault:
   private val Rounds   = 3
   private val Requests = 10000

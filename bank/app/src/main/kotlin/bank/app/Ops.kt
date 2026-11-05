@@ -5,27 +5,29 @@ import bank.api.OpsNode
 import bank.api.OpsSnapshot
 import bank.domain.Currencies
 import bank.protocol.wire.NodeSnapshot
-import io.github.matthewjones372.surefold.Reading
-import io.github.matthewjones372.surefold.actor.OffsetStore
-import io.github.matthewjones372.surefold.actor.ShardedJournal
-import io.github.matthewjones372.surefold.actor.Topic
-import io.github.matthewjones372.surefold.cluster.Cluster
-import io.github.matthewjones372.surefold.gauge
-import io.github.matthewjones372.surefold.logWarn
-import io.github.matthewjones372.surefold.readings
-import io.github.matthewjones372.surefold.stream.Running
-import io.github.matthewjones372.surefold.stream.Stream
-import io.github.matthewjones372.surefold.stream.StreamBackend
-import io.github.matthewjones372.surefold.stream.map
-import io.github.matthewjones372.surefold.stream.mapPar
-import io.github.matthewjones372.surefold.stream.restartOnDefect
-import io.github.matthewjones372.surefold.stream.runFold
-import io.github.matthewjones372.surefold.stream.start
-import io.github.matthewjones372.surefold.stream.tick
-import io.github.matthewjones372.surefold.stream.toSequence
+import dev.surefold.Reading
+import dev.surefold.Shared
+import dev.surefold.actor.OffsetStore
+import dev.surefold.actor.ShardedJournal
+import dev.surefold.actor.Topic
+import dev.surefold.cluster.Cluster
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.gauge
+import dev.surefold.logWarn
+import dev.surefold.readings
+import dev.surefold.stream.Running
+import dev.surefold.stream.Stream
+import dev.surefold.stream.StreamBackend
+import dev.surefold.stream.map
+import dev.surefold.stream.mapPar
+import dev.surefold.stream.restartOnDefect
+import dev.surefold.stream.runFold
+import dev.surefold.stream.start
+import dev.surefold.stream.tick
+import dev.surefold.stream.toSequence
 import java.math.BigDecimal
 import java.sql.SQLException
-import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -102,7 +104,7 @@ fun opsPublisher(meter: NodeMeter, topic: Topic<NodeSnapshot>, backend: StreamBa
             topic.publish(meter.snapshot())
             1L
         }
-        .restartOnDefect(io.github.matthewjones372.surefold.Schedule.spaced(1.seconds))
+        .restartOnDefect(dev.surefold.Schedule.spaced(1.seconds))
         .runFold(0L) { published, now -> published + now }
         .start(backend)
 
@@ -128,7 +130,7 @@ class JournalHeads(private val sources: List<Pair<String, DataSource>>) {
  */
 class LiveOps(
     private val node: String,
-    private val latest: ConcurrentHashMap<String, NodeSnapshot>,
+    private val latest: Shared<Map<String, NodeSnapshot>>,
     private val views: ClusterViews,
     private val reads: JdbcReadModels,
     private val heads: JournalHeads,
@@ -154,18 +156,19 @@ class LiveOps(
             readModelsOn = view.readModelsOn,
             unreachable = view.unreachable,
             // A node gone quiet stays on the page, aging, until it has been silent for a minute.
-            nodes = latest.values.filter { now - it.atMillis < FORGET_AFTER_MILLIS }.sortedBy { it.node }.map { said ->
-                OpsNode(
-                    said.node,
-                    said.status,
-                    now - said.atMillis,
-                    said.shards,
-                    said.entities,
-                    said.asksPerSecond,
-                    said.askP99Millis,
-                    said.commandsPerSecond,
-                )
-            },
+            nodes = latest.peek().values.filter { now - it.atMillis < FORGET_AFTER_MILLIS }.sortedBy { it.node }
+                .map { said ->
+                    OpsNode(
+                        said.node,
+                        said.status,
+                        now - said.atMillis,
+                        said.shards,
+                        said.entities,
+                        said.asksPerSecond,
+                        said.askP99Millis,
+                        said.commandsPerSecond,
+                    )
+                },
             ledger = reads.ledger(),
             transfers = reads.transfers(),
             journal = heads.heads().map { (database, head) ->
@@ -208,7 +211,7 @@ fun bookGauges(
     currencies.all.forEach { gap(it.currency.code).set(Double.NaN) }
     pending.set(Double.NaN)
     heads.databases.forEach { database -> readers.forEach { reader -> lag(database, reader).set(Double.NaN) } }
-    fun read(): Long = try {
+    fun read(): Long = Either.catchOrThrow<SQLException, Long> {
         val gaps = reads.books().associate { it.currency.code to it.gap }
         // A currency nobody holds yet has no books, and nothing out of balance.
         currencies.all.forEach { listed ->
@@ -219,15 +222,18 @@ fun bookGauges(
             readers.forEach { reader -> lag(database, reader).set(behind.lag(reader, database, head).toDouble()) }
         }
         1L
-    } catch (unanswered: SQLException) {
-        logWarn("the books could not be read for their gauges: $unanswered")
-        0L
-    }
+    }.fold(
+        { unanswered ->
+            logWarn("the books could not be read for their gauges: $unanswered")
+            0L
+        },
+        { it },
+    )
     // Read once now, so a scrape straight after start sees the books, then on every tick.
     val first = read()
     return Stream.tick(every, Unit)
         .map { _ -> read() }
-        .restartOnDefect(io.github.matthewjones372.surefold.Schedule.spaced(every))
+        .restartOnDefect(dev.surefold.Schedule.spaced(every))
         .runFold(first) { total, now -> total + now }
         .start(backend)
 }

@@ -1,7 +1,8 @@
 package bank.access.client
 
 import bank.access.fga.Fga
-import bank.access.fga.FgaUnavailable
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import java.time.Duration
@@ -69,37 +70,48 @@ class Access(private val fga: Fga, private val decisions: Decisions, private val
     }
 
     /** Every object of [relation]'s type [who] has it to; nothing at all when bank-access does not answer. */
-    fun listObjects(who: Asker, relation: Relation): Set<String> = try {
-        if (who.actor != null && !fga.check(
-                "person:${who.actor}",
-                Person.impersonator.name,
-                "person:${who.subject}",
-            )
-        ) {
-            emptySet()
-        } else {
-            fga.listObjects(
-                "person:${who.subject}",
-                relation.name,
-                relation.type,
-            ).map { it.substringAfter(':') }.toSet()
-        }
-    } catch (failed: FgaUnavailable) {
-        unanswered.increment()
-        emptySet()
+    fun listObjects(who: Asker, relation: Relation): Set<String> {
+        val acting = who.actor?.let { actor ->
+            fga.check("person:$actor", Person.impersonator.name, "person:${who.subject}")
+        } ?: Either.Right(true)
+        return acting.fold(
+            {
+                unanswered.increment()
+                emptySet()
+            },
+            { allowed ->
+                if (!allowed) {
+                    emptySet()
+                } else {
+                    fga.listObjects("person:${who.subject}", relation.name, relation.type).fold(
+                        {
+                            unanswered.increment()
+                            emptySet()
+                        },
+                        { objects -> objects.map { it.substringAfter(':') }.toSet() },
+                    )
+                }
+            },
+        )
     }
 
-    private fun ask(who: Asker, relation: Relation, obj: String): Answer = try {
-        val acting = who.actor?.let {
-            fga.check(
-                "person:$it",
-                Person.impersonator.name,
-                "person:${who.subject}",
-            )
-        } ?: true
-        if (acting && fga.check("person:${who.subject}", relation.name, obj)) Answer.Yes else Answer.No
-    } catch (failed: FgaUnavailable) {
-        Answer.Unanswered(failed.message ?: "bank-access did not answer")
+    private fun ask(who: Asker, relation: Relation, obj: String): Answer {
+        val acting = who.actor?.let { actor ->
+            fga.check("person:$actor", Person.impersonator.name, "person:${who.subject}")
+        } ?: Either.Right(true)
+        return acting.fold(
+            { failed -> Answer.Unanswered(failed.message ?: "bank-access did not answer") },
+            { allowed ->
+                if (!allowed) {
+                    Answer.No
+                } else {
+                    fga.check("person:${who.subject}", relation.name, obj).fold(
+                        { failed -> Answer.Unanswered(failed.message ?: "bank-access did not answer") },
+                        { yes -> if (yes) Answer.Yes else Answer.No },
+                    )
+                }
+            },
+        )
     }
 
     private val Answer.label: String

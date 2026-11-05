@@ -1,43 +1,30 @@
 package bank.app
 
-import bank.domain.AccountId
 import bank.domain.TransferError
-import bank.domain.TransferId
 import bank.domain.Unavailable
-import bank.protocol.TransferAsk
-import bank.protocol.TransferMessage
-import bank.protocol.TransferRequest
-import io.github.matthewjones372.surefold.actor.ActorRef
-import io.github.matthewjones372.surefold.actor.Address
-import io.github.matthewjones372.surefold.assert.shouldBeLeft
-import io.github.matthewjones372.surefold.fail.Either
+import dev.surefold.assert.shouldBeLeft
+import dev.surefold.fail.left
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import org.junit.jupiter.api.Test
-import kotlin.time.Duration.Companion.milliseconds
 
-/** A saga whose start was lost on the way: it never answers a start, and has not heard of the transfer. */
-private object LostStart : ActorRef<TransferMessage> {
-    override val address = Address("here", "/lost", 0)
-
-    override fun tell(message: TransferMessage) {
-        if (message is TransferAsk && message.request == TransferRequest.Status) {
-            message.reply(Either.Left(TransferError.NoSuchTransfer("t-lost")))
+/**
+ * A start that timed out before the saga's `Started` was journalled. The same id again is safe, so the answer is
+ * [Unavailable] and not a transfer that does not exist.
+ */
+object ShardedBankSpec : Suite() {
+    init {
+        test("a start that timed out and never landed is unavailable, to send again, and not a missing transfer") {
+            holds {
+                val lost = unstarted(
+                    "t-lost",
+                    TransferError.NoSuchTransfer("t-lost").left(),
+                    sagaStarted = false,
+                )
+                lost.shouldBeLeft().shouldBeInstanceOf<Unavailable>().message shouldBe
+                    "transfer t-lost did not start in time; send it again with the same id"
+            }
         }
-    }
-}
-
-class ShardedBankSpec {
-
-    @Test
-    fun `a start that timed out and never landed is unavailable, to send again, and not a missing transfer`() {
-        val bank = ShardedBank(
-            accounts = { error("no account is asked") },
-            transfers = { LostStart },
-            askTimeout = 200.milliseconds,
-            transferWait = 100.milliseconds,
-        )
-        bank.transfer(TransferId("t-lost"), AccountId("a"), AccountId("b"), gbp(5))
-            .shouldBeLeft()
-            .shouldBeInstanceOf<Unavailable>()
     }
 }

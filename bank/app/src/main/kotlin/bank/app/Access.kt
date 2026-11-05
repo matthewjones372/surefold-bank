@@ -5,25 +5,25 @@ import bank.api.Grants
 import bank.events.v1.ApprovalEvent
 import bank.events.v1.ApprovalEvent.EventCase
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.matthewjones372.surefold.Schedule
-import io.github.matthewjones372.surefold.counter
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.fold
-import io.github.matthewjones372.surefold.fail.left
-import io.github.matthewjones372.surefold.fail.right
-import io.github.matthewjones372.surefold.increment
-import io.github.matthewjones372.surefold.kafka.Kafka
-import io.github.matthewjones372.surefold.kafka.Topic
-import io.github.matthewjones372.surefold.kafka.consume
-import io.github.matthewjones372.surefold.kafka.mapRecord
-import io.github.matthewjones372.surefold.kafka.runCommitting
-import io.github.matthewjones372.surefold.kafka.within
-import io.github.matthewjones372.surefold.logInfo
-import io.github.matthewjones372.surefold.logWarn
-import io.github.matthewjones372.surefold.stream.Running
-import io.github.matthewjones372.surefold.stream.StreamBackend
-import io.github.matthewjones372.surefold.stream.restartOnDefect
-import io.github.matthewjones372.surefold.stream.start
+import dev.surefold.Schedule
+import dev.surefold.counter
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.left
+import dev.surefold.fail.right
+import dev.surefold.increment
+import dev.surefold.kafka.Kafka
+import dev.surefold.kafka.Topic
+import dev.surefold.kafka.consume
+import dev.surefold.kafka.mapRecord
+import dev.surefold.kafka.runCommitting
+import dev.surefold.kafka.within
+import dev.surefold.logInfo
+import dev.surefold.logWarn
+import dev.surefold.stream.Running
+import dev.surefold.stream.StreamBackend
+import dev.surefold.stream.restartOnDefect
+import dev.surefold.stream.start
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -99,19 +99,22 @@ data class Ask(val person: String, val access: Access, val lasting: Duration) {
             }
             return when {
                 access is Access.ActAs && access.customer == asker.subject -> "nobody acts as themselves".left()
+
                 facts["person"] != asker.subject -> "a grant is asked for by the person who will hold it".left()
+
                 "support" !in asker.groupsList -> "only someone in support is given a grant".left()
-                lasting == null || lasting <= Duration.ZERO -> "a grant says how long it lasts, as an ISO duration".left()
+
+                lasting == null || lasting <= Duration.ZERO ->
+                    "a grant says how long it lasts, as an ISO duration".left()
+
                 lasting > LONGEST_GRANT -> "a grant lasts at most $LONGEST_GRANT".left()
+
                 else -> Ask(asker.subject, access, lasting).right()
             }
         }
 
-        private fun parsedOrNull(written: String): Duration? = try {
-            Duration.parse(written)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        private fun parsedOrNull(written: String): Duration? =
+            Either.catchOrThrow<DateTimeParseException, Duration> { Duration.parse(written) }.getOrNull()
     }
 }
 
@@ -156,8 +159,8 @@ class JdbcGrants(private val data: DataSource) : Grants {
     private fun grant(person: String, kind: String, column: String, value: String): String? =
         data.connection.use { connection ->
             connection.prepareStatement(
-                "select approval_id from access_grant where person = ? and kind = ? and $column = ? and expires_at > now() " +
-                    "order by expires_at desc limit 1",
+                "select approval_id from access_grant where person = ? and kind = ? and $column = ? " +
+                    "and expires_at > now() order by expires_at desc limit 1",
             ).use { query ->
                 query.setString(1, person)
                 query.setString(2, kind)
@@ -169,7 +172,8 @@ class JdbcGrants(private val data: DataSource) : Grants {
     /** [request] as the bank read it: the grant it asks for, or why it will not be given. Heard twice, kept once. */
     fun ask(request: String, hash: String, ask: Either<String, Ask>) = data.connection.use { connection ->
         connection.prepareStatement(
-            "insert into access_request (request_id, content_hash, person, kind, account_id, subject, lasts_millis, refused) " +
+            "insert into access_request " +
+                "(request_id, content_hash, person, kind, account_id, subject, lasts_millis, refused) " +
                 "values (?, ?, ?, ?, ?, ?, ?, ?) on conflict (request_id) do nothing",
         ).use { insert ->
             val asked = ask.getOrNull()
@@ -215,7 +219,8 @@ class JdbcGrants(private val data: DataSource) : Grants {
     /** The grant approval [approval] gave, until [expires]. Given again, it changes nothing. */
     fun give(approval: String, person: String, access: Access, expires: Instant) = data.connection.use { connection ->
         connection.prepareStatement(
-            "insert into access_grant (approval_id, person, kind, account_id, subject, expires_at) values (?, ?, ?, ?, ?, ?) " +
+            "insert into access_grant " +
+                "(approval_id, person, kind, account_id, subject, expires_at) values (?, ?, ?, ?, ?, ?) " +
                 "on conflict (approval_id) do nothing",
         ).use { insert ->
             insert.setString(1, approval)
@@ -366,7 +371,7 @@ class GrantKeeper(private val grants: JdbcGrants, private val owner: Owner) {
     }
 }
 
-private fun skipping(offset: Long, unreadable: Exception) =
+private fun skipping(offset: Long, unreadable: Throwable) =
     logWarn("skipping ${ApprovalTopic.NAME} offset $offset: ${unreadable.message}")
 
 /** An Apicurio-framed record's message: a zero, the schema's content id, the message's indexes, then the message. */
@@ -398,12 +403,18 @@ fun grantsHeard(kafka: KafkaSettings, keeper: GrantKeeper, backend: StreamBacken
             // In the trace the event was written in (spec 0024), so telling Approvals it applied continues it.
             record.within {
                 // A record nobody can read is skipped, not read again forever; one that fails to apply is retried.
-                val approval = try {
-                    unframed(record.value())
-                } catch (unreadable: IllegalArgumentException) {
-                    null.also { skipping(record.offset(), unreadable) }
-                } catch (unreadable: IOException) {
-                    null.also { skipping(record.offset(), unreadable) }
+                val approval = when (val read = Either.catch { unframed(record.value()) }) {
+                    is Either.Right -> read.value
+
+                    is Either.Left -> when (val unreadable = read.value) {
+                        is IllegalArgumentException, is IOException -> {
+                            skipping(record.offset(), unreadable)
+                            null
+                        }
+
+                        // Anything else is not a record we can skip: the consumer starts again.
+                        else -> throw unreadable
+                    }
                 }
                 if (approval != null) keeper.heard(approval)
             }

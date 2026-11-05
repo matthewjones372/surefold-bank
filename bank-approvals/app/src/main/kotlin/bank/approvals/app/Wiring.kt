@@ -11,33 +11,33 @@ import bank.approvals.protocol.SubjectMessage
 import bank.approvals.protocol.SubjectMessages
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import dev.surefold.actor.ActorRef
+import dev.surefold.actor.journal
+import dev.surefold.actor.journal.jdbc.JdbcJournal
+import dev.surefold.actor.journal.jdbc.JdbcOffsets
+import dev.surefold.actor.journal.jdbc.JdbcSnapshots
+import dev.surefold.actor.projection.Projection
+import dev.surefold.actor.snapshots
+import dev.surefold.app.Module
+import dev.surefold.app.SurefoldApp
+import dev.surefold.app.actor.Actors
+import dev.surefold.app.actor.actors
+import dev.surefold.app.boundTo
+import dev.surefold.app.cluster.cluster
+import dev.surefold.app.liquibase.Migrated
+import dev.surefold.app.liquibase.migrations
+import dev.surefold.app.single
+import dev.surefold.app.singleOf
+import dev.surefold.cluster.Cluster
+import dev.surefold.cluster.Sharded
+import dev.surefold.cluster.sharding
+import dev.surefold.cluster.spread
+import dev.surefold.logInfo
+import dev.surefold.stream.start
 import io.github.matthewjones372.pelican.Api
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.jetty.docs.startWithDocs
 import io.github.matthewjones372.pelican.openapi.docs
-import io.github.matthewjones372.surefold.actor.ActorRef
-import io.github.matthewjones372.surefold.actor.journal
-import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcJournal
-import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcOffsets
-import io.github.matthewjones372.surefold.actor.journal.jdbc.JdbcSnapshots
-import io.github.matthewjones372.surefold.actor.projection.Projection
-import io.github.matthewjones372.surefold.actor.snapshots
-import io.github.matthewjones372.surefold.app.Module
-import io.github.matthewjones372.surefold.app.SurefoldApp
-import io.github.matthewjones372.surefold.app.actor.Actors
-import io.github.matthewjones372.surefold.app.actor.actors
-import io.github.matthewjones372.surefold.app.boundTo
-import io.github.matthewjones372.surefold.app.cluster.cluster
-import io.github.matthewjones372.surefold.app.liquibase.Migrated
-import io.github.matthewjones372.surefold.app.liquibase.migrations
-import io.github.matthewjones372.surefold.app.single
-import io.github.matthewjones372.surefold.app.singleOf
-import io.github.matthewjones372.surefold.cluster.Cluster
-import io.github.matthewjones372.surefold.cluster.Sharded
-import io.github.matthewjones372.surefold.cluster.sharding
-import io.github.matthewjones372.surefold.cluster.spread
-import io.github.matthewjones372.surefold.logInfo
-import io.github.matthewjones372.surefold.stream.start
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -57,7 +57,7 @@ import liquibase.ui.LoggerUIService
 import org.slf4j.bridge.SLF4JBridgeHandler
 import java.nio.file.Path
 import javax.sql.DataSource
-import io.github.matthewjones372.surefold.stream.Actors as StreamActors
+import dev.surefold.stream.Actors as StreamActors
 
 // ---- storage ----
 
@@ -139,7 +139,7 @@ class JournalReady(val journal: JdbcJournal)
 /** The publishers started, spread over the nodes: what the web waits for, so a request's events reach Kafka. */
 object Published
 
-/** The owning service asked again on Kafka. */
+// The owning service asked again on Kafka.
 
 /**
  * The SDK Approvals' spans are made through (bank spec 0024): W3C's `traceparent` in and out, sampled where a

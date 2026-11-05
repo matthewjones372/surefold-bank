@@ -1,6 +1,5 @@
-// Surefold and Pelican from checkouts rather than published snapshots, as surefold-bank does: set surefoldSource and
-// pelicanSource (in ~/.gradle/gradle.properties, or -P) to the checkouts' paths. Unset, mavenLocal's snapshots are
-// used.
+// Pelican, and a Surefold that publishes dev.surefold, from checkouts: set pelicanSource and surefoldSource to the
+// checkouts' paths. Unset, Maven Central's releases are used: Surefold core 0.18.1 and integrations 0.18.0, Pelican 1.2.0.
 val surefoldSource: String? = providers.gradleProperty("surefoldSource").orNull
 val pelicanSource: String? = providers.gradleProperty("pelicanSource").orNull
 
@@ -13,7 +12,7 @@ pluginManagement {
     }
     // The wiring plugin ships from surefold's own build, at surefold's version.
     plugins {
-        id("io.github.matthewjones372.surefold.wiring") version providers.gradleProperty("surefoldVersion").get()
+        id("dev.surefold.wiring") version providers.gradleProperty("surefoldVersion").get()
     }
 }
 

@@ -2,6 +2,7 @@ package bank.access.sync
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
+import dev.surefold.fail.Either
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,7 +19,7 @@ class LevelFile(private val file: Path) {
 
     /** Reads the file once, and sets the level it names; the level now, or null if the file said none. */
     fun read(): Level? {
-        val said = runCatching { Files.readString(file).trim().uppercase() }.getOrNull() ?: return null
+        val said = Either.catch { Files.readString(file).trim().uppercase() }.getOrNull() ?: return null
         val level = Level.toLevel(said, null) ?: return null
         taking.filter { it.level != level }.forEach { it.level = level }
         return level

@@ -1,9 +1,9 @@
 package bank.app.memory
 
-import io.github.matthewjones372.surefold.Counter
-import io.github.matthewjones372.surefold.Gauge
-import io.github.matthewjones372.surefold.Histogram
-import io.github.matthewjones372.surefold.Metrics
+import dev.surefold.Counter
+import dev.surefold.Gauge
+import dev.surefold.Histogram
+import dev.surefold.Metrics
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.DoubleAdder
 

@@ -9,17 +9,17 @@
 A small bank, built to see whether a handful of Kotlin and Scala libraries hold up when the money has to add up. It
 is four services: the bank itself on a three-node cluster, transfer screening, changes that need two people to
 agree, and fine-grained access control. The name is Wall Street for birds, since it runs on
-[Surefold](https://github.com/surefold/surefold).
+[Surefold](https://github.com/surefold/surefold-core).
 
 It is a personal project, not a real bank. It holds no real money, and the credentials in it are development values
 for running it on your own machine.
 
 ## What it does
 
-- **Every account is an actor** on a three-node [Surefold](https://github.com/surefold/surefold) cluster. It owns its
+- **Every account is an actor** on a three-node [Surefold](https://github.com/surefold/surefold-core) cluster. It owns its
   balance, writes its events to a Postgres journal before it answers, and lives on whichever node holds its shard.
-- **A transfer is a saga.** It debits one account, credits the other, and refunds the first if the credit is
-  refused. If the node running it dies part way through, another node picks it up from its last event.
+- **A transfer is a durable saga.** It debits one account, credits the other, and refunds the first if the credit is
+  refused. If the node running it dies part way through, another node resumes it from the last step it journalled.
 - **The books are checked.** `GET /ledger` checks that the balances plus the money in flight equal everything paid in
   minus everything paid out.
 - **It survives some chaos.** `scripts/chaos-docker.sh` cuts a node off, freezes another, stops a journal database
@@ -101,7 +101,7 @@ Transfers run clean, under 1 in 1,000 failed and a p99 under 1 s, up to 250 to 3
 | [`bank-approvals/`](bank-approvals) | Changes that more than one person agrees to before they take effect, with an audit trail kept as a hash chain. Kotlin on Surefold and Pelican. |
 | [`bank-access/`](bank-access) | Who may do what, in one place: an OpenFGA model, a service that derives relationships from events, and the client the other services ask. |
 
-It is built on four libraries of mine: [Surefold](https://github.com/surefold/surefold) for actors, clustering, event
+It is built on four libraries of mine: [Surefold](https://github.com/surefold/surefold-core) for actors, clustering, event
 sourcing and streams, [Pelican](https://github.com/surefold/pelican) for HTTP endpoints and pages,
 [Proofload](https://github.com/matthewjones372/proofload) for the load tests, and
 [kimney](https://github.com/surefold/kimney) for mapping between the wire and the domain.
@@ -110,14 +110,14 @@ sourcing and streams, [Pelican](https://github.com/surefold/pelican) for HTTP en
 
 You need Docker and JDK 25. Each folder also has a Nix flake whose dev shell has everything else (`nix develop`).
 
-The bank builds against snapshots of Surefold and Pelican that are not on Maven Central yet, so clone them beside this
-repository and tell Gradle where they are, once, in `~/.gradle/gradle.properties`:
+Surefold is the published release on Maven Central: core `0.18.1` and the integration modules at `0.18.0`, group
+`dev.surefold`. Pelican is `1.2.0`. bank-access's client is built from this repository. A checkout of Pelican, or of
+a Surefold that publishes `dev.surefold`, replaces the published artifacts when Gradle is told where it is, in
+`~/.gradle/gradle.properties`:
 
 ```bash
-git clone https://github.com/surefold/surefold ../surefold
 git clone https://github.com/surefold/pelican ../pelican
 cat >> ~/.gradle/gradle.properties <<PROPS
-surefoldSource=$(cd ../surefold && pwd)
 pelicanSource=$(cd ../pelican && pwd)
 accessSource=$(pwd)/bank-access
 PROPS

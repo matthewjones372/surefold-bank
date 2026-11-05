@@ -1,7 +1,8 @@
-# The bank from source (bank spec 0010): surefold, pelican and bank-access's client built in the same Gradle run as a
-# composite build, so nothing comes from mavenLocal. Every other dependency is pinned in deps.json, which `nix run .#bank.mitmCache
-# .updateScript` rewrites when a dependency changes.
-{ lib, stdenv, gradle_9, jdk25_headless, jdk21_headless, protobuf, makeWrapper, src, surefold, pelican, access }:
+# The bank from source (bank spec 0010): pelican and bank-access's client built in the same Gradle run as a
+# composite build. Surefold is the published release (core 0.18.1, integrations 0.18.0). Every other dependency is
+# pinned in deps.json, which `nix run .#bank.mitmCache.updateScript` rewrites when a dependency changes. That cache
+# does not yet hold the 0.18 artifacts, so `nix build` fails until it is refreshed.
+{ lib, stdenv, gradle_9, jdk25_headless, jdk21_headless, protobuf, makeWrapper, src, pelican, access }:
 
 let
   # On the same JDK as the build: Gradle's package otherwise runs on its own 21 and names it JAVA_HOME, which the
@@ -23,16 +24,14 @@ stdenv.mkDerivation (finalAttrs: {
     data = ./deps.json;
   };
 
-  # Beside the bank's source, where -PsurefoldSource=../surefold finds it, and writable: Gradle writes into an included build.
+  # Beside the bank's source, where -PpelicanSource=../pelican finds it, and writable: Gradle writes into an included build.
   postUnpack = ''
-    cp -r ${surefold} surefold
     cp -r ${pelican} pelican
     cp -r ${access} bank-access
-    chmod -R u+w surefold pelican bank-access
+    chmod -R u+w pelican bank-access
   '';
 
   gradleFlags = [
-    "-PsurefoldSource=../surefold"
     "-PpelicanSource=../pelican"
     "-PaccessSource=../bank-access"
     # The toolchains the projects ask for, and nothing downloaded: 25 for everything, 21 for the Gradle plugins, which

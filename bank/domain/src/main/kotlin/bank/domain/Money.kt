@@ -1,8 +1,8 @@
 package bank.domain
 
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.left
-import io.github.matthewjones372.surefold.fail.right
+import dev.surefold.fail.Either
+import dev.surefold.fail.left
+import dev.surefold.fail.right
 import java.math.BigDecimal
 import java.math.RoundingMode
 

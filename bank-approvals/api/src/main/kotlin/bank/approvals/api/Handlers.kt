@@ -12,6 +12,10 @@ import bank.approvals.domain.RequestId
 import bank.approvals.domain.replay
 import bank.approvals.protocol.Act
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import dev.surefold.fail.Either
+import dev.surefold.fail.flatMap
+import dev.surefold.fail.fold
+import dev.surefold.fail.map
 import io.github.matthewjones372.pelican.Authenticator
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.PageGuard
@@ -23,10 +27,6 @@ import io.github.matthewjones372.pelican.jetty.handledOrFail
 import io.github.matthewjones372.pelican.metrics.otel.openTelemetry
 import io.github.matthewjones372.pelican.ok
 import io.github.matthewjones372.pelican.pages
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.flatMap
-import io.github.matthewjones372.surefold.fail.fold
-import io.github.matthewjones372.surefold.fail.map
 import io.opentelemetry.api.OpenTelemetry
 import java.time.Instant
 import java.time.LocalDate
@@ -285,7 +285,8 @@ fun approvalsApi(
 private const val LISTED = 200
 
 private fun summary(view: RequestView, at: Instant): Pair<Instant, RequestSummary> = at to RequestSummary(
-    view.id, view.state, view.kind, view.subject, view.title, view.requester, view.approvedBy.size, view.needed, at.toString(),
+    view.id, view.state, view.kind, view.subject, view.title, view.requester,
+    view.approvedBy.size, view.needed, at.toString(),
 )
 
 /**
@@ -305,8 +306,12 @@ private fun answer(approvals: Approvals, id: String, act: Act): Outcome<Problem,
 /** Who is voting, when [act] is a vote. */
 private fun voter(act: Act): Person? = when (act) {
     is Act.Approve -> act.by
+
     is Act.Reject -> act.by
-    is Act.Ask, is Act.Comment, is Act.Withdraw, is Act.Supersede, is Act.MarkApplied, is Act.MarkApplyFailed, Act.Read -> null
+
+    is Act.Ask, is Act.Comment, is Act.Withdraw, is Act.Supersede,
+    is Act.MarkApplied, is Act.MarkApplyFailed, Act.Read,
+    -> null
 }
 
 /** An export's JSON, written as the API writes its own. */
@@ -323,11 +328,10 @@ private fun filter(
     fun day(text: String?): Either<Problem, LocalDate?> = when (text) {
         null -> Either.Right(null)
 
-        else -> try {
-            Either.Right(LocalDate.parse(text))
-        } catch (_: DateTimeParseException) {
-            Either.Left(Problem("$text is not a day: write it as 2026-10-01"))
-        }
+        else -> Either.catchOrThrow<DateTimeParseException, LocalDate> { LocalDate.parse(text) }.fold(
+            { Either.Left(Problem("$text is not a day: write it as 2026-10-01")) },
+            { Either.Right(it) },
+        )
     }
     return day(from).flatMap { start -> day(to).map { end -> AuditFilter(person, subject, request, start, end) } }
 }
@@ -394,7 +398,9 @@ fun view(id: RequestId, history: List<RequestEvent>): RequestView {
         before = proposal.before, after = proposal.after, facts = proposal.facts, impact = proposal.impact,
         link = proposal.link, hash = asked.hash, requester = asked.requester.view(), needed = asked.policy.needed,
         approvers = asked.policy.approvers.sorted(), approvedBy = approvedBy.map { it.view() },
-        policyVersion = asked.policyVersion, expiresAt = asked.expiresAt.toString(), approvedAutomatically = automatically,
+        policyVersion = asked.policyVersion,
+        expiresAt = asked.expiresAt.toString(),
+        approvedAutomatically = automatically,
         timeline = history.map(::entry),
     )
 }

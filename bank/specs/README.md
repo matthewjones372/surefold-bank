@@ -48,3 +48,5 @@ home overlay, by name.
 | [0031](0031-a-transfer-in-fewer-writes.md) | a transfer in four appends on its path instead of five: no `SourceDebited`, one drive on start, `LegsClosed` batched, no recovery read for a new transfer; built to `legs-closed-batched`, its chaos run not yet run |
 | [0032](0032-the-journals-commits-sized-and-the-rest-cheaper.md) | group commit sized in config, read-model writes not waiting for a durable flush, `ledger_totals` per partition, the access log batched, and a ramp to measure each; built to `ledger-totals-per-partition` |
 | [0033](0033-payrolls-at-the-rate-transfers-run.md) | payroll through several senders per node, and the two changes surefold's `Producer` needs; built to `payroll-load-reports-credits` |
+| [0034](0034-a-transfer-as-a-durable-saga.md) | a transfer is Surefold's durable saga: steps journalled, the published transfer events unchanged, accounts left as they are |
+| [0035](0035-shared-memory-and-suites.md) | shared cells, promises and caches, every spec a suite, and a failure as an Either |

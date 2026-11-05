@@ -1,5 +1,7 @@
 package bank.access.sync
 
+import dev.surefold.fail.Either
+import dev.surefold.fail.onLeft
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -60,15 +62,16 @@ private val recordHeaders = object : TextMapGetter<ConsumerRecord<String, ByteAr
 fun traced(record: ConsumerRecord<String, ByteArray>) = record.headers().lastHeader("traceparent") != null
 
 /** [work] in a consumer span named [name], a child of the trace [record] was published in. */
-fun <T> OpenTelemetry.handling(name: String, record: ConsumerRecord<String, ByteArray>, work: () -> T): T {
+fun <T> OpenTelemetry.handling(
+    name: String,
+    record: ConsumerRecord<String, ByteArray>,
+    work: () -> T,
+): Either<Throwable, T> {
     val span = getTracer("access-sync").spanBuilder(name).setSpanKind(SpanKind.CONSUMER).setParent(publishedIn(record))
         .setAttribute("messaging.destination.name", record.topic())
         .startSpan()
     return try {
-        span.makeCurrent().use { work() }
-    } catch (failed: Exception) {
-        span.recordException(failed)
-        throw failed
+        Either.catch { span.makeCurrent().use { work() } }.onLeft { failed -> span.recordException(failed) }
     } finally {
         span.end()
     }

@@ -4,11 +4,12 @@ import bank.approvals.api.NewRequest
 import bank.approvals.api.ask
 import bank.events.v1.ApprovalEvent.EventCase
 import com.sun.net.httpserver.HttpServer
+import dev.surefold.app.use
+import dev.surefold.assert.shouldBeRight
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
 import io.github.matthewjones372.pelican.test.shouldBeOk
-import io.github.matthewjones372.surefold.app.use
-import io.github.matthewjones372.surefold.assert.shouldBeRight
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress
 import java.net.URI
@@ -41,47 +42,53 @@ private class Collector : AutoCloseable {
 }
 
 /** bank spec 0024's `trace-calls`, Approvals' half: a request continues its caller's trace, and is exported. */
-class TraceSpec {
-    @Test
-    fun `a request in a sampled trace is exported in it, and one in an unsampled trace is not`() {
-        Collector().use { collector ->
-            val config = """
-                approvals.telemetry.enabled = true
-                approvals.telemetry.otlp = "${collector.url}"
-                approvals.telemetry.sampled = 0.0
-            """.trimIndent()
-            TestCluster(1, extra = config).node(0).use { node: TestNode ->
-                val http = HttpClient.newHttpClient()
-                fun asked(trace: String, flags: String) = http.send(
-                    HttpRequest.newBuilder(URI.create("${node.server.baseUrl}/me"))
-                        .header("Authorization", "Bearer ${TestIdentity.token("rae", "engineers")}")
-                        .header("traceparent", "00-$trace-00f067aa0ba902b7-$flags")
-                        .build(),
-                    HttpResponse.BodyHandlers.discarding(),
-                ).statusCode()
-                val sampled = UUID.randomUUID().toString().replace("-", "")
-                val unsampled = UUID.randomUUID().toString().replace("-", "")
-                asked(sampled, "01") shouldBe 200
-                asked(unsampled, "00") shouldBe 200
+object TraceSpec : Suite() {
+    init {
+        test("a request in a sampled trace is exported in it, and one in an unsampled trace is not") {
+            holds {
+                Collector().use { collector ->
+                    val config = """
+                        approvals.telemetry.enabled = true
+                        approvals.telemetry.otlp = "${collector.url}"
+                        approvals.telemetry.sampled = 0.0
+                    """.trimIndent()
+                    TestCluster(1, extra = config).node(0).use { node: TestNode ->
+                        val http = HttpClient.newHttpClient()
+                        fun asked(trace: String, flags: String) = http.send(
+                            HttpRequest.newBuilder(URI.create("${node.server.baseUrl}/me"))
+                                .header("Authorization", "Bearer ${TestIdentity.token("rae", "engineers")}")
+                                .header("traceparent", "00-$trace-00f067aa0ba902b7-$flags")
+                                .build(),
+                            HttpResponse.BodyHandlers.discarding(),
+                        ).statusCode()
+                        val sampled = UUID.randomUUID().toString().replace("-", "")
+                        val unsampled = UUID.randomUUID().toString().replace("-", "")
+                        asked(sampled, "01") shouldBe 200
+                        asked(unsampled, "00") shouldBe 200
 
-                eventually { collector.holds(sampled) } shouldBe true
-                collector.holds(unsampled) shouldBe false
+                        eventually { collector.holds(sampled) } shouldBe true
+                        collector.holds(unsampled) shouldBe false
+                    }
+                }
             }
         }
-    }
+        test("an event written in a request's trace is published with that trace, for its readers to continue") {
+            holds {
+                TestCluster(1).node(0).use { node: TestNode ->
+                    val trace = UUID.randomUUID().toString().replace("-", "")
+                    val subject = "test/traced-${trace.take(8)}"
+                    val view = node.calling("rae", "engineers").inTrace("00-$trace-00f067aa0ba902b7-01")
+                        .outcome(
+                            ask,
+                            NewRequest("test.change", subject, "a rule", before = "1000", after = "500"),
+                        ).shouldBeOk()
 
-    @Test
-    fun `an event written in a request's trace is published with that trace, for its readers to continue`() {
-        TestCluster(1).node(0).use { node: TestNode ->
-            val trace = UUID.randomUUID().toString().replace("-", "")
-            val subject = "test/traced-${trace.take(8)}"
-            val view = node.calling("rae", "engineers").inTrace("00-$trace-00f067aa0ba902b7-01")
-                .outcome(ask, NewRequest("test.change", subject, "a rule", before = "1000", after = "500")).shouldBeOk()
-
-            val requested = TestKafka.records(setOf(view.id)) { seen -> seen.isNotEmpty() }.first()
-            requested.value().eventCase shouldBe EventCase.REQUESTED
-            val traceparent = requested.headers().lastHeader("traceparent")?.value()?.toString(Charsets.UTF_8)
-            traceparent?.split("-")?.get(1) shouldBe trace
-        }.shouldBeRight()
+                    val requested = TestKafka.records(setOf(view.id)) { seen -> seen.isNotEmpty() }.first()
+                    requested.value().eventCase shouldBe EventCase.REQUESTED
+                    val traceparent = requested.headers().lastHeader("traceparent")?.value()?.toString(Charsets.UTF_8)
+                    traceparent?.split("-")?.get(1) shouldBe trace
+                }.shouldBeRight()
+            }
+        }
     }
 }

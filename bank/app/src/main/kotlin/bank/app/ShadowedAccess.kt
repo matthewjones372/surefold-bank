@@ -10,10 +10,10 @@ import bank.access.fga.Fga
 import bank.api.Asked
 import bank.api.Caller
 import bank.api.Shadow
-import io.github.matthewjones372.surefold.Carriers
-import io.github.matthewjones372.surefold.counter
-import io.github.matthewjones372.surefold.increment
-import io.github.matthewjones372.surefold.logWarn
+import dev.surefold.Carriers
+import dev.surefold.counter
+import dev.surefold.increment
+import dev.surefold.logWarn
 import io.micrometer.core.instrument.Metrics
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore

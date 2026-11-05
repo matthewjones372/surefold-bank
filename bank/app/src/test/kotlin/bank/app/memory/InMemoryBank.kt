@@ -1,155 +1,103 @@
 package bank.app.memory
 
+import bank.app.AccountsById
+import bank.app.DurableTransfers
+import bank.app.Screening
 import bank.app.ShardedBank
+import bank.app.TransferMoves
 import bank.app.account
-import bank.app.transfer
+import bank.app.transferSaga
 import bank.domain.Account
 import bank.domain.AccountEvent
 import bank.domain.AccountId
 import bank.domain.Bank
 import bank.domain.Money
-import bank.domain.Transfer
 import bank.domain.TransferEvent
 import bank.domain.TransferId
 import bank.domain.evolve
 import bank.protocol.AccountEvents
 import bank.protocol.AccountMessage
 import bank.protocol.Kinds
-import bank.protocol.Nudge
-import bank.protocol.TransferAnswer
-import bank.protocol.TransferAsk
 import bank.protocol.TransferEvents
-import bank.protocol.TransferMessage
-import bank.protocol.TransferRequest
-import io.github.matthewjones372.surefold.actor.ActorRef
-import io.github.matthewjones372.surefold.actor.Address
-import io.github.matthewjones372.surefold.actor.Faults
-import io.github.matthewjones372.surefold.actor.InMemoryJournal
-import io.github.matthewjones372.surefold.actor.Journal
-import io.github.matthewjones372.surefold.actor.JournalConflict
-import io.github.matthewjones372.surefold.actor.Ordering
-import io.github.matthewjones372.surefold.actor.PersistenceId
-import io.github.matthewjones372.surefold.actor.Remembered
-import io.github.matthewjones372.surefold.actor.Reply
-import io.github.matthewjones372.surefold.actor.TestActor
-import io.github.matthewjones372.surefold.actor.TestActors
-import io.github.matthewjones372.surefold.actor.TraceEntry
-import io.github.matthewjones372.surefold.actor.events
-import io.github.matthewjones372.surefold.actor.testActors
-import io.github.matthewjones372.surefold.assert.shouldBeRight
-import io.github.matthewjones372.surefold.clock
-import io.github.matthewjones372.surefold.fixedClock
+import dev.surefold.Promise
+import dev.surefold.Scope
+import dev.surefold.Shared
+import dev.surefold.actor.ActorRef
+import dev.surefold.actor.InMemoryJournal
+import dev.surefold.actor.Journal
+import dev.surefold.actor.PersistenceId
+import dev.surefold.actor.events
+import dev.surefold.actor.journal
+import dev.surefold.actor.spawn
+import dev.surefold.assert.shouldBeRight
+import dev.surefold.clock
+import dev.surefold.fail.Either
+import dev.surefold.fail.onLeft
+import dev.surefold.fixedClock
+import dev.surefold.scope
+import io.opentelemetry.api.OpenTelemetry
 import java.time.Instant
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /** Noon UTC on a fixed day, so no spec's daily limit (bank spec 0027) crosses midnight while it runs. */
 private val NOON: Instant = Instant.parse("2026-10-10T12:00:00Z")
 
 /**
- * The bank's shipped `account(...)` and `transfer(...)` behaviours as Surefold test actors, stepped on the test's
- * thread with an in-memory journal: no cluster, no Postgres, no threads (bank spec 0028). [order] and [faults] are
- * Surefold's (Surefold spec 0128): a seeded order, and messages between actors lost, doubled, delayed or crashing their
- * receiver.
+ * The bank's account actors and its durable transfer saga, in one scope, with an in-memory journal: no cluster and
+ * no Postgres (bank spec 0028). A transfer runs on the calling thread, and asks the account actors, which run on
+ * the scope's own.
  */
 fun inMemory(
     legTimeout: Duration = 1.seconds,
-    order: Ordering = Ordering.Told,
-    faults: Faults = Faults(),
-    block: InMemoryBank.() -> Unit,
-) {
-    // Unit, so a spec written `= inMemory { ... }` is a void @Test, which JUnit runs: one returning its last value
-    // is skipped. A spec that wants a value back asks [inMemoryOf].
-    inMemoryOf(legTimeout, order, faults, block = block)
-}
-
-/**
- * As [inMemory], answering what [block] does: for a spec that runs many and looks at each. With [closeAfter], each
- * account holds a settled transfer's close for its next write, as a node does (bank spec 0031). [journal] is where
- * every actor's events go.
- */
-fun <A> inMemoryOf(
-    legTimeout: Duration = 1.seconds,
-    order: Ordering = Ordering.Told,
-    faults: Faults = Faults(),
     closeAfter: Duration? = null,
     journal: Journal = InMemoryJournal(),
-    block: InMemoryBank.() -> A,
-): A = // Events are stamped from surefold's clock, bound here for the test's thread.
-    clock.locally(fixedClock(NOON)) {
-        testActors(clock = fixedClock(NOON), journal = journal, order = order, faults = faults) {
-            InMemoryBank(this, legTimeout, Actors(this, legTimeout, closeAfter)).block()
-        }
-    }
-
-/** The [Bank] port as it ships, [ShardedBank], over account and transfer test actors instead of sharded entities. */
-class InMemoryBank internal constructor(
-    private val sim: TestActors,
-    /** How long a saga waits for a leg's answer before sending it again, in the test's own time. */
-    val legTimeout: Duration,
-    private val actors: Actors = Actors(sim, legTimeout),
-) : Bank by ShardedBank(
-    accounts = { id -> Plain(actors.accountOf(id)) },
-    transfers = { id -> Plain(actors.sagaOf(id)) },
-    askTimeout = ASK,
-    transferWait = ASK,
+    screening: Screening = Screening.Off,
+    block: InMemoryBank.() -> Unit,
 ) {
+    // Unit, so a suite test can end on the block. A spec that wants a value back asks [inMemoryOf].
+    inMemoryOf(legTimeout, closeAfter, journal, screening, block)
+}
 
-    /** The way between every saga and the accounts, for a spec to drop, repeat or hold legs on. */
-    val network: Network get() = actors.network
-
-    /** A start told straight to the saga, with a reply that keeps every answer: one still moving has none yet. */
-    fun start(id: TransferId, from: AccountId, to: AccountId, amount: Money): Answers =
-        Answers(id).also { actors.sagaOf(id.value).tell(TransferAsk(TransferRequest.Start(from, to, amount), it)) }
-
-    /** The saga crashes as its node's death would: what it held only in memory goes, and its journal stays. */
-    fun crashSaga(id: TransferId) = sim.crash(actors.sagaOf(id.value))
-
-    /** A nudge told straight to the saga, as the sweeper sends one to a transfer it finds stuck. */
-    fun nudge(id: TransferId) = actors.sagaOf(id.value).tell(Nudge)
-
-    /** The saga crashed as its node's death would: its timers gone, and its next message recovers it. */
-    fun crash(id: TransferId) = sim.crash(actors.sagaOf(id.value))
-
-    /** A status asked straight of the saga, whose answer nobody hears: the message a recovery waits for. */
-    fun poke(id: TransferId) = actors.sagaOf(id.value).tell(TransferAsk(TransferRequest.Status, Unheard))
-
-    /** Runs every message waiting, and what they tell, to idle, without moving the test's time on. */
-    fun settle() = sim.settle()
-
-    /** Every delivery, loss, duplicate, delay and crash so far, to read when a seed fails. */
-    val trace: List<TraceEntry> get() = sim.trace
-
-    /** Moves the test's time on, firing each saga's leg timer that falls due on the way. */
-    fun advance(by: Duration = legTimeout) = sim.advance(by)
-
-    /**
-     * Runs messages and timers to idle, then asks each saga still moving how far it has got, as a caller polling
-     * would, until none is: a crashed saga's timers went with it, so only a message starts it again.
-     */
-    fun settleAll(rounds: Int = 50) {
-        repeat(rounds) {
-            sim.settle()
-            val moving = actors.sagaIds.map(::TransferId).filterNot(::settled)
-            if (moving.isEmpty()) return
-            moving.forEach { actors.sagaOf(it.value).tell(TransferAsk(TransferRequest.Status, Unheard)) }
-        }
-        sim.settle()
+/** As [inMemory], answering what [block] does. With [closeAfter], each account holds a settled transfer's close. */
+fun <A> inMemoryOf(
+    legTimeout: Duration = 1.seconds,
+    closeAfter: Duration? = null,
+    journal: Journal = InMemoryJournal(),
+    screening: Screening = Screening.Off,
+    block: InMemoryBank.() -> A,
+): A = clock.locally(fixedClock(NOON)) {
+    scope {
+        val here = this
+        journal(journal)
+        val accounts = MemoryAccounts(here, closeAfter)
+        val tracer = OpenTelemetry.noop().getTracer("surefold-bank-test")
+        val saga = transferSaga(journal, accounts, legTimeout, screening, tracer)
+        val moves = DurableTransfers(journal, screening, askTimeout = 2.seconds, saga)
+        InMemoryBank(journal, accounts, moves).block()
     }
+}
 
-    private fun settled(id: TransferId): Boolean =
-        (transferEvents(id).fold<TransferEvent, Transfer>(Transfer.Unrequested, Transfer::evolve) as? Transfer.Moving)
-            ?.settled == true
-
+/** The [Bank] port as it ships, [ShardedBank], over account actors and a durable saga instead of a cluster. */
+class InMemoryBank internal constructor(
+    private val journal: Journal,
+    private val accounts: MemoryAccounts,
+    moves: TransferMoves,
+) : Bank by ShardedBank(
+    accounts = accounts::entity,
+    transfers = moves,
+    askTimeout = 5.seconds,
+    transferWait = 30.seconds,
+) {
     fun transferEvents(id: TransferId): List<TransferEvent> =
-        sim.journal.events(PersistenceId(Kinds.TRANSFER, id.value), TransferEvents)
+        journal.events(PersistenceId(Kinds.TRANSFER, id.value), TransferEvents)
 
     fun accountEvents(id: AccountId): List<AccountEvent> =
-        sim.journal.events(PersistenceId(Kinds.ACCOUNT, id.value), AccountEvents)
+        journal.events(PersistenceId(Kinds.ACCOUNT, id.value), AccountEvents)
 
-    /** The account as its actor holds it now. */
-    fun accountState(id: AccountId): Account = actors.accountOf(id.value).state.value
+    /** The account as its journal folds, which is what its actor holds once a command has been answered. */
+    fun accountState(id: AccountId): Account =
+        accountEvents(id).fold<AccountEvent, Account>(Account.Unopened) { account, event -> account.evolve(event) }
 
     /** [id] opened for an owner of the same name, or the spec fails. */
     fun opened(id: AccountId, initial: Money, dailyLimit: Money? = null) =
@@ -157,59 +105,38 @@ class InMemoryBank internal constructor(
 
     /** What [id]'s account holds now, or the spec fails. */
     fun balanceOf(id: AccountId): Money = balance(id).shouldBeRight().balance
+}
 
-    /** What one start was answered: nothing while the saga is still moving, then once when it settles or refuses. */
-    class Answers(id: TransferId) : Reply<TransferAnswer> {
-        override val address = Address("test", "/temp/start-${id.value}", 1)
-        val answers = mutableListOf<TransferAnswer>()
+/** Each account spawned on first use, as sharding starts one. */
+internal class MemoryAccounts(private val scope: Scope<Nothing>, private val closeAfter: Duration?) : AccountsById {
+    private class Slot(val ref: Promise<Throwable, ActorRef<AccountMessage>> = Promise("bank.memory.account"))
 
-        override fun invoke(answer: TransferAnswer) {
-            answers += answer
+    private val accounts = Shared(emptyMap<String, Slot>(), "bank.memory.accounts")
+
+    override fun entity(id: String): ActorRef<AccountMessage> {
+        val slot = Slot()
+        val won = accounts.modify { held ->
+            val existing = held[id]
+            if (existing != null) held to existing else (held + (id to slot)) to slot
+        }
+        if (won === slot) {
+            Either.catch {
+                val spawned = scope.spawn(
+                    "account-$id",
+                    account(AccountId(id), snapshots = null, closeAfter = closeAfter),
+                )
+                won.ref.succeed(spawned)
+            }.onLeft { failed ->
+                accounts.update { held -> if (held[id] === slot) held - id else held }
+                won.ref.fail(failed)
+            }
+        }
+        return when (val ended = won.ref.await()) {
+            is Either.Right -> ended.value
+            is Either.Left -> throw ended.value
         }
     }
 }
-
-/** Each entity's test actor, spawned on first use as sharding starts one, and every saga on the one [network]. */
-internal class Actors(
-    private val sim: TestActors,
-    private val legTimeout: Duration,
-    private val closeAfter: Duration? = null,
-) {
-    private val accounts = HashMap<String, TestActor<AccountMessage, Remembered<Account>, JournalConflict>>()
-    private val sagas = HashMap<String, TestActor<TransferMessage, Remembered<Transfer>, JournalConflict>>()
-
-    val network = Network { id -> accountOf(id) }
-
-    val sagaIds: Set<String> get() = sagas.keys.toSet()
-
-    fun accountOf(id: String) = accounts.getOrPut(id) {
-        sim.spawn("account-$id", account(AccountId(id), snapshots = null, closeAfter = closeAfter))
-    }
-
-    fun sagaOf(id: String) =
-        sagas.getOrPut(id) { sim.spawn("transfer-$id", transfer(TransferId(id), network, legTimeout)) }
-}
-
-/**
- * A test actor seen only as an [ActorRef], so Surefold's `ask` takes a node's path: an ask nobody answers yet times
- * out, as one to a saga still moving does on a node, where a test actor's own ask fails. It all still runs on this
- * thread.
- */
-private class Plain<M : Any>(private val actor: ActorRef<M>) : ActorRef<M> {
-    override val address: Address get() = actor.address
-
-    override fun tell(message: M) = actor.tell(message)
-}
-
-/** Where a poke's answer goes: the poke only wakes the saga. */
-private object Unheard : Reply<TransferAnswer> {
-    override val address = Address("test", "/temp/unheard", 1)
-
-    override fun invoke(answer: TransferAnswer) = Unit
-}
-
-/** An account or a settled saga has answered before the tell returns; only a saga still moving waits this out. */
-private val ASK = 1.milliseconds
 
 /** Each event's kind, for a spec to say which were written and in what order. */
 internal fun List<Any>.kinds(): List<String?> = map { it::class.simpleName }

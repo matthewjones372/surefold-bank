@@ -18,5 +18,6 @@ bank-approvals is built the way surefold-bank is, on Surefold and Pelican.
   to run it, what it carries now. No history: no earlier runs, fixed gaps, dated logs or PR trails; measurements are
   the latest only. Why belongs in the spec, what changed in the commit. Diagrams are mermaid fences, checked to draw
   before committing. surefold-bank's `docs/services.md` describes this service: keep it true.
-- **Tests are sentences in backticks**, Kotest matchers, JUnit 5. The failing test comes first.
+- **Tests are sentences in a suite**, Kotest matchers recorded with `holds`, run by surefold-junit. A wait is
+  `eventually`. The failing test comes first.
 - **Verify before saying done:** `./gradlew build`, and quote the result. Run it in `nix develop .#ci` as CI does.

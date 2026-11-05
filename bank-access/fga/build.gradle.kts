@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     api("com.fasterxml.jackson.core:jackson-databind:2.22.3")
+    api("dev.surefold:surefold:0.18.1")
     testFixturesApi("org.testcontainers:testcontainers:2.0.5")
 }
 

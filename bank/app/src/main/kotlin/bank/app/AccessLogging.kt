@@ -5,22 +5,24 @@ import bank.api.Caller
 import bank.api.Logged
 import bank.api.Look
 import bank.events.v1.AccessEvent
-import io.github.matthewjones372.surefold.Schedule
-import io.github.matthewjones372.surefold.counter
-import io.github.matthewjones372.surefold.increment
-import io.github.matthewjones372.surefold.logWarn
-import io.github.matthewjones372.surefold.stream.Running
-import io.github.matthewjones372.surefold.stream.Stream
-import io.github.matthewjones372.surefold.stream.StreamBackend
-import io.github.matthewjones372.surefold.stream.map
-import io.github.matthewjones372.surefold.stream.restartOnDefect
-import io.github.matthewjones372.surefold.stream.runFold
-import io.github.matthewjones372.surefold.stream.start
-import io.github.matthewjones372.surefold.stream.tick
+import dev.surefold.Schedule
+import dev.surefold.counter
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.onLeft
+import dev.surefold.increment
+import dev.surefold.logWarn
+import dev.surefold.stream.Running
+import dev.surefold.stream.Stream
+import dev.surefold.stream.StreamBackend
+import dev.surefold.stream.map
+import dev.surefold.stream.restartOnDefect
+import dev.surefold.stream.runFold
+import dev.surefold.stream.start
+import dev.surefold.stream.tick
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.Timestamp
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
@@ -68,10 +70,10 @@ class JdbcAccessLog(
     }
 
     private fun write(looks: List<Look>) {
-        try {
+        Either.catchOrThrow<java.sql.SQLException, Unit> {
             data.connection.use { connection -> connection.insert(looks) }
             counter("bank.access.recorded").increment(looks.size.toDouble())
-        } catch (failed: java.sql.SQLException) {
+        }.onLeft { failed ->
             // The answers have gone already; looks not recorded are counted and alerted on, never silent.
             counter("bank.access.unrecorded").increment(looks.size.toDouble())
             val first = looks.first()
@@ -123,7 +125,7 @@ class JdbcAccessLog(
      */
     fun publishSome(most: Int, publish: (List<Logged>) -> Unit): Int = data.connection.use { connection ->
         connection.autoCommit = false
-        try {
+        val published = Either.catch {
             val due = connection.prepareStatement(
                 "select * from access_log where published_at is null order by id limit ? for update skip locked",
             ).use { query ->
@@ -143,12 +145,11 @@ class JdbcAccessLog(
             }
             connection.commit()
             due.size
-        } catch (failed: Exception) {
-            connection.rollback()
-            throw failed
-        } finally {
-            connection.autoCommit = true
         }
+        published.onLeft { connection.rollback() }
+        connection.autoCommit = true
+        // A failure here is a defect: the outbox must not be marked published, and the stream starts again.
+        published.fold({ throw it }, { it })
     }
 
     private fun ResultSet.logged(): Logged {
@@ -201,7 +202,7 @@ fun accessPublisher(
                 val key = logged.look.account ?: logged.look.who.subject
                 publisher.publish(Outbound(EventStream.ACCESS.topic, key, logged.toEvent()))
             }
-            CompletableFuture.allOf(*sent.toTypedArray()).join()
+            sent.forEach { published -> published.awaitOrThrow() }
             counter("bank.access.published").increment(due.size.toDouble())
         }.toLong()
     }

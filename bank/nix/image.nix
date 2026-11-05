@@ -6,7 +6,7 @@ let
   # Surefold's slice mover (spec 0105), on the bank's own classpath with its JDBC driver: run it from a bank pod.
   journalMove = writeShellScriptBin "surefold-journal-move" ''
     exec ${jdk25_headless}/bin/java -cp "${bank}/share/bank/lib/*" \
-      io.github.matthewjones372.surefold.actor.journal.jdbc.JournalMoveKt "$@"
+      dev.surefold.actor.journal.jdbc.JournalMoveKt "$@"
   '';
 in
 dockerTools.streamLayeredImage {

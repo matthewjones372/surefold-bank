@@ -17,6 +17,9 @@ import bank.domain.Transfer
 import bank.domain.TransferEvent
 import bank.domain.TransferStatus
 import bank.domain.evolve
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.onLeft
 import java.math.BigDecimal
 import java.sql.Connection
 import javax.sql.DataSource
@@ -48,7 +51,8 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
 
         val reached = known.toMutableMap()
         val inserted = connection.prepareStatement(
-            "insert into statement_line (account_id, seq_nr, kind, currency, exponent, amount, balance, reference, at_millis) " +
+            "insert into statement_line " +
+                "(account_id, seq_nr, kind, currency, exponent, amount, balance, reference, at_millis) " +
                 "values (?, ?, ?, ?, ?, ?, ?, ?, ?) on conflict do nothing",
         ).use { insert ->
             fresh.forEach { (id, sequence, event) ->
@@ -76,7 +80,8 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
             totals[currency.code] = currency to sum + event.totals()
         }
         connection.prepareStatement(
-            "insert into account_balance (account_id, owner, currency, exponent, balance, last_seq) values (?, ?, ?, ?, ?, ?) " +
+            "insert into account_balance " +
+                "(account_id, owner, currency, exponent, balance, last_seq) values (?, ?, ?, ?, ?, ?) " +
                 "on conflict (account_id) do update set balance = excluded.balance, last_seq = excluded.last_seq " +
                 "where account_balance.last_seq < excluded.last_seq",
         ).use { upsert ->
@@ -108,8 +113,10 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
             last[id] = sequence to event.atMillis
         }
         connection.prepareStatement(
-            "insert into transfer_status (transfer_id, from_account, to_account, currency, exponent, amount, status, settled, " +
-                "last_seq, updated_millis) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) on conflict (transfer_id) do update set status = excluded.status, " +
+            "insert into transfer_status " +
+                "(transfer_id, from_account, to_account, currency, exponent, amount, status, settled, " +
+                "last_seq, updated_millis) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "on conflict (transfer_id) do update set status = excluded.status, " +
                 "settled = excluded.settled, last_seq = excluded.last_seq, updated_millis = excluded.updated_millis " +
                 "where transfer_status.last_seq < excluded.last_seq",
         ).use { upsert ->
@@ -177,8 +184,8 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
         who,
     ) { connection ->
         connection.prepareStatement(
-            "select seq_nr, kind, currency, exponent, amount, balance, reference, at_millis from statement_line where account_id = ? " +
-                "and seq_nr < ? order by seq_nr desc limit ?",
+            "select seq_nr, kind, currency, exponent, amount, balance, reference, at_millis " +
+                "from statement_line where account_id = ? and seq_nr < ? order by seq_nr desc limit ?",
         ).use { query ->
             query.setString(1, account)
             // No cursor is the newest page: every sequence number is below Long.MAX_VALUE.
@@ -339,13 +346,13 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
     private fun <A> transaction(derived: Boolean = false, work: (Connection) -> A): A =
         data.connection.use { connection ->
             connection.autoCommit = false
-            try {
+            val done = Either.catchOrThrow<java.sql.SQLException, A> {
                 if (derived) connection.createStatement().use { it.execute("set local synchronous_commit = off") }
                 work(connection).also { connection.commit() }
-            } catch (failed: java.sql.SQLException) {
-                connection.rollback()
-                throw failed
             }
+            done.onLeft { connection.rollback() }
+            // A failure here is a defect: the projection's offset must not move past a batch that did not commit.
+            done.fold({ throw it }, { it })
         }
 }
 
@@ -405,7 +412,8 @@ private fun Connection.addToTotals(share: String, totals: Collection<Pair<Curren
         "insert into ledger_totals (currency, exponent, share, paid_in, paid_out, in_flight, events) " +
             "values (?, ?, ?, ?, ?, ?, ?) " +
             "on conflict (currency, share) do update set paid_in = ledger_totals.paid_in + excluded.paid_in, " +
-            "paid_out = ledger_totals.paid_out + excluded.paid_out, in_flight = ledger_totals.in_flight + excluded.in_flight, " +
+            "paid_out = ledger_totals.paid_out + excluded.paid_out, " +
+            "in_flight = ledger_totals.in_flight + excluded.in_flight, " +
             "events = ledger_totals.events + excluded.events",
     ).use { upsert ->
         totals.forEach { (currency, moved) ->
@@ -451,8 +459,8 @@ private fun Connection.balances(ids: List<String>): Map<String, Row> = prepareSt
 
 /** Each known transfer's state, rebuilt from its row, and the sequence the row reached. */
 private fun Connection.transfers(ids: List<String>): Map<String, Pair<Transfer, Long>> = prepareStatement(
-    "select transfer_id, from_account, to_account, currency, exponent, amount, status, last_seq, updated_millis from transfer_status " +
-        "where transfer_id = any(?)",
+    "select transfer_id, from_account, to_account, currency, exponent, amount, status, last_seq, updated_millis " +
+        "from transfer_status where transfer_id = any(?)",
 ).use { query ->
     query.setArray(1, createArrayOf("text", ids.toTypedArray()))
     query.executeQuery().use { rows ->

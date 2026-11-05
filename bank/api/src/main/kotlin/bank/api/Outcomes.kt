@@ -1,10 +1,10 @@
 package bank.api
 
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
 import io.github.matthewjones372.pelican.ErrorOutput
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.ok
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.fold
 
 /**
  * The domain answers in Surefold's [Either]: a `Left` becomes [failure], which supplies the status, and a `Right` is

@@ -2,6 +2,8 @@ package bank.approvals.app
 
 import bank.approvals.api.Rules
 import bank.approvals.api.Signing
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
 import io.github.matthewjones372.pelican.Authenticator
 import io.github.matthewjones372.pelican.Credentials
 import io.github.matthewjones372.pelican.Identity
@@ -40,17 +42,17 @@ fun signing(settings: IdentitySettings): Signing {
  */
 class ServiceClients(private val people: Authenticator, private val services: Map<String, Authenticator>) :
     Authenticator {
-    override fun authenticate(credentials: Credentials): Identity? = try {
-        people.authenticate(credentials)
-    } catch (refused: Unauthenticated) {
-        services.firstNotNullOfOrNull { (client, verifier) ->
-            runCatching {
-                verifier.authenticate(
-                    credentials,
-                )
-            }.getOrNull()?.let { Identity(client, client, setOf(Rules.SERVICES), claims = it.claims) }
-        } ?: throw refused
-    }
+    override fun authenticate(credentials: Credentials): Identity? =
+        Either.catchOrThrow<Unauthenticated, Identity?> { people.authenticate(credentials) }.fold(
+            { refused ->
+                services.firstNotNullOfOrNull { (client, verifier) ->
+                    Either.catch { verifier.authenticate(credentials) }.getOrNull()?.let {
+                        Identity(client, client, setOf(Rules.SERVICES), claims = it.claims)
+                    }
+                } ?: throw refused
+            },
+            { it },
+        )
 }
 
 private fun sessionKey(configured: String): ByteArray {

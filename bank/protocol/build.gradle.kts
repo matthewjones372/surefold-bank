@@ -9,12 +9,12 @@ plugins {
     id("com.google.protobuf") version "0.9.5"
 }
 
-val surefoldVersion: String = providers.gradleProperty("surefoldVersion").get()
+val surefoldIntegrationsVersion: String = providers.gradleProperty("surefoldIntegrationsVersion").get()
 val protobufVersion = "4.36.2"
 
 dependencies {
     api(project(":domain"))
-    api("io.github.matthewjones372:surefold-actor-remote-kotlinx:$surefoldVersion")
+    api("dev.surefold:surefold-actor-remote-kotlinx:$surefoldIntegrationsVersion")
     // The events as the contract others read (spec 0015), mapped to and from the domain in Contract.kt.
     api("io.github.matthewjones372:surefold-bank-events:0.1.0-SNAPSHOT")
 

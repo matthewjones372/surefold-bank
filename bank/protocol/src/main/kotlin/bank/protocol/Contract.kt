@@ -23,13 +23,13 @@ import bank.events.v1.Screened
 import bank.events.v1.SourceDebited
 import bank.events.v1.SourceRefunded
 import bank.events.v1.Withdrawn
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.fail.Fail
-import io.github.matthewjones372.surefold.fail.attempt
-import io.github.matthewjones372.surefold.fail.bind
-import io.github.matthewjones372.surefold.fail.ensureNotNull
-import io.github.matthewjones372.surefold.fail.fail
-import io.github.matthewjones372.surefold.fail.mapLeft
+import dev.surefold.fail.Either
+import dev.surefold.fail.Fail
+import dev.surefold.fail.attempt
+import dev.surefold.fail.bind
+import dev.surefold.fail.ensureNotNull
+import dev.surefold.fail.fail
+import dev.surefold.fail.mapLeft
 import bank.events.v1.AccountEvent as AccountRecord
 import bank.events.v1.AccountEvent.EventCase as AccountCase
 import bank.events.v1.Money as MoneyRecord

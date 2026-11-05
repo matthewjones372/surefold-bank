@@ -2,16 +2,18 @@ package bank.app
 
 import bank.domain.Bank
 import bank.issuer.TestIssuer
+import dev.surefold.app.Module
+import dev.surefold.app.single
+import dev.surefold.app.typesafe.overridingConfig
+import dev.surefold.app.use
+import dev.surefold.cluster.Cluster
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.getOrElse
+import dev.surefold.fail.onLeft
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.signedInAs
-import io.github.matthewjones372.surefold.app.Module
-import io.github.matthewjones372.surefold.app.single
-import io.github.matthewjones372.surefold.app.typesafe.overridingConfig
-import io.github.matthewjones372.surefold.app.use
-import io.github.matthewjones372.surefold.cluster.Cluster
-import io.github.matthewjones372.surefold.fail.fold
-import io.github.matthewjones372.surefold.fail.onLeft
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.io.IOException
@@ -20,6 +22,8 @@ import java.sql.DriverManager
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /** One Postgres for the test JVM, in a container started on first use, and an empty database in it per cluster. */
 object TestPostgres {
@@ -96,12 +100,10 @@ private fun freePorts(count: Int): List<Int> {
     return chosen.toList()
 }
 
-private fun bindable(port: Int): Boolean = try {
+private fun bindable(port: Int): Boolean = Either.catchOrThrow<IOException, Boolean> {
     ServerSocket(port).close()
     true
-} catch (_: IOException) {
-    false
-}
+}.getOrElse { false }
 
 private const val FIRST_PORT = 20_000
 private const val LAST_PORT = 32_000
@@ -209,11 +211,10 @@ class Detached(module: Module) {
 }
 
 /** Polls [done] until it holds or [seconds] pass, and answers whether it held. */
-fun eventually(seconds: Long = 30, done: () -> Boolean): Boolean {
-    val deadline = System.nanoTime() + seconds * 1_000_000_000
-    while (System.nanoTime() < deadline) {
-        if (done()) return true
-        Thread.sleep(100)
-    }
-    return done()
+fun eventually(seconds: Long = 30, done: () -> Boolean): Boolean = dev.surefold.test.eventually(
+    seconds.seconds,
+    every = 100.milliseconds,
+) {
+    check(done())
+    true
 }

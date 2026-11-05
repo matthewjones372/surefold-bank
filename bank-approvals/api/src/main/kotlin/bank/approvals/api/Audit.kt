@@ -78,7 +78,8 @@ fun auditEntry(request: String, sequence: Long, kind: String, subject: String, e
 }
 
 private val COLUMNS = listOf(
-    "request", "sequence", "at", "kind", "subject", "what", "who", "who_name", "text", "hash", "session", "address", "user_agent",
+    "request", "sequence", "at", "kind", "subject", "what", "who", "who_name", "text", "hash",
+    "session", "address", "user_agent",
 )
 
 /** [entries] as CSV (RFC 4180): a header, then one line each, every field quoted. */
@@ -86,7 +87,8 @@ fun csv(entries: List<AuditEntry>): String = buildString {
     appendLine(COLUMNS.joinToString(","))
     entries.forEach { e ->
         val fields = listOf(
-            e.request, e.sequence.toString(), e.at, e.kind, e.subject, e.what, e.who?.subject, e.who?.name, e.text, e.hash,
+            e.request, e.sequence.toString(), e.at, e.kind, e.subject, e.what,
+            e.who?.subject, e.who?.name, e.text, e.hash,
             e.origin?.session, e.origin?.address, e.origin?.userAgent,
         )
         appendLine(fields.joinToString(",") { "\"" + it.orEmpty().replace("\"", "\"\"") + "\"" })

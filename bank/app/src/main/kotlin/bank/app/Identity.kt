@@ -1,6 +1,8 @@
 package bank.app
 
 import bank.api.Signing
+import dev.surefold.cache.Cache
+import dev.surefold.fail.Either
 import io.github.matthewjones372.pelican.Authenticator
 import io.github.matthewjones372.pelican.Credentials
 import io.github.matthewjones372.pelican.Identity
@@ -13,10 +15,12 @@ import java.security.SecureRandom
 import java.time.Instant
 import java.util.Base64
 import java.util.Date
-import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration
+import kotlin.time.toKotlinDuration
 
 /**
- * The bank's identity provider as pelican-oidc sees it (bank spec 0021): API tokens verified against [IdentitySettings.issuer],
+ * The bank's identity provider as pelican-oidc sees it (bank spec 0021): API tokens verified against
+ * [IdentitySettings.issuer],
  * and the pages signed in to as its client, the session sealed with the key every node shares.
  */
 fun signing(settings: IdentitySettings): Signing {
@@ -45,21 +49,36 @@ fun signing(settings: IdentitySettings): Signing {
  * bytes are taken as verified; a JWT cannot be withdrawn before it expires, so remembering one changes nothing about
  * what is accepted. Sessions and refusals are not remembered.
  */
-private class Verified(private val underneath: Authenticator, private val most: Int = 10_000) : Authenticator {
-    private class Known(val identity: Identity, val until: Instant)
-
-    private val known = ConcurrentHashMap<String, Known>()
+private class Verified(private val underneath: Authenticator, most: Int = 10_000) : Authenticator {
+    // A token with no expiry, and a token the issuer refused, are answered and not kept.
+    private val known = Cache<String, Unit, Identity>(
+        ttl = { answer ->
+            val identity = (answer as? Either.Right)?.value ?: return@Cache Duration.ZERO
+            val expires = (identity.claims["exp"] as? Date)?.toInstant() ?: return@Cache Duration.ZERO
+            val left = java.time.Duration.between(Instant.now(), expires)
+            if (left.isZero || left.isNegative) Duration.ZERO else left.toKotlinDuration()
+        },
+        capacity = most,
+        lookup = { token ->
+            underneath.authenticate(Bearer(token))?.let { Either.Right(it) } ?: Either.Left(Unit)
+        },
+    )
 
     override fun authenticate(credentials: Credentials): Identity? {
         val token = credentials.bearerToken() ?: return underneath.authenticate(credentials)
-        val now = Instant.now()
-        known[token]?.takeIf { now.isBefore(it.until) }?.let { return it.identity }
-        val identity = underneath.authenticate(credentials) ?: return null
-        val expires = (identity.claims["exp"] as? Date)?.toInstant() ?: return identity
-        if (known.size >= most) known.clear()
-        known[token] = Known(identity, expires)
-        return identity
+        return when (val found = known.get(token)) {
+            is Either.Right -> found.value
+            is Either.Left -> null
+        }
     }
+}
+
+/** The bearer a cached lookup presents, which is all the issuer reads from an API token. */
+private class Bearer(private val token: String) : Credentials {
+    override fun header(name: String): String? =
+        if (name.equals("Authorization", ignoreCase = true)) "Bearer $token" else null
+
+    override fun cookie(name: String): String? = null
 }
 
 /** A request's `Cookie` header as the credentials pelican-oidc reads a session from. */

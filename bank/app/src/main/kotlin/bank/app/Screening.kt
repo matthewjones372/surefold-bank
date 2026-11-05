@@ -8,14 +8,14 @@ import bank.domain.ScreeningOutcome
 import bank.domain.Step
 import bank.domain.TransferId
 import bank.domain.WhenUnanswered
+import dev.surefold.fail.Either
+import dev.surefold.timed
 import io.github.matthewjones372.pelican.ClientRequest
 import io.github.matthewjones372.pelican.ClientTransport
 import io.github.matthewjones372.pelican.Method
 import io.github.matthewjones372.pelican.client.jetty.JettyHttpTransport
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.metrics.otel.traced
-import io.github.matthewjones372.surefold.fail.Either
-import io.github.matthewjones372.surefold.timed
 import io.opentelemetry.api.OpenTelemetry
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
@@ -77,10 +77,11 @@ class PelicanScreener(
             requestedAtMillis = proposed.requestedAt,
         )
         // Whatever goes wrong on the way, the answer is the same: no decision, and the bank's policy applies.
-        val decision = try {
-            timed("bank.screening.duration") { client.screen(asked) }
-        } catch (failed: Exception) {
-            return Either.Left(NoDecision(failed.message ?: failed::class.java.name))
+        val decision = when (
+            val screened = Either.catch { timed("bank.screening.duration") { client.screen(asked) } }
+        ) {
+            is Either.Left -> return Either.Left(NoDecision(screened.value.message ?: screened.value::class.java.name))
+            is Either.Right -> screened.value
         }
         val outcome = when (decision.outcome) {
             "approved" -> ScreeningOutcome.Approved
