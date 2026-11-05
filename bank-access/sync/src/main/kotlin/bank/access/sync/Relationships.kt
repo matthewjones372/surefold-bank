@@ -4,6 +4,7 @@ import bank.access.fga.Tuple
 import bank.events.v1.AccountEvent
 import bank.events.v1.ApprovalEvent
 import bank.events.v1.ApprovalEvent.EventCase
+import dev.surefold.fail.Either
 import java.time.Duration
 import java.time.Instant
 
@@ -93,8 +94,5 @@ class Grants {
 }
 
 /** A grant's `for`, or null if it is not a duration; the bank refused such a grant, so none is applied. */
-private fun duration(text: String): Duration? = try {
-    Duration.parse(text)
-} catch (_: java.time.format.DateTimeParseException) {
-    null
-}
+private fun duration(text: String): Duration? =
+    Either.catchOrThrow<java.time.format.DateTimeParseException, Duration> { Duration.parse(text) }.getOrNull()

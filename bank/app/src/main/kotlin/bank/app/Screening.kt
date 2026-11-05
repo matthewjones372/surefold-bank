@@ -77,10 +77,11 @@ class PelicanScreener(
             requestedAtMillis = proposed.requestedAt,
         )
         // Whatever goes wrong on the way, the answer is the same: no decision, and the bank's policy applies.
-        val decision = try {
-            timed("bank.screening.duration") { client.screen(asked) }
-        } catch (failed: Exception) {
-            return Either.Left(NoDecision(failed.message ?: failed::class.java.name))
+        val decision = when (
+            val screened = Either.catch { timed("bank.screening.duration") { client.screen(asked) } }
+        ) {
+            is Either.Left -> return Either.Left(NoDecision(screened.value.message ?: screened.value::class.java.name))
+            is Either.Right -> screened.value
         }
         val outcome = when (decision.outcome) {
             "approved" -> ScreeningOutcome.Approved

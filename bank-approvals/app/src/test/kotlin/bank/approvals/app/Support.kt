@@ -38,6 +38,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /** One Postgres for the test JVM, and an empty database in it per cluster, as surefold-bank's tests have. */
 object TestPostgres {
@@ -279,11 +281,8 @@ class Detached(module: Module) {
 }
 
 /** Polls [done] until it holds or [seconds] pass, and answers whether it held. */
-fun eventually(seconds: Long = 30, done: () -> Boolean): Boolean {
-    val deadline = System.nanoTime() + seconds * 1_000_000_000
-    while (System.nanoTime() < deadline) {
-        if (runCatching(done).getOrDefault(false)) return true
-        Thread.sleep(100)
+fun eventually(seconds: Long = 30, done: () -> Boolean): Boolean =
+    dev.surefold.test.eventually(seconds.seconds, every = 100.milliseconds) {
+        check(done())
+        true
     }
-    return done()
-}

@@ -15,6 +15,7 @@ import bank.api.transfer
 import bank.api.transferCounts
 import bank.api.withdraw
 import bank.issuer.TestIssuer
+import dev.surefold.fail.Either
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.Outcome
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
@@ -198,21 +199,27 @@ fun open(plan: Plan, client: ApiClient) {
 fun settles(client: ApiClient, within: Duration = 180.seconds): Boolean {
     val deadline = System.nanoTime() + within.inWholeNanoseconds
     while (System.nanoTime() < deadline) {
-        try {
-            val counts = client.call(transferCounts, Unit)
-            val books = client.call(ledger, Unit)
-            println(
-                "pending ${counts.pending}, completed ${counts.completed}, conserved ${books.conserved}, events ${books.eventsProjected}",
-            )
-            books.currencies.forEach {
+        when (
+            val asked = Either.catchOrThrow<IOException, Boolean> {
+                val counts = client.call(transferCounts, Unit)
+                val books = client.call(ledger, Unit)
                 println(
-                    "  ${it.currency}: ${it.accounts} accounts, balances ${it.balances}, in flight ${it.inFlight}, conserved ${it.conserved}",
+                    "pending ${counts.pending}, completed ${counts.completed}, conserved ${books.conserved}, " +
+                        "events ${books.eventsProjected}",
                 )
+                books.currencies.forEach {
+                    println(
+                        "  ${it.currency}: ${it.accounts} accounts, balances ${it.balances}, " +
+                            "in flight ${it.inFlight}, conserved ${it.conserved}",
+                    )
+                }
+                counts.pending == 0L && books.conserved
             }
-            if (counts.pending == 0L && books.conserved) return true
-        } catch (unreachable: IOException) {
+        ) {
+            is Either.Right -> if (asked.value) return true
+
             // The node asked may be restarting after chaos; the books are checked again, not given up on.
-            println("the bank did not answer ($unreachable); asking again")
+            is Either.Left -> println("the bank did not answer (${asked.value}); asking again")
         }
         Thread.sleep(2_000)
     }

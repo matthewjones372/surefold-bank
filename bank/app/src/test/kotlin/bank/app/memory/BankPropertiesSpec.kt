@@ -9,8 +9,9 @@ import bank.domain.TransferEvent
 import bank.domain.TransferId
 import bank.domain.TransferStatus
 import bank.domain.evolve
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.Test
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
@@ -40,21 +41,24 @@ private fun List<Money>.total(): Money = fold(gbp(0)) { sum, amount -> sum + amo
  * are gone (spec 0034): a leg's retry lives in the saga's ask, and the account applies each reference once. A failure
  * names its seeds.
  */
-class BankPropertiesSpec {
-    @Test
-    fun `across 1,000 seeds money is conserved, every transfer settles and each leg applies once`() {
-        val broken = (1L..1_000L)
-            .associateWith { seed -> inMemoryOf { brokenUnder(seed) } }
-            .filterValues { it.isNotEmpty() }
-        broken shouldBe emptyMap()
-    }
-
-    @Test
-    fun `with every account holding its closes for its next write, the same 1,000 seeds keep every property`() {
-        val broken = (1L..1_000L)
-            .associateWith { seed -> inMemoryOf(closeAfter = 5.seconds) { brokenUnder(seed) } }
-            .filterValues { it.isNotEmpty() }
-        broken shouldBe emptyMap()
+object BankPropertiesSpec : Suite() {
+    init {
+        test("across 1,000 seeds money is conserved, every transfer settles and each leg applies once") {
+            holds {
+                val broken = (1L..1_000L)
+                    .associateWith { seed -> inMemoryOf { brokenUnder(seed) } }
+                    .filterValues { it.isNotEmpty() }
+                broken shouldBe emptyMap()
+            }
+        }
+        test("with every account holding its closes for its next write, the same 1,000 seeds keep every property") {
+            holds {
+                val broken = (1L..1_000L)
+                    .associateWith { seed -> inMemoryOf(closeAfter = 5.seconds) { brokenUnder(seed) } }
+                    .filterValues { it.isNotEmpty() }
+                broken shouldBe emptyMap()
+            }
+        }
     }
 
     /** The properties [seed]'s transfers broke, by name; none when they kept them all. */

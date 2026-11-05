@@ -252,11 +252,12 @@ object NodeSnapshots : MessageCodec<NodeSnapshot> {
 }
 
 /** Bytes another node sent that do not read are the wire's fault, not a bug here. */
-private inline fun <A> wired(read: () -> A): A = try {
-    read()
-} catch (broken: SerializationException) {
-    throw WireException("not a message the bank can read: ${broken.message}").apply { initCause(broken) }
-}
+private inline fun <A> wired(read: () -> A): A = Either.catchOrThrow<SerializationException, A>(read).fold(
+    { broken ->
+        throw WireException("not a message the bank can read: ${broken.message}").apply { initCause(broken) }
+    },
+    { it },
+)
 
 /** The journal's kinds: the first half of every persistence id, and what a projection follows. */
 object Kinds {

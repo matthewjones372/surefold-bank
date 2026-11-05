@@ -261,8 +261,9 @@ object SubjectMessages : MessageCodec<SubjectMessage> {
 }
 
 /** Bytes another node sent that do not read are the wire's fault, not a bug here. */
-private inline fun <A> wired(read: () -> A): A = try {
-    read()
-} catch (broken: SerializationException) {
-    throw WireException("not a message approvals can read: ${broken.message}").apply { initCause(broken) }
-}
+private inline fun <A> wired(read: () -> A): A = Either.catchOrThrow<SerializationException, A>(read).fold(
+    { broken ->
+        throw WireException("not a message approvals can read: ${broken.message}").apply { initCause(broken) }
+    },
+    { it },
+)

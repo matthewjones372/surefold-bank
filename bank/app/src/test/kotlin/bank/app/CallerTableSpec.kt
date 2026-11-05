@@ -4,6 +4,9 @@ import bank.api.OpenAccount
 import bank.api.TransferRequest
 import bank.api.openAccount
 import bank.api.transfer
+import dev.surefold.clock
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.test.apiClient
@@ -11,7 +14,6 @@ import io.github.matthewjones372.pelican.test.shouldBeOk
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.Test
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -22,7 +24,7 @@ import java.util.UUID
  * Bank spec 0021's specification of who may do what: every endpoint, as every kind of caller, and the status each must
  * answer. Someone else's account is missing, not forbidden; an ops view refused is forbidden, since it names nothing.
  */
-class CallerTableSpec {
+object CallerTableSpec : Suite() {
 
     /** Who calls: the token they send, or none. */
     private enum class Who(val token: () -> String?) {
@@ -67,7 +69,7 @@ class CallerTableSpec {
 
     private fun unique() = UUID.randomUUID().toString()
 
-    private val gbp = """"amount":{"value":"0.01","currency":"GBP"}"""
+    private const val GBP = """"amount":{"value":"0.01","currency":"GBP"}"""
 
     private val table = listOf(
         Row(
@@ -82,14 +84,14 @@ class CallerTableSpec {
             "POST",
             "/accounts/{accountId}/deposits",
             { "/accounts/a1/deposits" },
-            { """{$gbp,"reference":"${unique()}"}""" },
+            { """{$GBP,"reference":"${unique()}"}""" },
             statuses(401, 200, 404, 404, 404, 404, 404, 403),
         ),
         Row(
             "POST",
             "/accounts/{accountId}/withdrawals",
             { "/accounts/a1/withdrawals" },
-            { """{$gbp,"reference":"${unique()}"}""" },
+            { """{$GBP,"reference":"${unique()}"}""" },
             statuses(401, 200, 404, 404, 404, 404, 404, 403),
         ),
         Row(
@@ -110,7 +112,7 @@ class CallerTableSpec {
             "PUT",
             "/transfers/{transferId}",
             { "/transfers/${unique()}" },
-            { """{"from":"a1","to":"b1",$gbp}""" },
+            { """{"from":"a1","to":"b1",$GBP}""" },
             statuses(401, 200, 404, 404, 404, 404, 404, 403),
         ),
         Row(
@@ -125,7 +127,7 @@ class CallerTableSpec {
             "POST",
             "/payrolls/{payrollId}",
             { "/payrolls/${unique()}" },
-            { """{"credits":[{"account":"b1",$gbp}]}""" },
+            { """{"credits":[{"account":"b1",$GBP}]}""" },
             statuses(401, 403, 403, 403, 403, 403, 202, 403),
         ),
         Row("GET", "/currencies", { "/currencies" }, null, statuses(401, 200, 200, 200, 200, 200, 200, 200)),
@@ -175,48 +177,57 @@ class CallerTableSpec {
         return response.statusCode()
     }
 
-    @Test
-    fun `every endpoint answers every kind of caller as the table says`() {
-        TestCluster(1).running { (node) ->
-            val base = node.server.baseUrl
-            apiClient(base, JacksonCodecs).use { anyone ->
-                anyone.calling("ada").outcome(openAccount, In2("a1", OpenAccount("GBP", "100.00"))).shouldBeOk()
-                anyone.calling("bob").outcome(openAccount, In2("b1", OpenAccount("GBP"))).shouldBeOk()
-                anyone.calling(
-                    "ada",
-                ).outcome(transfer, In2("t1", TransferRequest("a1", "b1", pounds("1.00")))).shouldBeOk()
-            }
-            // As Approvals would have it given: gil in support may see a1, and nothing else, for the next hour.
-            node.grants.give("table-grant", "gil", Access.View("a1"), java.time.Instant.now().plusSeconds(3600))
-            // And bob may act as ada, which the acting column's token says he is doing.
-            node.grants.give("table-acting", "bob", Access.ActAs("ada"), java.time.Instant.now().plusSeconds(3600))
-            assertSoftly {
-                table.forEach { row ->
-                    Who.entries.forEach { who ->
-                        withClue("${row.method} ${row.template} as $who") {
-                            status(base, row, who) shouldBe row.expected.getValue(who)
+    init {
+        test("every endpoint answers every kind of caller as the table says") {
+            holds {
+                TestCluster(1).running { (node) ->
+                    val base = node.server.baseUrl
+                    apiClient(base, JacksonCodecs).use { anyone ->
+                        anyone.calling("ada").outcome(openAccount, In2("a1", OpenAccount("GBP", "100.00"))).shouldBeOk()
+                        anyone.calling("bob").outcome(openAccount, In2("b1", OpenAccount("GBP"))).shouldBeOk()
+                        anyone.calling(
+                            "ada",
+                        ).outcome(transfer, In2("t1", TransferRequest("a1", "b1", pounds("1.00")))).shouldBeOk()
+                    }
+                    // As Approvals would have it given: gil in support may see a1, and nothing else, for the next hour.
+                    node.grants.give("table-grant", "gil", Access.View("a1"), clock.get().now().plusSeconds(3600))
+                    // And bob may act as ada, which the acting column's token says he is doing.
+                    node.grants.give(
+                        "table-acting",
+                        "bob",
+                        Access.ActAs("ada"),
+                        clock.get().now().plusSeconds(3600),
+                    )
+                    assertSoftly {
+                        table.forEach { row ->
+                            Who.entries.forEach { who ->
+                                withClue("${row.method} ${row.template} as $who") {
+                                    status(base, row, who) shouldBe row.expected.getValue(who)
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    @Test
-    fun `and the table covers every endpoint the document describes`() {
-        TestCluster(1).running { (node) ->
-            val document = http.send(
-                HttpRequest.newBuilder(URI.create("${node.server.baseUrl}/openapi.json")).build(),
-                HttpResponse.BodyHandlers.ofString(),
-            ).body()
-            val described = Regex(""""(/[^"]*)":\s*\{\s*"(get|put|post|delete|patch)"""").findAll(document)
-                .map { it.groupValues[1] }.toSet()
-            val tabled = table.map { it.template }.toSet()
+        test("and the table covers every endpoint the document describes") {
+            holds {
+                TestCluster(1).running { (node) ->
+                    val document = http.send(
+                        HttpRequest.newBuilder(URI.create("${node.server.baseUrl}/openapi.json")).build(),
+                        HttpResponse.BodyHandlers.ofString(),
+                    ).body()
+                    val described = Regex(""""(/[^"]*)":\s*\{\s*"(get|put|post|delete|patch)"""").findAll(document)
+                        .map { it.groupValues[1] }.toSet()
+                    val tabled = table.map { it.template }.toSet()
 
-            // Found, not assumed: an empty match would pass the check below and prove nothing.
-            (described.size >= 15) shouldBe true
-            ("/accounts/{accountId}" in described) shouldBe true
-            withClue("endpoints described but not in the table") { (described - tabled) shouldBe emptySet() }
+                    // Found, not assumed: an empty match would pass the check below and prove nothing.
+                    (described.size >= 15) shouldBe true
+                    ("/accounts/{accountId}" in described) shouldBe true
+                    withClue("endpoints described but not in the table") { (described - tabled) shouldBe emptySet() }
+                }
+            }
         }
     }
 }

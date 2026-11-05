@@ -6,11 +6,12 @@ import bank.api.getAccount
 import bank.api.statement
 import bank.domain.AccountId
 import dev.surefold.assert.shouldBeRight
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
 import io.github.matthewjones372.pelican.In3
 import io.github.matthewjones372.pelican.jackson.JacksonCodecs
 import io.github.matthewjones372.pelican.test.apiClient
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.Test
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import java.net.URI
@@ -18,6 +19,8 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /** bank-access for the test JVM (spec 0022): OpenFGA in memory, the model from bank-access-client's own jar. */
 object TestAccess {
@@ -55,72 +58,88 @@ object TestAccess {
 }
 
 /** Bank spec 0022's `access-shadow`: bank-access asked every question the bank's own rules answer, and compared. */
-class ShadowSpec {
-    private val run = UUID.randomUUID().toString().take(8)
-    private val http = HttpClient.newHttpClient()
+object ShadowSpec : Suite() {
+    init {
+        test(
+            "the bank answers as before, bank-access agrees with it, and a deliberately wrong relationship is counted",
+        ) {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val store = "shadow-$run"
+                    val fga = TestAccess.store(store)
+                    val acc = "acc-$run"
+                    TestCluster(1, extra = TestAccess.config(store)).running { (node) ->
+                        val base = node.server.baseUrl
+                        node.bank.open(AccountId(acc), "ada", gbp(5_000), "open:$acc").shouldBeRight()
+                        // What access-sync writes from the Opened, written here instead.
+                        fga.write(
+                            listOf(
+                                Tuple("person:ada", "owner", "account:$acc"),
+                                Tuple("bank:surefold", "bank", "account:$acc"),
+                            ),
+                        )
 
-    /**
-     * A counter on [base]'s /metrics, summed over the lines whose labels contain each of [labels]. A count made in a
-     * sampled trace ends in an exemplar (`# {trace_id=...} 1.0 <time>`); the value is the number before it.
-     */
-    private fun counted(base: String, name: String, vararg labels: String): Double = http.send(
-        HttpRequest.newBuilder(URI.create("$base/metrics")).build(),
-        HttpResponse.BodyHandlers.ofString(),
-    ).body()
-        .lines().filter { it.startsWith(name) && labels.all(it::contains) }
-        .sumOf { it.substringBefore(" # ").substringAfterLast(' ').toDouble() }
+                        apiClient(base, JacksonCodecs).use { client ->
+                            answered(base) { client.calling("ada").response(getAccount, acc).status shouldBe 200 }
+                            answered(
+                                base,
+                            ) { client.calling("ada").response(statement, In3(acc, 50, null)).status shouldBe 200 }
+                            answered(base) { client.calling("eve").response(getAccount, acc).status shouldBe 404 }
+                            counted(base, "bank_access_shadow_total", "agreed") shouldBe 3.0
+                            counted(base, "bank_access_disagreed_total") shouldBe 0.0
 
-    /** Every question the shadow has finished with: agreed, unanswered, or disagreed after asking again. */
-    private fun judged(base: String): Double =
-        counted(base, "bank_access_shadow_total") + counted(base, "bank_access_disagreed_total")
-
-    /**
-     * Makes [request], which the bank shadows with one question, again for as long as bank-access leaves it unanswered:
-     * past its 50 ms budget nothing is compared (spec 0022), so that says nothing about the relationship.
-     */
-    private fun answered(base: String, request: () -> Unit) {
-        repeat(5) {
-            val before = judged(base)
-            val unanswered = counted(base, "bank_access_shadow_total", "unanswered")
-            request()
-            eventually("the shadow finished with its question") { judged(base) > before }
-            if (counted(base, "bank_access_shadow_total", "unanswered") == unanswered) return
+                            // A relationship that is wrong: Eve as acc's owner. The bank still answers from its own
+                            // rules.
+                            fga.write(listOf(Tuple("person:eve", "owner", "account:$acc")))
+                            answered(base) { client.calling("eve").response(getAccount, acc).status shouldBe 404 }
+                            counted(base, "bank_access_disagreed_total", "view-account") shouldBe 1.0
+                        }
+                    }
+                }
+            }
         }
-        error("bank-access never answered within its budget")
     }
 
-    private fun eventually(what: String, done: () -> Boolean) {
-        val until = System.nanoTime() + 30_000_000_000
-        while (!done()) {
-            check(System.nanoTime() < until) { "never: $what" }
-            Thread.sleep(200)
+    private class Fixture {
+        val run = UUID.randomUUID().toString().take(8)
+        val http = HttpClient.newHttpClient()
+
+        /**
+         * A counter on [base]'s /metrics, summed over the lines whose labels contain each of [labels]. A count made in
+         * a
+         * sampled trace ends in an exemplar (`# {trace_id=...} 1.0 <time>`); the value is the number before it.
+         */
+        fun counted(base: String, name: String, vararg labels: String): Double = http.send(
+            HttpRequest.newBuilder(URI.create("$base/metrics")).build(),
+            HttpResponse.BodyHandlers.ofString(),
+        ).body()
+            .lines().filter { it.startsWith(name) && labels.all(it::contains) }
+            .sumOf { it.substringBefore(" # ").substringAfterLast(' ').toDouble() }
+
+        /** Every question the shadow has finished with: agreed, unanswered, or disagreed after asking again. */
+        fun judged(base: String): Double =
+            counted(base, "bank_access_shadow_total") + counted(base, "bank_access_disagreed_total")
+
+        /**
+         * Makes [request], which the bank shadows with one question, again for as long as bank-access leaves it
+         * unanswered:
+         * past its 50 ms budget nothing is compared (spec 0022), so that says nothing about the relationship.
+         */
+        fun answered(base: String, request: () -> Unit) {
+            repeat(5) {
+                val before = judged(base)
+                val unanswered = counted(base, "bank_access_shadow_total", "unanswered")
+                request()
+                eventually("the shadow finished with its question") { judged(base) > before }
+                if (counted(base, "bank_access_shadow_total", "unanswered") == unanswered) return
+            }
+            error("bank-access never answered within its budget")
         }
-    }
 
-    @Test
-    fun `the bank answers as before, bank-access agrees with it, and a deliberately wrong relationship is counted`() {
-        val store = "shadow-$run"
-        val fga = TestAccess.store(store)
-        val acc = "acc-$run"
-        TestCluster(1, extra = TestAccess.config(store)).running { (node) ->
-            val base = node.server.baseUrl
-            node.bank.open(AccountId(acc), "ada", gbp(5_000), "open:$acc").shouldBeRight()
-            // What access-sync writes from the Opened, written here instead.
-            fga.write(
-                listOf(Tuple("person:ada", "owner", "account:$acc"), Tuple("bank:surefold", "bank", "account:$acc")),
-            )
-
-            apiClient(base, JacksonCodecs).use { client ->
-                answered(base) { client.calling("ada").response(getAccount, acc).status shouldBe 200 }
-                answered(base) { client.calling("ada").response(statement, In3(acc, 50, null)).status shouldBe 200 }
-                answered(base) { client.calling("eve").response(getAccount, acc).status shouldBe 404 }
-                counted(base, "bank_access_shadow_total", "agreed") shouldBe 3.0
-                counted(base, "bank_access_disagreed_total") shouldBe 0.0
-
-                // A relationship that is wrong: Eve as acc's owner. The bank still answers from its own rules.
-                fga.write(listOf(Tuple("person:eve", "owner", "account:$acc")))
-                answered(base) { client.calling("eve").response(getAccount, acc).status shouldBe 404 }
-                counted(base, "bank_access_disagreed_total", "view-account") shouldBe 1.0
+        fun eventually(what: String, done: () -> Boolean) {
+            dev.surefold.test.eventually(30.seconds, every = 200.milliseconds) {
+                check(done()) { "never: $what" }
             }
         }
     }

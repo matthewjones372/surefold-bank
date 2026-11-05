@@ -328,11 +328,10 @@ private fun filter(
     fun day(text: String?): Either<Problem, LocalDate?> = when (text) {
         null -> Either.Right(null)
 
-        else -> try {
-            Either.Right(LocalDate.parse(text))
-        } catch (_: DateTimeParseException) {
-            Either.Left(Problem("$text is not a day: write it as 2026-10-01"))
-        }
+        else -> Either.catchOrThrow<DateTimeParseException, LocalDate> { LocalDate.parse(text) }.fold(
+            { Either.Left(Problem("$text is not a day: write it as 2026-10-01")) },
+            { Either.Right(it) },
+        )
     }
     return day(from).flatMap { start -> day(to).map { end -> AuditFilter(person, subject, request, start, end) } }
 }

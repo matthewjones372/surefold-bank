@@ -5,11 +5,11 @@ import bank.approvals.domain.Policies
 import bank.approvals.domain.Policy
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import dev.surefold.Shared
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * `policies.yaml`, read at start and again whenever it changes, so a change Flux ships takes effect on the next
@@ -19,13 +19,13 @@ import java.util.concurrent.atomic.AtomicReference
 class PolicyFile(private val path: Path) {
     private class Read(val modified: Long, val policies: Policies)
 
-    private val read = AtomicReference(load())
+    private val read = Shared(load(), "approvals.policies")
 
     fun current(): Policies {
         val modified = Files.getLastModifiedTime(path).toMillis()
-        val held = read.get()
-        if (modified == held.modified) return held.policies
-        return load().also(read::set).policies
+        return read.modify { held ->
+            if (modified == held.modified) held to held.policies else load().let { fresh -> fresh to fresh.policies }
+        }
     }
 
     private fun load(): Read {

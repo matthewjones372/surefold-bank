@@ -8,66 +8,96 @@ import bank.v1.Bank
 import dev.surefold.actor.Address
 import dev.surefold.actor.Reply
 import dev.surefold.fail.Either
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.Test
 
 /** Bank spec 0027: an account's daily limit in the journal, its snapshot and between nodes; older rows still read. */
-class DailyLimitWireSpec {
+object DailyLimitWireSpec : Suite() {
+    init {
+        test("an Opened carries the limit the account opened with") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val opened = AccountEvent.Opened("ada", gbp(100), "open-1", 1, dailyLimit = gbp(50_000))
+                    AccountEvents.decode(AccountEvents.encode(opened)) shouldBe opened
+                }
+            }
+        }
+        test("an Opened written before limits reads with none, which the account takes as the default") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val old = Bank.AccountEvent.newBuilder()
+                        .setOpened(
+                            Bank.Opened.newBuilder().setOwner("ada").setReference("open-1").setAtMillis(1)
+                                .setInitial(wireGbp("1.00")),
+                        )
+                        .build()
+                        .toByteArray()
+                    AccountEvents.decode(old) shouldBe AccountEvent.Opened(
+                        "ada",
+                        gbp(100),
+                        "open-1",
+                        1,
+                        dailyLimit = null,
+                    )
+                }
+            }
+        }
+        test("an account's snapshot keeps its limit and what it has paid out today") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val open = Account.Open(
+                        "ada",
+                        gbp(42),
+                        listOf("a"),
+                        setOf("debit:t-1"),
+                        dailyLimit = gbp(500),
+                        paidOutOn = 20_736,
+                        paidOut = gbp(300),
+                        debitedOn = setOf("t-1"),
+                    )
+                    AccountStates.decode(AccountStates.encode(open)) shouldBe open
+                }
+            }
+        }
+        test("a snapshot taken before limits reads as an account that has paid nothing out") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val old = Bank.AccountSnapshot.newBuilder()
+                        .setOpenAccount(
+                            Bank.OpenAccount.newBuilder().setOwner("ada").setBalance(wireGbp("0.42")).addRecent("a"),
+                        )
+                        .build()
+                        .toByteArray()
+                    AccountStates.decode(old) shouldBe Account.Open("ada", gbp(42), listOf("a"))
+                }
+            }
+        }
+        test("opening with a limit, and the refusal for passing it, cross between nodes as themselves") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val open = AccountCommand.Open("ada", gbp(1), "r", dailyLimit = gbp(500))
+                    (AccountMessages.roundTrip(AccountAsk(open, Unanswered())) as AccountAsk).command shouldBe open
 
-    @Test
-    fun `an Opened carries the limit the account opened with`() {
-        val opened = AccountEvent.Opened("ada", gbp(100), "open-1", 1, dailyLimit = gbp(50_000))
-        AccountEvents.decode(AccountEvents.encode(opened)) shouldBe opened
+                    val refused: AccountAnswer =
+                        Either.Left(AccountError.DailyLimitExceeded("a", gbp(1_000_000), gbp(250), gbp(300)))
+                    AccountAnswers.roundTrip(refused) shouldBe refused
+                }
+            }
+        }
     }
 
-    @Test
-    fun `an Opened written before limits reads with none, which the account takes as the default`() {
-        val old = Bank.AccountEvent.newBuilder()
-            .setOpened(
-                Bank.Opened.newBuilder().setOwner("ada").setReference("open-1").setAtMillis(1)
-                    .setInitial(wireGbp("1.00")),
-            )
-            .build()
-            .toByteArray()
-        AccountEvents.decode(old) shouldBe AccountEvent.Opened("ada", gbp(100), "open-1", 1, dailyLimit = null)
+    private class Fixture {
+
+        fun wireGbp(amount: String) = Bank.Money.newBuilder().setAmount(
+            amount,
+        ).setCurrency(Bank.Currency.newBuilder().setCode("GBP").setExponent(2))
     }
-
-    @Test
-    fun `an account's snapshot keeps its limit and what it has paid out today`() {
-        val open = Account.Open(
-            "ada",
-            gbp(42),
-            listOf("a"),
-            setOf("debit:t-1"),
-            dailyLimit = gbp(500),
-            paidOutOn = 20_736,
-            paidOut = gbp(300),
-            debitedOn = setOf("t-1"),
-        )
-        AccountStates.decode(AccountStates.encode(open)) shouldBe open
-    }
-
-    @Test
-    fun `a snapshot taken before limits reads as an account that has paid nothing out`() {
-        val old = Bank.AccountSnapshot.newBuilder()
-            .setOpenAccount(Bank.OpenAccount.newBuilder().setOwner("ada").setBalance(wireGbp("0.42")).addRecent("a"))
-            .build()
-            .toByteArray()
-        AccountStates.decode(old) shouldBe Account.Open("ada", gbp(42), listOf("a"))
-    }
-
-    @Test
-    fun `opening with a limit, and the refusal for passing it, cross between nodes as themselves`() {
-        val open = AccountCommand.Open("ada", gbp(1), "r", dailyLimit = gbp(500))
-        (AccountMessages.roundTrip(AccountAsk(open, Unanswered())) as AccountAsk).command shouldBe open
-
-        val refused: AccountAnswer =
-            Either.Left(AccountError.DailyLimitExceeded("a", gbp(1_000_000), gbp(250), gbp(300)))
-        AccountAnswers.roundTrip(refused) shouldBe refused
-    }
-
-    private fun wireGbp(amount: String) =
-        Bank.Money.newBuilder().setAmount(amount).setCurrency(Bank.Currency.newBuilder().setCode("GBP").setExponent(2))
 }
 
 private class Unanswered<A : Any> : Reply<A> {

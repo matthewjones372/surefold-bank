@@ -3,6 +3,13 @@ package bank.access.fga
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
+import dev.surefold.fail.Either
+import dev.surefold.fail.flatMap
+import dev.surefold.fail.fold
+import dev.surefold.fail.left
+import dev.surefold.fail.map
+import dev.surefold.fail.onLeft
+import dev.surefold.fail.right
 import java.io.IOException
 import java.net.URI
 import java.net.URLEncoder
@@ -40,54 +47,77 @@ class Fga(
 ) {
     private val http = HttpClient.newBuilder().connectTimeout(timeout).build()
 
-    /** Found once, by name: the store the access-model Job makes. */
-    val storeId: String by lazy {
-        storeNamed(url, token, http, timeout, store, carried())
-            ?: throw FgaUnavailable("OpenFGA has no store named $store")
+    /** Found once, by name: the store the access-model Job makes, or why it could not be. */
+    val storeId: Either<FgaUnavailable, String> by lazy {
+        storeNamed(url, token, http, timeout, store, carried()).flatMap { found ->
+            found?.right() ?: FgaUnavailable("OpenFGA has no store named $store").left()
+        }
     }
 
     /** Whether [user] has [relation] to [obj] at [now], which is what a grant's expiry is weighed against. */
-    fun check(user: String, relation: String, obj: String, now: Instant = Instant.now()): Boolean {
+    fun check(
+        user: String,
+        relation: String,
+        obj: String,
+        now: Instant = Instant.now(),
+    ): Either<FgaUnavailable, Boolean> {
         val body = json.createObjectNode()
         body.putObject("tuple_key").put("user", user).put("relation", relation).put("object", obj)
         body.putObject("context").put("current_time", now.toString())
-        return call("POST", "/stores/$storeId/check", body).path("allowed").asBoolean(false)
+        return call("POST", "/check", body).map { it.path("allowed").asBoolean(false) }
     }
 
     /** Every [type] object [user] has [relation] to, at [now]. */
-    fun listObjects(user: String, relation: String, type: String, now: Instant = Instant.now()): Set<String> {
+    fun listObjects(
+        user: String,
+        relation: String,
+        type: String,
+        now: Instant = Instant.now(),
+    ): Either<FgaUnavailable, Set<String>> {
         val body = json.createObjectNode().put("user", user).put("relation", relation).put("type", type)
         body.putObject("context").put("current_time", now.toString())
-        return call("POST", "/stores/$storeId/list-objects", body).path("objects").map(JsonNode::asText).toSet()
+        return call("POST", "/list-objects", body).map { page ->
+            page.path("objects").map(JsonNode::asText).toSet()
+        }
     }
 
     /** Writes [tuples], a hundred at a time, as OpenFGA takes them; one already there is left as it is. */
-    fun write(tuples: Collection<Tuple>) = tuples.chunked(MOST_PER_WRITE).forEach { some ->
-        val body = json.createObjectNode()
-        val writes = body.putObject("writes").put("on_duplicate", "ignore")
-        val keys = writes.putArray("tuple_keys")
-        some.forEach { keys.add(it.toJson()) }
-        call("POST", "/stores/$storeId/write", body)
+    fun write(tuples: Collection<Tuple>): Either<FgaUnavailable, Unit> {
+        tuples.chunked(MOST_PER_WRITE).forEach { some ->
+            val body = json.createObjectNode()
+            val writes = body.putObject("writes").put("on_duplicate", "ignore")
+            val keys = writes.putArray("tuple_keys")
+            some.forEach { keys.add(it.toJson()) }
+            call("POST", "/write", body).onLeft { return it.left() }
+        }
+        return Unit.right()
     }
 
     /** Deletes [tuples], a hundred at a time; one already gone is no error. */
-    fun delete(tuples: Collection<Tuple>) = tuples.chunked(MOST_PER_WRITE).forEach { some ->
-        val body = json.createObjectNode()
-        val deletes = body.putObject("deletes").put("on_missing", "ignore")
-        val keys = deletes.putArray("tuple_keys")
-        some.forEach {
-            keys.add(
-                json.createObjectNode().put("user", it.user).put("relation", it.relation).put("object", it.obj),
-            )
+    fun delete(tuples: Collection<Tuple>): Either<FgaUnavailable, Unit> {
+        tuples.chunked(MOST_PER_WRITE).forEach { some ->
+            val body = json.createObjectNode()
+            val deletes = body.putObject("deletes").put("on_missing", "ignore")
+            val keys = deletes.putArray("tuple_keys")
+            some.forEach {
+                keys.add(
+                    json.createObjectNode().put("user", it.user).put("relation", it.relation).put("object", it.obj),
+                )
+            }
+            call("POST", "/write", body).onLeft { return it.left() }
         }
-        call("POST", "/stores/$storeId/write", body)
+        return Unit.right()
     }
 
     /**
      * Every relationship in the store, or those matching what is given, a page at a time. OpenFGA reads by an object,
      * with or without a relation and a user, or by a user and an object's type (`account:`); not by a relation alone.
      */
-    fun read(user: String? = null, relation: String? = null, obj: String? = null): List<Tuple> {
+    fun read(
+        user: String? = null,
+        relation: String? = null,
+        obj: String? = null,
+    ): Either<FgaUnavailable, List<Tuple>> {
         val read = mutableListOf<Tuple>()
         var continuation = ""
         do {
@@ -99,7 +129,10 @@ class Fga(
                 relation?.let { key.put("relation", it) }
                 obj?.let { key.put("object", it) }
             }
-            val page = call("POST", "/stores/$storeId/read", body)
+            val page = when (val asked = call("POST", "/read", body)) {
+                is Either.Left -> return asked
+                is Either.Right -> asked.value
+            }
             page.path("tuples").forEach { found ->
                 val key = found.path("key")
                 val expires = key.path(
@@ -114,7 +147,7 @@ class Fga(
             }
             continuation = page.path("continuation_token").asText("")
         } while (continuation.isNotEmpty())
-        return read
+        return read.right()
     }
 
     private fun Tuple.toJson(): ObjectNode {
@@ -127,19 +160,20 @@ class Fga(
         return key
     }
 
-    private fun call(method: String, path: String, body: JsonNode?): JsonNode =
-        send(http, url, token, timeout, method, path, body, carried())
+    /** [suffix] is the path after `/stores/{id}`. The store is looked up once. */
+    private fun call(method: String, suffix: String, body: JsonNode?): Either<FgaUnavailable, JsonNode> =
+        storeId.flatMap { id -> send(http, url, token, timeout, method, "/stores/$id$suffix", body, carried()) }
 
     companion object {
         private val json = ObjectMapper()
         private const val MOST_PER_WRITE = 100
 
         /** Makes the store [store] if there is none, and writes [modelJson] as its newest model, as the Job does. */
-        fun create(url: String, token: String, store: String, modelJson: String) {
+        fun create(url: String, token: String, store: String, modelJson: String): Either<FgaUnavailable, Unit> {
             val http = HttpClient.newHttpClient()
             val timeout = Duration.ofSeconds(10)
-            val id = storeNamed(url, token, http, timeout, store)
-                ?: send(
+            return storeNamed(url, token, http, timeout, store).flatMap { existing ->
+                val made = existing?.right() ?: send(
                     http,
                     url,
                     token,
@@ -147,8 +181,19 @@ class Fga(
                     "POST",
                     "/stores",
                     json.createObjectNode().put("name", store),
-                ).path("id").asText()
-            send(http, url, token, timeout, "POST", "/stores/$id/authorization-models", json.readTree(modelJson))
+                ).map { it.path("id").asText() }
+                made.flatMap { id ->
+                    send(
+                        http,
+                        url,
+                        token,
+                        timeout,
+                        "POST",
+                        "/stores/$id/authorization-models",
+                        json.readTree(modelJson),
+                    ).map { }
+                }
+            }
         }
 
         /**
@@ -162,17 +207,49 @@ class Fga(
             timeout: Duration,
             store: String,
             headers: Map<String, String> = emptyMap(),
-        ): String? {
-            val name = URLEncoder.encode(store, StandardCharsets.UTF_8)
-            var continuation = ""
-            do {
-                val path = "/stores?name=$name&page_size=100&continuation_token=$continuation"
-                val page = send(http, url, token, timeout, "GET", path, null, headers)
-                val found = page.path("stores").firstOrNull { it.path("name").asText() == store }
-                if (found != null) return found.path("id").asText()
-                continuation = page.path("continuation_token").asText("")
-            } while (continuation.isNotEmpty())
-            return null
+        ): Either<FgaUnavailable, String?> = storePage(
+            url,
+            token,
+            http,
+            timeout,
+            store,
+            URLEncoder.encode(store, StandardCharsets.UTF_8),
+            headers,
+            "",
+        )
+
+        private tailrec fun storePage(
+            url: String,
+            token: String,
+            http: HttpClient,
+            timeout: Duration,
+            store: String,
+            name: String,
+            headers: Map<String, String>,
+            continuation: String,
+        ): Either<FgaUnavailable, String?> = when (
+            val asked = send(
+                http,
+                url,
+                token,
+                timeout,
+                "GET",
+                "/stores?name=$name&page_size=100&continuation_token=$continuation",
+                null,
+                headers,
+            )
+        ) {
+            is Either.Left -> asked
+
+            is Either.Right -> {
+                val found = asked.value.path("stores").firstOrNull { it.path("name").asText() == store }
+                val next = asked.value.path("continuation_token").asText("")
+                when {
+                    found != null -> found.path("id").asText().right()
+                    next.isEmpty() -> null.right()
+                    else -> storePage(url, token, http, timeout, store, name, headers, next)
+                }
+            }
         }
 
         private fun send(
@@ -184,7 +261,7 @@ class Fga(
             path: String,
             body: JsonNode?,
             headers: Map<String, String> = emptyMap(),
-        ): JsonNode {
+        ): Either<FgaUnavailable, JsonNode> {
             val request = HttpRequest.newBuilder(URI.create(url.trimEnd('/') + path)).timeout(timeout)
                 .header("Authorization", "Bearer $token").header("Content-Type", "application/json")
                 .apply { headers.forEach { (name, value) -> header(name, value) } }
@@ -197,17 +274,20 @@ class Fga(
                     } ?: HttpRequest.BodyPublishers.noBody(),
                 )
                 .build()
-            val answer = try {
+            return Either.catchOrThrow<IOException, HttpResponse<String>> {
                 http.send(request, HttpResponse.BodyHandlers.ofString())
-            } catch (failed: IOException) {
-                throw FgaUnavailable("OpenFGA did not answer $method $path: ${failed.message}", failed)
-            }
-            if (answer.statusCode() !in 200..299) {
-                throw FgaUnavailable(
-                    "OpenFGA answered $method $path with ${answer.statusCode()}: ${answer.body()}",
-                )
-            }
-            return json.readTree(answer.body().ifEmpty { "{}" })
+            }.fold(
+                { failed -> FgaUnavailable("OpenFGA did not answer $method $path: ${failed.message}", failed).left() },
+                { answer ->
+                    if (answer.statusCode() !in 200..299) {
+                        FgaUnavailable(
+                            "OpenFGA answered $method $path with ${answer.statusCode()}: ${answer.body()}",
+                        ).left()
+                    } else {
+                        json.readTree(answer.body().ifEmpty { "{}" }).right()
+                    }
+                },
+            )
         }
     }
 }

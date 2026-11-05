@@ -17,6 +17,9 @@ import bank.domain.Transfer
 import bank.domain.TransferEvent
 import bank.domain.TransferStatus
 import bank.domain.evolve
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.onLeft
 import java.math.BigDecimal
 import java.sql.Connection
 import javax.sql.DataSource
@@ -343,13 +346,13 @@ class JdbcReadModels(private val data: DataSource) : ReadModels {
     private fun <A> transaction(derived: Boolean = false, work: (Connection) -> A): A =
         data.connection.use { connection ->
             connection.autoCommit = false
-            try {
+            val done = Either.catchOrThrow<java.sql.SQLException, A> {
                 if (derived) connection.createStatement().use { it.execute("set local synchronous_commit = off") }
                 work(connection).also { connection.commit() }
-            } catch (failed: java.sql.SQLException) {
-                connection.rollback()
-                throw failed
             }
+            done.onLeft { connection.rollback() }
+            // A failure here is a defect: the projection's offset must not move past a batch that did not commit.
+            done.fold({ throw it }, { it })
         }
 }
 

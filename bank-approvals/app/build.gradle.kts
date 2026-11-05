@@ -40,6 +40,7 @@ dependencies {
     implementation(project(":protocol"))
 
     // The application as a value, its actors as a node, its settings, and its migrations.
+    implementation(surefold("surefold-cache"))
     implementation(surefold("surefold-app"))
     implementation(surefold("surefold-app-actor"))
     implementation(surefold("surefold-app-typesafe"))

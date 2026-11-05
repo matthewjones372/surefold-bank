@@ -113,6 +113,8 @@ subprojects {
         "testImplementation"("org.junit.jupiter:junit-jupiter:6.1.3")
         "testImplementation"("io.kotest:kotest-assertions-core:6.2.4")
         "testImplementation"("dev.surefold:surefold-assert:$surefoldVersion")
+        "testImplementation"("dev.surefold:surefold-junit:$surefoldVersion")
+        "testImplementation"("dev.surefold:surefold-test:$surefoldVersion")
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 

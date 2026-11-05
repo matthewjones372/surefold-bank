@@ -19,7 +19,9 @@ import bank.protocol.AccountEvents
 import bank.protocol.AccountMessage
 import bank.protocol.Kinds
 import bank.protocol.TransferEvents
+import dev.surefold.Promise
 import dev.surefold.Scope
+import dev.surefold.Shared
 import dev.surefold.actor.ActorRef
 import dev.surefold.actor.InMemoryJournal
 import dev.surefold.actor.Journal
@@ -29,6 +31,8 @@ import dev.surefold.actor.journal
 import dev.surefold.actor.spawn
 import dev.surefold.assert.shouldBeRight
 import dev.surefold.clock
+import dev.surefold.fail.Either
+import dev.surefold.fail.onLeft
 import dev.surefold.fixedClock
 import dev.surefold.scope
 import io.opentelemetry.api.OpenTelemetry
@@ -51,8 +55,7 @@ fun inMemory(
     screening: Screening = Screening.Off,
     block: InMemoryBank.() -> Unit,
 ) {
-    // Unit, so a spec written `= inMemory { ... }` is a void @Test, which JUnit runs: one returning its last value
-    // is skipped. A spec that wants a value back asks [inMemoryOf].
+    // Unit, so a suite test can end on the block. A spec that wants a value back asks [inMemoryOf].
     inMemoryOf(legTimeout, closeAfter, journal, screening, block)
 }
 
@@ -106,11 +109,31 @@ class InMemoryBank internal constructor(
 
 /** Each account spawned on first use, as sharding starts one. */
 internal class MemoryAccounts(private val scope: Scope<Nothing>, private val closeAfter: Duration?) : AccountsById {
-    private val accounts = HashMap<String, ActorRef<AccountMessage>>()
+    private class Slot(val ref: Promise<Throwable, ActorRef<AccountMessage>> = Promise("bank.memory.account"))
 
-    override fun entity(id: String): ActorRef<AccountMessage> = synchronized(accounts) {
-        accounts.getOrPut(id) {
-            scope.spawn("account-$id", account(AccountId(id), snapshots = null, closeAfter = closeAfter))
+    private val accounts = Shared(emptyMap<String, Slot>(), "bank.memory.accounts")
+
+    override fun entity(id: String): ActorRef<AccountMessage> {
+        val slot = Slot()
+        val won = accounts.modify { held ->
+            val existing = held[id]
+            if (existing != null) held to existing else (held + (id to slot)) to slot
+        }
+        if (won === slot) {
+            Either.catch {
+                val spawned = scope.spawn(
+                    "account-$id",
+                    account(AccountId(id), snapshots = null, closeAfter = closeAfter),
+                )
+                won.ref.succeed(spawned)
+            }.onLeft { failed ->
+                accounts.update { held -> if (held[id] === slot) held - id else held }
+                won.ref.fail(failed)
+            }
+        }
+        return when (val ended = won.ref.await()) {
+            is Either.Right -> ended.value
+            is Either.Left -> throw ended.value
         }
     }
 }

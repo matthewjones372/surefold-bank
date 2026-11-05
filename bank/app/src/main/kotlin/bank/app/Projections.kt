@@ -9,6 +9,7 @@ import bank.protocol.Kinds
 import bank.protocol.TransferEvents
 import bank.protocol.toContract
 import dev.surefold.Schedule
+import dev.surefold.Shared
 import dev.surefold.actor.EventCodec
 import dev.surefold.actor.Journal
 import dev.surefold.actor.OffsetStore
@@ -18,7 +19,11 @@ import dev.surefold.actor.SlicedFeed
 import dev.surefold.actor.projection.Followed
 import dev.surefold.actor.projection.Projection
 import dev.surefold.actor.projection.runProjecting
+import dev.surefold.cache.Cache
 import dev.surefold.counter
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.onLeft
 import dev.surefold.gauge
 import dev.surefold.increment
 import dev.surefold.logWarn
@@ -33,6 +38,7 @@ import dev.surefold.stream.runFold
 import dev.surefold.stream.start
 import dev.surefold.stream.tick
 import dev.surefold.timed
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /** The read models' names, which are also the offsets they save and what pruning waits for. */
@@ -115,6 +121,7 @@ fun publishedAccounts(share: Share, offsets: OffsetStore, publisher: Publisher, 
             val account = AccountId(followed.id.id)
             val event = followed.value.toContract(account, followed.sequence)
             publisher.publish(Outbound(EventStream.ACCOUNTS.topic, account.value, event, tracedOnly(followed.metadata)))
+                .asStage()
                 .thenApply { followed }
         }
         .groupedWithin(settings.batch, settings.within)
@@ -137,6 +144,7 @@ fun publishedTransfers(
         publisher.publish(
             Outbound(EventStream.TRANSFERS.topic, transfer.value, event, tracedOnly(followed.metadata)),
         )
+            .asStage()
             .thenApply { followed }
     }
     .groupedWithin(settings.batch, settings.within)
@@ -157,14 +165,30 @@ private const val IN_FLIGHT = 256
  * from the journal for a transfer whose `Requested` was published before this node's publisher started.
  */
 class TransferParties(private val journal: Journal, private val remembered: Int = 50_000) {
-    private val known = object : LinkedHashMap<String, Pair<AccountId, AccountId>>(1_024, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Pair<AccountId, AccountId>>) =
-            size > remembered
+    private val planted = Shared(emptyMap<String, Pair<AccountId, AccountId>>(), "bank.transfer.parties")
+    private val known = Cache<String, Nothing, Pair<AccountId, AccountId>>(
+        ttl = { Duration.INFINITE },
+        capacity = remembered,
+        onEvict = { id, _ -> planted.update { held -> held - id } },
+        lookup = { id ->
+            planted.peek()[id]?.let { Either.Right(it) } ?: Either.Right(requested(TransferId(id)))
+        },
+    )
+
+    fun of(transfer: TransferId, event: TransferEvent): Pair<AccountId, AccountId> {
+        if (event is TransferEvent.Requested) {
+            val pair = event.from to event.to
+            plant(transfer.value, pair)
+            return pair
+        }
+        return known.get(transfer.value).fold({ error("a party's lookup does not fail") }, { it })
     }
 
-    fun of(transfer: TransferId, event: TransferEvent): Pair<AccountId, AccountId> = synchronized(known) {
-        if (event is TransferEvent.Requested) known[transfer.value] = event.from to event.to
-        known.getOrPut(transfer.value) { requested(transfer) }
+    private fun plant(id: String, pair: Pair<AccountId, AccountId>) {
+        planted.update { held ->
+            val next = held + (id to pair)
+            if (next.size <= remembered) next else next - next.keys.first()
+        }
     }
 
     private fun requested(transfer: TransferId): Pair<AccountId, AccountId> {
@@ -190,11 +214,9 @@ fun sweeper(reads: JdbcReadModels, wake: (String) -> Unit, settings: ReadModelSe
 /** What a read-models worker, or the sweeper's singleton, runs while it lives, and stops when it moves. */
 class ReadModelRuns(private val runs: List<Running<*, *>>) : AutoCloseable {
     fun stop() = runs.forEach { running ->
-        try {
-            running.close()
-        } catch (interrupted: InterruptedException) {
-            logWarn("a read model was interrupted stopping: $interrupted")
-            Thread.currentThread().interrupt()
+        // An interrupt leaves this loop: Either.catch does not keep one, so the rest of the runs are not closed here.
+        Either.catch { running.close() }.onLeft { failed ->
+            logWarn("a read model failed stopping: $failed")
         }
     }
 

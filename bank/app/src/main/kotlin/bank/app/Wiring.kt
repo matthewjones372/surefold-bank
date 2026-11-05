@@ -21,6 +21,7 @@ import bank.protocol.NodeSnapshots
 import bank.protocol.wire.NodeSnapshot
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import dev.surefold.Shared
 import dev.surefold.actor.ActorRef
 import dev.surefold.actor.Producer
 import dev.surefold.actor.Prune
@@ -105,7 +106,6 @@ import liquibase.database.jvm.JdbcConnection
 import liquibase.resource.ClassLoaderResourceAccessor
 import liquibase.ui.LoggerUIService
 import org.slf4j.bridge.SLF4JBridgeHandler
-import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 import dev.surefold.stream.Actors as StreamActors
 import io.micrometer.core.instrument.Metrics as MicrometerRegistries
@@ -530,7 +530,7 @@ private val web: Module =
                 currencies: Currencies,
             ->
             install({
-                val latest = ConcurrentHashMap<String, NodeSnapshot>()
+                val latest = Shared(emptyMap<String, NodeSnapshot>(), "bank.ops")
                 val topic = cluster.topic("ops", NodeSnapshots)
                 actors.within {
                     topic.subscribe(
@@ -538,7 +538,7 @@ private val web: Module =
                             "ops-collector",
                             behaviour<NodeSnapshot, Unit>(
                                 Unit,
-                            ) { _, _, said -> stay().also { latest[said.node] = said } },
+                            ) { _, _, said -> stay().also { latest.update { it + (said.node to said) } } },
                         ),
                     )
                 }

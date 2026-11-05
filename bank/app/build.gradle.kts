@@ -48,6 +48,7 @@ dependencies {
     implementation(surefold("surefold-app-liquibase"))
 
     // Entities on whichever node owns them, remembered in Postgres, and read back into read models.
+    implementation(surefold("surefold-cache"))
     implementation(surefold("surefold-cluster"))
     implementation(surefold("surefold-cluster-saga"))
     implementation(surefold("surefold-app-cluster"))

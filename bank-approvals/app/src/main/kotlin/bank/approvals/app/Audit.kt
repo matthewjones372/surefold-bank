@@ -18,6 +18,7 @@ import bank.approvals.protocol.StoredLinks
 import dev.surefold.Schedule
 import dev.surefold.actor.FeedEvent
 import dev.surefold.actor.JournalFeed
+import dev.surefold.fail.Either
 import dev.surefold.logInfo
 import dev.surefold.stream.Stream
 import dev.surefold.stream.map
@@ -52,7 +53,7 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
 
     /** Every request's events as they read now; one that no longer reads is left out, and `verify` names it. */
     override fun all(): Map<RequestId, List<RequestEvent>> = stored().mapNotNull { (id, events) ->
-        runCatching { RequestId(id) to events.map { RequestEvents.decode(it.bytes).event } }.getOrNull()
+        Either.catch { RequestId(id) to events.map { RequestEvents.decode(it.bytes).event } }.getOrNull()
     }.toMap()
 
     /** Every request's stored events, by request, in sequence order. */
@@ -79,7 +80,7 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
             if (event.sequence != expected) {
                 return Walked(links, Broken(id, expected, "missing: the chain goes on at ${event.sequence}"))
             }
-            val stored = runCatching { StoredLinks.decode(event.bytes) }.getOrNull()
+            val stored = Either.catch { StoredLinks.decode(event.bytes) }.getOrNull()
                 ?: return Walked(links, Broken(id, event.sequence, "does not read as an event"))
             val link = Chain.link(previous, stored.event.toHexString())
             if (link != stored.link) {
@@ -131,7 +132,7 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
         }
 
     private fun dayOf(event: FeedEvent): LocalDate? =
-        runCatching { RequestEvents.decode(event.bytes).event.at.atZone(ZoneOffset.UTC).toLocalDate() }.getOrNull()
+        Either.catch { RequestEvents.decode(event.bytes).event.at.atZone(ZoneOffset.UTC).toLocalDate() }.getOrNull()
 
     /** [day]'s digest, made and kept if it is not already; a day already digested is never digested again. */
     fun digest(day: LocalDate): Digest = digests().firstOrNull { it.day == day } ?: run {
@@ -211,7 +212,7 @@ class JournalAudit(private val feed: JournalFeed, private val data: DataSource) 
     override fun entries(filter: AuditFilter): List<AuditEntry> = stored().flatMap { (id, events) ->
         if (filter.request != null && filter.request != id) return@flatMap emptyList()
         val decoded = events.mapNotNull { event ->
-            runCatching {
+            Either.catch {
                 event.sequence to RequestEvents.decode(
                     event.bytes,
                 ).event

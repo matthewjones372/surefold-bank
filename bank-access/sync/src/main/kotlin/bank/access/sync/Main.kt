@@ -1,8 +1,11 @@
 package bank.access.sync
 
+import dev.surefold.fail.Either
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
+import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 /** access-sync as it runs in the cluster: everything from the environment, until it is stopped. */
@@ -34,8 +37,14 @@ fun main() {
     telemetry.use {
         AccessSync(settings, telemetry).use { sync ->
             Runtime.getRuntime().addShutdownHook(Thread { done.countDown() })
-            sync.start()
-            done.await()
+            when (val started = sync.start()) {
+                is Either.Left -> {
+                    LoggerFactory.getLogger("access-sync").error("not started: {}", started.value.toString())
+                    exitProcess(1)
+                }
+
+                is Either.Right -> done.await()
+            }
         }
     }
 }

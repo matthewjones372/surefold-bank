@@ -4,10 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.google.protobuf.Message
+import dev.surefold.Promise
+import dev.surefold.fail.Either
+import dev.surefold.fail.onLeft
 import dev.surefold.kafka.Kafka
 import dev.surefold.kafka.Producer
 import dev.surefold.kafka.carrying
 import dev.surefold.kafka.producer
+import dev.surefold.surefoldFuture
 import org.apache.kafka.clients.admin.Admin
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.producer.ProducerConfig
@@ -47,8 +51,24 @@ fun tracedOnly(metadata: Map<String, String>): Map<String, String> = metadata.fi
 }
 
 interface Publisher : AutoCloseable {
-    /** Sends [record]; the future completes once the transport has it for good (for Kafka, acks=all). */
-    fun publish(record: Outbound): CompletableFuture<Unit>
+    /** Sends [record]. The promise completes once the transport has it for good (for Kafka, acks=all). */
+    fun publish(record: Outbound): Promise<Throwable, Unit>
+}
+
+/**
+ * The stream's `mapAsync` asks for a completion stage. The publisher answers a promise, so a virtual thread waits
+ * for it and completes the stage the stream already knows.
+ */
+fun Promise<Throwable, Unit>.asStage(): CompletableFuture<Unit> = surefoldFuture {
+    awaitOrThrow()
+}
+
+/** Waits until the transport has the record, and throws the transport's failure. */
+fun Promise<Throwable, Unit>.awaitOrThrow() {
+    when (val ended = await()) {
+        is Either.Right -> Unit
+        is Either.Left -> throw ended.value
+    }
 }
 
 /**
@@ -78,10 +98,14 @@ enum class EventStream(val topic: String, val schema: String) {
  */
 class KafkaPublisher(private val producer: Producer<String, ByteArray>, private val schemas: Map<String, Int>) :
     Publisher {
-    override fun publish(record: Outbound): CompletableFuture<Unit> {
+    override fun publish(record: Outbound): Promise<Throwable, Unit> {
         val schema = requireNotNull(schemas[record.stream]) { "no schema registered for ${record.stream}" }
         val sent = ProducerRecord(record.stream, record.key, framed(schema, record.value)).carrying(record.carried)
-        return producer.send(sent).thenApply { }
+        val done = Promise<Throwable, Unit>("bank.publish")
+        producer.send(sent).whenComplete { _, error ->
+            if (error == null) done.succeed(Unit) else done.fail(error)
+        }
+        return done
     }
 
     override fun close() = producer.close()
@@ -174,9 +198,11 @@ class Apicurio(private val url: String, private val group: String = "default") {
 /** Every topic, made with [EventStream.PARTITIONS] partitions if they are not there yet. */
 fun createTopics(settings: KafkaSettings) = Admin.create(settings.client).use { admin ->
     EventStream.entries.forEach { stream ->
-        try {
-            admin.createTopics(listOf(NewTopic(stream.topic, EventStream.PARTITIONS, settings.replication))).all().get()
-        } catch (failed: ExecutionException) {
+        Either.catchOrThrow<ExecutionException, Unit> {
+            admin.createTopics(
+                listOf(NewTopic(stream.topic, EventStream.PARTITIONS, settings.replication)),
+            ).all().get()
+        }.onLeft { failed ->
             if (failed.cause !is TopicExistsException) throw failed
         }
     }

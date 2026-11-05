@@ -4,10 +4,12 @@ application { mainClass.set("bank.load.LoadKt") }
 
 val proofloadVersion: String = providers.gradleProperty("proofloadVersion").get()
 val pelicanVersion: String = providers.gradleProperty("pelicanVersion").get()
+val surefoldVersion: String = providers.gradleProperty("surefoldVersion").get()
 
 dependencies {
     // The bank's endpoints, so the load names endpoints and never a URL.
     implementation(project(":api"))
+    implementation("dev.surefold:surefold:$surefoldVersion")
     // The test issuer: the load asks it for a token, and compose runs it from this image.
     implementation(project(":issuer"))
     implementation("io.github.matthewjones372:pelican-test:$pelicanVersion")

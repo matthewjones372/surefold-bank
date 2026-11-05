@@ -25,7 +25,9 @@ import bank.protocol.AccountEvents
 import bank.protocol.AccountMessage
 import bank.protocol.Kinds
 import bank.protocol.TransferEvents
+import dev.surefold.Promise
 import dev.surefold.Settled
+import dev.surefold.Shared
 import dev.surefold.actor.ActorRef
 import dev.surefold.actor.AskFailure
 import dev.surefold.actor.Journal
@@ -33,6 +35,8 @@ import dev.surefold.actor.PersistenceId
 import dev.surefold.actor.StateCodec
 import dev.surefold.actor.ask
 import dev.surefold.actor.events
+import dev.surefold.awaitValue
+import dev.surefold.clock
 import dev.surefold.cluster.saga.Diverged
 import dev.surefold.cluster.saga.Durable
 import dev.surefold.cluster.saga.DurableScope
@@ -50,6 +54,7 @@ import dev.surefold.fail.right
 import dev.surefold.increment
 import dev.surefold.logDebug
 import dev.surefold.otel.tracedSpan
+import dev.surefold.resourceScope
 import dev.surefold.timeoutOrNull
 import io.opentelemetry.api.trace.Tracer
 import java.io.ByteArrayInputStream
@@ -57,7 +62,6 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.math.BigDecimal
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -120,7 +124,9 @@ class DurableTransfers internal constructor(
     private val saga: Durable<TransferInput, TransferHalt, TransferView>,
     private val runs: Sagas<TransferInput, TransferHalt, TransferView>? = null,
 ) : TransferMoves {
-    private val gates = ConcurrentHashMap<String, Any>()
+    // One direct run per id. The next caller waits for this one's promise, then runs its own body, so a different
+    // transfer under the same id is refused rather than handed the first caller's answer.
+    private val gates = Shared(emptyMap<String, Promise<Nothing, Unit>>(), "bank.transfer.direct")
 
     override fun transfer(
         id: TransferId,
@@ -164,21 +170,29 @@ class DurableTransfers internal constructor(
         }
     }
 
-    private fun directly(id: String, input: TransferInput): Either<TransferError, TransferView> =
-        synchronized(gates.computeIfAbsent(id) { Any() }) {
-            val ended = try {
-                saga.run(journal, id, input)
-            } catch (stuck: Stuck) {
-                return unavailable(stuck.message, id).left()
-            } catch (unsettled: Unsettled) {
-                return unavailable(unsettled.message, id).left()
-            } catch (diverged: Diverged) {
-                return unavailable(diverged.message, id).left()
-            } catch (overtaken: Overtaken) {
-                return unavailable(overtaken.message, id).left()
+    private fun directly(id: String, input: TransferInput): Either<TransferError, TransferView> = oneAtATime(id) {
+        when (val ran = Either.catch { saga.run(journal, id, input) }) {
+            is Either.Right -> ran.value.fold({ standing(id) }, { it.right() })
+
+            is Either.Left -> when (val failed = ran.value) {
+                is Stuck, is Unsettled, is Diverged, is Overtaken -> unavailable(failed.message, id).left()
+                else -> unavailable(failed.message ?: failed::class.simpleName.orEmpty(), id).left()
             }
-            ended.fold({ standing(id) }, { it.right() })
         }
+    }
+
+    private fun <A> oneAtATime(id: String, block: () -> A): A {
+        val mine = Promise<Nothing, Unit>("bank.transfer.direct")
+        val earlier = gates.modify { held -> (held + (id to mine)) to held[id] }
+        return resourceScope {
+            onRelease {
+                gates.update { held -> if (held[id] === mine) held - id else held }
+                mine.succeed(Unit)
+            }
+            earlier?.awaitValue()
+            block()
+        }
+    }
 
     private fun across(
         cluster: Sagas<TransferInput, TransferHalt, TransferView>,
@@ -423,46 +437,43 @@ private class TransferBody(
 
     private fun leg(account: AccountId, command: AccountCommand): AccountAnswer {
         while (true) {
-            val asked = try {
+            val asked = Either.catchOrThrow<IllegalStateException, Either<AskFailure, AccountAnswer>> {
                 tracer.tracedSpan("transfer ${command::class.simpleName?.lowercase()}") {
                     accounts.entity(account.value).ask<AccountMessage, AccountAnswer>(legTimeout) {
                         AccountAsk(command, it)
                     }
                 }
-            } catch (full: IllegalStateException) {
-                // A tell from the saga's turn throws when the account's mailbox is full, rather than waiting.
-                counter("bank.transfer.legs_deferred").increment()
-                logDebug("transfer ${scope.id}: ${full.message}; the leg goes again in $legTimeout")
-                pause()
-                continue
             }
-            when (asked) {
-                is Either.Right -> return asked.value
-                is Either.Left -> pause()
-            }
+            asked.fold(
+                { full ->
+                    // A tell from the saga's turn throws when the account's mailbox is full, rather than waiting.
+                    counter("bank.transfer.legs_deferred").increment()
+                    logDebug("transfer ${scope.id}: ${full.message}; the leg goes again in $legTimeout")
+                    pause()
+                },
+                { answer ->
+                    answer.fold(
+                        { pause() },
+                        { return it },
+                    )
+                },
+            )
         }
     }
 
     /** A close lost only leaves a leg open (spec 0013), so a failure here does not fail the transfer. */
     private fun closeBoth() {
         listOf(input.from, input.to).forEach { account ->
-            try {
+            Either.catchOrThrow<IllegalStateException, Either<AskFailure, AccountAnswer>> {
                 accounts.entity(account.value).ask<AccountMessage, AccountAnswer>(legTimeout) {
                     AccountAsk(AccountCommand.Close(transfer), it)
                 }
-            } catch (_: IllegalStateException) {
-                Unit
             }
         }
     }
 
     private fun pause() {
-        try {
-            Thread.sleep(legTimeout.inWholeMilliseconds.coerceAtLeast(1))
-        } catch (interrupted: InterruptedException) {
-            Thread.currentThread().interrupt()
-            throw interrupted
-        }
+        clock.get().sleep(legTimeout.coerceAtLeast(1.milliseconds))
     }
 }
 

@@ -10,9 +10,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.sun.net.httpserver.HttpServer
 import dev.surefold.assert.shouldBeLeft
 import dev.surefold.assert.shouldBeRight
+import dev.surefold.clock
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.net.InetSocketAddress
 import java.util.UUID
@@ -48,7 +50,7 @@ private class StubCheck(
             asked.computeIfAbsent(transfer) { AtomicInteger() }.incrementAndGet()
             traceparents[transfer] = exchange.requestHeaders.getFirst("traceparent").orEmpty()
             hold.await()
-            Thread.sleep(delayMillis)
+            clock.get().sleep(delayMillis.milliseconds)
             val amount = BigDecimal(proposed["amount"]["value"].asText())
             val decision = decided.computeIfAbsent(transfer) {
                 if (amount >=
@@ -80,128 +82,151 @@ private class StubCheck(
 }
 
 /** Bank spec 0018: every transfer screened before its source is debited. */
-class ScreeningSpec {
-    private val run = UUID.randomUUID().toString().take(8)
-    private val from = AccountId("scr-a-$run")
-    private val to = AccountId("scr-b-$run")
-
-    private fun TestNode.opened() {
-        bank.open(from, "Ada", gbp(100_000), "open:$from").shouldBeRight()
-        bank.open(to, "Bob", gbp(0), "open:$to").shouldBeRight()
-    }
-
-    private fun TestNode.settled(transfer: TransferId) = eventually {
-        bank.transferStatus(
-            transfer,
-        ).getOrNull()?.status in setOf(TransferStatus.Completed, TransferStatus.Rejected)
-    }
-
-    @Test
-    fun `two hundred transfers screened at once each get the check's answer, not the policy's`() {
-        StubCheck(declineFrom = BigDecimal("500.00"), delayMillis = 50).use { check ->
-            val screener = PelicanScreener(check.url, 5.seconds)
-            val calls = (1..200).map { n ->
-                val step = Step.Screen(from, to, gbp(1_000), requestedAt = 1)
-                java.util.concurrent.CompletableFuture.supplyAsync(
-                    { screener.screen(TransferId("scr-many-$run-$n"), step) },
-                    Executors.newVirtualThreadPerTaskExecutor(),
-                )
-            }
-            val answers = calls.map { it.get(30, TimeUnit.SECONDS) }
-            answers.filter { it.isLeft() } shouldBe emptyList()
-        }
-    }
-
-    @Test
-    fun `the check's approval and its decline are read with the rule, version and evidence it gave`() {
-        StubCheck(declineFrom = BigDecimal("500.00")).use { check ->
-            val screener = PelicanScreener(check.url, 5.seconds)
-            fun screened(amount: Long) = screener.screen(
-                TransferId("scr-read-$run-$amount"),
-                Step.Screen(from, to, gbp(amount), requestedAt = 1),
-            )
-
-            screened(10_000).shouldBeRight() shouldBe
-                ScreeningDecision(ScreeningOutcome.Approved, null, null, "no rule held")
-            screened(60_000).shouldBeRight() shouldBe
-                ScreeningDecision(ScreeningOutcome.Declined, "large-transfer", 3, "amount >= 500.00")
-        }
-    }
-
-    @Test
-    fun `a check that is down, or slower than the timeout, gives no decision, for the bank's policy to decide`() {
-        val down = StubCheck(declineFrom = BigDecimal.ZERO).apply { close() }
-        PelicanScreener(down.url, 1.seconds)
-            .screen(TransferId("scr-down-$run"), Step.Screen(from, to, gbp(1_000), requestedAt = 1))
-            .shouldBeLeft().why.isNotBlank() shouldBe true
-
-        val never = CountDownLatch(1)
-        StubCheck(declineFrom = BigDecimal("500.00"), hold = never).use { check ->
-            PelicanScreener(check.url, 300.milliseconds)
-                .screen(TransferId("scr-slow-$run"), Step.Screen(from, to, gbp(1_000), requestedAt = 1))
-                .shouldBeLeft().why.isNotBlank() shouldBe true
-            never.countDown()
-        }
-    }
-
-    @Test
-    fun `a saga that stops mid-screening asks again when it starts, and gets the same decision`() {
-        val database = TestPostgres.fresh()
-        val released = CountDownLatch(1)
-        StubCheck(declineFrom = BigDecimal("500.00"), hold = released).use { check ->
-            val transfer = TransferId("scr-moved-$run")
-            // Long enough that the node is gone before the saga's own timer decides.
-            TestCluster(1, database = database, extra = check.config(timeout = "30s")).running { (node) ->
-                node.opened()
-                Thread.ofVirtual().start { node.bank.transfer(transfer, from, to, gbp(60_000)) }
-                eventually { check.asked[transfer.value] != null } shouldBe true
-            }
-            released.countDown()
-            TestCluster(1, database = database, extra = check.config(timeout = "30s")).running { (node) ->
-                // Asked about, the saga starts again on this node, and screens again.
-                node.bank.transferStatus(transfer).shouldBeRight()
-                node.settled(transfer) shouldBe true
-                val view = node.bank.transferStatus(transfer).shouldBeRight()
-                view.status shouldBe TransferStatus.Rejected
-                view.reason shouldBe "Declined by large-transfer, version 3"
-                // Once before the stop, and again after; the sweeper may nudge it into asking a third time, as safely.
-                check.asked.getValue(transfer.value).get() shouldBeGreaterThanOrEqual 2
-                node.bank.balance(from).shouldBeRight().balance shouldBe gbp(100_000)
+object ScreeningSpec : Suite() {
+    init {
+        test("two hundred transfers screened at once each get the check's answer, not the policy's") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    StubCheck(declineFrom = BigDecimal("500.00"), delayMillis = 50).use { check ->
+                        val screener = PelicanScreener(check.url, 5.seconds)
+                        val calls = (1..200).map { n ->
+                            val step = Step.Screen(from, to, gbp(1_000), requestedAt = 1)
+                            java.util.concurrent.CompletableFuture.supplyAsync(
+                                { screener.screen(TransferId("scr-many-$run-$n"), step) },
+                                Executors.newVirtualThreadPerTaskExecutor(),
+                            )
+                        }
+                        val answers = calls.map { it.get(30, TimeUnit.SECONDS) }
+                        answers.filter { it.isLeft() } shouldBe emptyList()
+                    }
+                }
             }
         }
-    }
-
-    @Test
-    fun `a transfer's screening reaches the check inside the transfer's trace`() {
-        StubCheck(declineFrom = BigDecimal("500.00")).use { check ->
-            TestCluster(1, extra = check.config()).running { (node) ->
-                node.opened()
-                val trace = UUID.randomUUID().toString().replace("-", "")
-                val transfer = "scr-traced-$run"
-                val status = java.net.http.HttpClient.newHttpClient().send(
-                    java.net.http.HttpRequest.newBuilder(
-                        java.net.URI.create("${node.server.baseUrl}/transfers/$transfer"),
-                    )
-                        .header("Authorization", "Bearer ${TestIdentity.token("Ada")}")
-                        .header("Content-Type", "application/json")
-                        .header("traceparent", "00-$trace-00f067aa0ba902b7-01")
-                        .PUT(
-                            java.net.http.HttpRequest.BodyPublishers.ofString(
-                                """{"from":"${from.value}","to":"${to.value}","amount":{"value":"1.00","currency":"GBP"}}""",
-                            ),
+        test("the check's approval and its decline are read with the rule, version and evidence it gave") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    StubCheck(declineFrom = BigDecimal("500.00")).use { check ->
+                        val screener = PelicanScreener(check.url, 5.seconds)
+                        fun screened(amount: Long) = screener.screen(
+                            TransferId("scr-read-$run-$amount"),
+                            Step.Screen(from, to, gbp(amount), requestedAt = 1),
                         )
-                        .build(),
-                    java.net.http.HttpResponse.BodyHandlers.discarding(),
-                ).statusCode()
-                status shouldBe 200
-                eventually { check.traceparents[transfer] != null } shouldBe true
 
-                val sent = check.traceparents.getValue(transfer).split("-")
-                sent[1] shouldBe trace
-                // Sampled, as the caller's was, and the bank's own client span as its parent, not the caller's.
-                sent[3] shouldBe "01"
-                (sent[2] != "00f067aa0ba902b7") shouldBe true
+                        screened(10_000).shouldBeRight() shouldBe
+                            ScreeningDecision(ScreeningOutcome.Approved, null, null, "no rule held")
+                        screened(60_000).shouldBeRight() shouldBe
+                            ScreeningDecision(ScreeningOutcome.Declined, "large-transfer", 3, "amount >= 500.00")
+                    }
+                }
             }
+        }
+        test("a check that is down, or slower than the timeout, gives no decision, for the bank's policy to decide") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val down = StubCheck(declineFrom = BigDecimal.ZERO).apply { close() }
+                    PelicanScreener(down.url, 1.seconds)
+                        .screen(TransferId("scr-down-$run"), Step.Screen(from, to, gbp(1_000), requestedAt = 1))
+                        .shouldBeLeft().why.isNotBlank() shouldBe true
+
+                    val never = CountDownLatch(1)
+                    StubCheck(declineFrom = BigDecimal("500.00"), hold = never).use { check ->
+                        PelicanScreener(check.url, 300.milliseconds)
+                            .screen(TransferId("scr-slow-$run"), Step.Screen(from, to, gbp(1_000), requestedAt = 1))
+                            .shouldBeLeft().why.isNotBlank() shouldBe true
+                        never.countDown()
+                    }
+                }
+            }
+        }
+        test("a saga that stops mid-screening asks again when it starts, and gets the same decision") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val database = TestPostgres.fresh()
+                    val released = CountDownLatch(1)
+                    StubCheck(declineFrom = BigDecimal("500.00"), hold = released).use { check ->
+                        val transfer = TransferId("scr-moved-$run")
+                        // Long enough that the node is gone before the saga's own timer decides.
+                        TestCluster(1, database = database, extra = check.config(timeout = "30s")).running { (node) ->
+                            node.opened()
+                            Thread.ofVirtual().start { node.bank.transfer(transfer, from, to, gbp(60_000)) }
+                            eventually { check.asked[transfer.value] != null } shouldBe true
+                        }
+                        released.countDown()
+                        TestCluster(1, database = database, extra = check.config(timeout = "30s")).running { (node) ->
+                            // Asked about, the saga starts again on this node, and screens again.
+                            node.bank.transferStatus(transfer).shouldBeRight()
+                            node.settled(transfer) shouldBe true
+                            val view = node.bank.transferStatus(transfer).shouldBeRight()
+                            view.status shouldBe TransferStatus.Rejected
+                            view.reason shouldBe "Declined by large-transfer, version 3"
+                            // Once before the stop, and again after; the sweeper may nudge it into asking a third time,
+                            // as safely.
+                            check.asked.getValue(transfer.value).get() shouldBeGreaterThanOrEqual 2
+                            node.bank.balance(from).shouldBeRight().balance shouldBe gbp(100_000)
+                        }
+                    }
+                }
+            }
+        }
+        test("a transfer's screening reaches the check inside the transfer's trace") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    StubCheck(declineFrom = BigDecimal("500.00")).use { check ->
+                        TestCluster(1, extra = check.config()).running { (node) ->
+                            node.opened()
+                            val trace = UUID.randomUUID().toString().replace("-", "")
+                            val transfer = "scr-traced-$run"
+                            val status = java.net.http.HttpClient.newHttpClient().send(
+                                java.net.http.HttpRequest.newBuilder(
+                                    java.net.URI.create("${node.server.baseUrl}/transfers/$transfer"),
+                                )
+                                    .header("Authorization", "Bearer ${TestIdentity.token("Ada")}")
+                                    .header("Content-Type", "application/json")
+                                    .header("traceparent", "00-$trace-00f067aa0ba902b7-01")
+                                    .PUT(
+                                        java.net.http.HttpRequest.BodyPublishers.ofString(
+                                            """{"from":"${from.value}","to":"${to.value}",""" +
+                                                """"amount":{"value":"1.00","currency":"GBP"}}""",
+                                        ),
+                                    )
+                                    .build(),
+                                java.net.http.HttpResponse.BodyHandlers.discarding(),
+                            ).statusCode()
+                            status shouldBe 200
+                            eventually { check.traceparents[transfer] != null } shouldBe true
+
+                            val sent = check.traceparents.getValue(transfer).split("-")
+                            sent[1] shouldBe trace
+                            // Sampled, as the caller's was, and the bank's own client span as its parent, not the
+                            // caller's.
+                            sent[3] shouldBe "01"
+                            (sent[2] != "00f067aa0ba902b7") shouldBe true
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private class Fixture {
+        val run = UUID.randomUUID().toString().take(8)
+        val from = AccountId("scr-a-$run")
+        val to = AccountId("scr-b-$run")
+
+        fun TestNode.opened() {
+            bank.open(from, "Ada", gbp(100_000), "open:$from").shouldBeRight()
+            bank.open(to, "Bob", gbp(0), "open:$to").shouldBeRight()
+        }
+
+        fun TestNode.settled(transfer: TransferId) = eventually {
+            bank.transferStatus(
+                transfer,
+            ).getOrNull()?.status in setOf(TransferStatus.Completed, TransferStatus.Rejected)
         }
     }
 }

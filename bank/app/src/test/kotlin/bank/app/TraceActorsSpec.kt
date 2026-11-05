@@ -7,16 +7,20 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import dev.surefold.assert.shouldBeLeft
 import dev.surefold.assert.shouldBeRight
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
+import dev.surefold.test.eventually
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.Test
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /** A trace as Tempo holds it: each span's name, and the node that made it. */
 private class Held(val spans: List<Pair<String, String>>) {
@@ -25,94 +29,111 @@ private class Held(val spans: List<Pair<String, String>>) {
 }
 
 /** Bank spec 0024's `trace-actors`: a transfer's trace follows it to the accounts' nodes. */
-class TraceActorsSpec {
-    private val run = UUID.randomUUID().toString().take(8)
-    private val http = HttpClient.newHttpClient()
-    private val json = ObjectMapper()
-
-    private fun held(trace: String): Held {
-        val asked = HttpRequest.newBuilder(URI.create("${TestTempo.api}/api/v2/traces/$trace")).build()
-        val answer = http.send(asked, HttpResponse.BodyHandlers.ofString())
-        if (answer.statusCode() == 404) return Held(emptyList())
-        val spans = json.readTree(
-            answer.body(),
-        ).findValues("resourceSpans").flatMap { it.toList() }.flatMap { resource ->
-            val node = resource.path("resource").path("attributes")
-                .first { it.path("key").asText() == "service.instance.id" }.path("value").path("stringValue").asText()
-            resource.findValues("spans").flatMap { spans: JsonNode -> spans.map { it.path("name").asText() to node } }
-        }
-        return Held(spans)
-    }
-
-    /** Accounts opened, so the traced transfers find their shards already placed. */
-    private fun opened(first: TestNode) {
-        (1..6).forEach { n ->
-            val from = "from-$n-$run"
-            val to = "to-$n-$run"
-            first.bank.open(AccountId(from), "ada", gbp(5_000), "open:$from").shouldBeRight()
-            first.bank.open(AccountId(to), "bob", gbp(0), "open:$to").shouldBeRight()
-        }
-    }
-
-    @Test
-    fun `a transfer's trace holds its debit and credit, made on the nodes the accounts live on`() {
-        val config = """
-            bank.telemetry.enabled = true
-            bank.telemetry.otlp = "${TestTempo.otlp}"
-            bank.telemetry.sampled = 0.0
-        """.trimIndent()
-        TestCluster(3, extra = config).running { nodes ->
-            val first = nodes.first()
-            withClue("every node sees three members up") {
-                eventually {
-                    nodes.all { node -> node.cluster.view.members.count { it.status.name == "Up" } == 3 }
-                } shouldBe true
-            }
-            opened(first)
-            (1..6).forEach { n ->
-                first.bank.transferStatus(TransferId("t-$n-$run")).shouldBeLeft() shouldBe
-                    TransferError.NoSuchTransfer("t-$n-$run")
-            }
-            val traces = (1..6).map { n ->
-                val from = "from-$n-$run"
-                val to = "to-$n-$run"
-                val trace = UUID.randomUUID().toString().replace("-", "")
-                val status = http.send(
-                    HttpRequest.newBuilder(URI.create("${first.server.baseUrl}/transfers/t-$n-$run"))
-                        .header("Authorization", "Bearer ${TestIdentity.token("ada")}")
-                        .header("Content-Type", "application/json")
-                        .header("traceparent", "00-$trace-00f067aa0ba902b7-01")
-                        .PUT(
-                            HttpRequest.BodyPublishers.ofString(
-                                """{"from":"$from","to":"$to","amount":{"value":"1.00","currency":"GBP"}}""",
-                            ),
+object TraceActorsSpec : Suite() {
+    init {
+        test("a transfer's trace holds its debit and credit, made on the nodes the accounts live on") {
+            holds {
+                val fixture = Fixture()
+                with(fixture) {
+                    val config = """
+                    bank.telemetry.enabled = true
+                    bank.telemetry.otlp = "${TestTempo.otlp}"
+                    bank.telemetry.sampled = 0.0
+                    """.trimIndent()
+                    TestCluster(3, extra = config).running { nodes ->
+                        val first = nodes.first()
+                        withClue("every node sees three members up") {
+                            eventually {
+                                nodes.all { node -> node.cluster.view.members.count { it.status.name == "Up" } == 3 }
+                            } shouldBe true
+                        }
+                        opened(first)
+                        (1..6).forEach { n ->
+                            first.bank.transferStatus(TransferId("t-$n-$run")).shouldBeLeft() shouldBe
+                                TransferError.NoSuchTransfer("t-$n-$run")
+                        }
+                        val traces = (1..6).map { n ->
+                            val from = "from-$n-$run"
+                            val to = "to-$n-$run"
+                            val trace = UUID.randomUUID().toString().replace("-", "")
+                            val status = http.send(
+                                HttpRequest.newBuilder(URI.create("${first.server.baseUrl}/transfers/t-$n-$run"))
+                                    .header("Authorization", "Bearer ${TestIdentity.token("ada")}")
+                                    .header("Content-Type", "application/json")
+                                    .header("traceparent", "00-$trace-00f067aa0ba902b7-01")
+                                    .PUT(
+                                        HttpRequest.BodyPublishers.ofString(
+                                            """{"from":"$from","to":"$to",""" +
+                                                """"amount":{"value":"1.00","currency":"GBP"}}""",
+                                        ),
+                                    )
+                                    .build(),
+                                HttpResponse.BodyHandlers.discarding(),
+                            ).statusCode()
+                            status shouldBe 200
+                            trace
+                        }
+                        // Each node exports its spans on its own schedule, so wait for every span the trace is checked
+                        // for, not
+                        // only the last ones made: the request's own spans can reach Tempo after the accounts' do.
+                        val expected = listOf(
+                            "PUT /transfers/{transferId}",
+                            "transfer debitsource",
+                            "account debit",
+                            "account credit",
                         )
-                        .build(),
-                    HttpResponse.BodyHandlers.discarding(),
-                ).statusCode()
-                status shouldBe 200
-                trace
-            }
-            // Each node exports its spans on its own schedule, so wait for every span the trace is checked for, not
-            // only the last ones made: the request's own spans can reach Tempo after the accounts' do.
-            val expected = listOf(
-                "PUT /transfers/{transferId}",
-                "transfer debitsource",
-                "account debit",
-                "account credit",
-            )
-            val until = System.nanoTime() + 60_000_000_000
-            fun complete(trace: String) = held(trace).names.containsAll(expected)
-            while (!traces.all(::complete) && System.nanoTime() < until) Thread.sleep(500)
+                        fun complete(trace: String) = held(trace).names.containsAll(expected)
+                        eventually(60.seconds, every = 500.milliseconds) {
+                            check(traces.all(::complete))
+                        }
 
-            val all = traces.map(::held)
-            all.forEach { trace ->
-                withClue(trace.names) {
-                    trace.names shouldContainAll expected
+                        val all = traces.map(::held)
+                        all.forEach { trace ->
+                            withClue(trace.names) {
+                                trace.names shouldContainAll expected
+                            }
+                        }
+                        withClue("six transfers, two accounts each, on three nodes: some leg is on another node") {
+                            all.maxOf { it.nodes.size } shouldBeGreaterThan 1
+                        }
+                    }
                 }
             }
-            withClue("six transfers, two accounts each, on three nodes: some leg is on another node") {
-                all.maxOf { it.nodes.size } shouldBeGreaterThan 1
+        }
+    }
+
+    private class Fixture {
+        val run = UUID.randomUUID().toString().take(8)
+        val http = HttpClient.newHttpClient()
+        val json = ObjectMapper()
+
+        fun held(trace: String): Held {
+            val asked = HttpRequest.newBuilder(URI.create("${TestTempo.api}/api/v2/traces/$trace")).build()
+            val answer = http.send(asked, HttpResponse.BodyHandlers.ofString())
+            if (answer.statusCode() == 404) return Held(emptyList())
+            val spans = json.readTree(
+                answer.body(),
+            ).findValues("resourceSpans").flatMap { it.toList() }.flatMap { resource ->
+                val node = resource.path("resource").path("attributes")
+                    .first {
+                        it.path(
+                            "key",
+                        ).asText() == "service.instance.id"
+                    }.path("value").path("stringValue").asText()
+                resource.findValues(
+                    "spans",
+                ).flatMap { spans: JsonNode -> spans.map { it.path("name").asText() to node } }
+            }
+            return Held(spans)
+        }
+
+        /** Accounts opened, so the traced transfers find their shards already placed. */
+        fun opened(first: TestNode) {
+            (1..6).forEach { n ->
+                val from = "from-$n-$run"
+                val to = "to-$n-$run"
+                first.bank.open(AccountId(from), "ada", gbp(5_000), "open:$from").shouldBeRight()
+                first.bank.open(AccountId(to), "bob", gbp(0), "open:$to").shouldBeRight()
             }
         }
     }

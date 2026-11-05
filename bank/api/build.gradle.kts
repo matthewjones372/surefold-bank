@@ -1,6 +1,9 @@
 val pelicanVersion: String = providers.gradleProperty("pelicanVersion").get()
+val surefoldVersion: String = providers.gradleProperty("surefoldVersion").get()
 
 dependencies {
+    // Who owns an account, remembered on this node (spec 0035).
+    implementation("dev.surefold:surefold-cache:$surefoldVersion")
     api(project(":domain"))
     api("io.github.matthewjones372:pelican-jetty:$pelicanVersion")
     api("io.github.matthewjones372:pelican-jackson:$pelicanVersion")

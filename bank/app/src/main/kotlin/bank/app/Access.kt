@@ -113,11 +113,8 @@ data class Ask(val person: String, val access: Access, val lasting: Duration) {
             }
         }
 
-        private fun parsedOrNull(written: String): Duration? = try {
-            Duration.parse(written)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+        private fun parsedOrNull(written: String): Duration? =
+            Either.catchOrThrow<DateTimeParseException, Duration> { Duration.parse(written) }.getOrNull()
     }
 }
 
@@ -374,7 +371,7 @@ class GrantKeeper(private val grants: JdbcGrants, private val owner: Owner) {
     }
 }
 
-private fun skipping(offset: Long, unreadable: Exception) =
+private fun skipping(offset: Long, unreadable: Throwable) =
     logWarn("skipping ${ApprovalTopic.NAME} offset $offset: ${unreadable.message}")
 
 /** An Apicurio-framed record's message: a zero, the schema's content id, the message's indexes, then the message. */
@@ -406,12 +403,18 @@ fun grantsHeard(kafka: KafkaSettings, keeper: GrantKeeper, backend: StreamBacken
             // In the trace the event was written in (spec 0024), so telling Approvals it applied continues it.
             record.within {
                 // A record nobody can read is skipped, not read again forever; one that fails to apply is retried.
-                val approval = try {
-                    unframed(record.value())
-                } catch (unreadable: IllegalArgumentException) {
-                    null.also { skipping(record.offset(), unreadable) }
-                } catch (unreadable: IOException) {
-                    null.also { skipping(record.offset(), unreadable) }
+                val approval = when (val read = Either.catch { unframed(record.value()) }) {
+                    is Either.Right -> read.value
+
+                    is Either.Left -> when (val unreadable = read.value) {
+                        is IllegalArgumentException, is IOException -> {
+                            skipping(record.offset(), unreadable)
+                            null
+                        }
+
+                        // Anything else is not a record we can skip: the consumer starts again.
+                        else -> throw unreadable
+                    }
                 }
                 if (approval != null) keeper.heard(approval)
             }

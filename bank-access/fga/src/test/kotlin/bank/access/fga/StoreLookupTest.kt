@@ -1,11 +1,13 @@
 package bank.access.fga
 
 import com.sun.net.httpserver.HttpServer
-import io.kotest.assertions.throwables.shouldThrow
+import dev.surefold.assert.shouldBeLeft
+import dev.surefold.assert.shouldBeRight
+import dev.surefold.junit.Suite
+import dev.surefold.junit.holds
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -32,39 +34,42 @@ private class FakeStores(private val pages: Map<String, String>) {
 }
 
 /** The store is found by its name, not by listing every store. */
-class StoreLookupTest {
-    @Test
-    fun `the store is asked for by name, across the pages OpenFGA answers in`() {
-        val fake = FakeStores(
-            mapOf(
-                "" to """{"stores":[{"name":"bank-old","id":"s0"}],"continuation_token":"next"}""",
-                "next" to """{"stores":[{"name":"bank","id":"s1"}],"continuation_token":""}""",
-            ),
-        )
-        try {
-            val fga = Fga(fake.url, "key", "bank")
+object StoreLookupTest : Suite() {
+    init {
+        test("the store is asked for by name, across the pages OpenFGA answers in") {
+            holds {
+                val fake = FakeStores(
+                    mapOf(
+                        "" to """{"stores":[{"name":"bank-old","id":"s0"}],"continuation_token":"next"}""",
+                        "next" to """{"stores":[{"name":"bank","id":"s1"}],"continuation_token":""}""",
+                    ),
+                )
+                try {
+                    val fga = Fga(fake.url, "key", "bank")
 
-            fga.check("person:ada", "owner", "account:a1") shouldBe true
+                    fga.check("person:ada", "owner", "account:a1").shouldBeRight() shouldBe true
 
-            fake.asked.toList() shouldContainExactly listOf(
-                "GET /stores?name=bank&page_size=100&continuation_token=",
-                "GET /stores?name=bank&page_size=100&continuation_token=next",
-                "POST /stores/s1/check",
-            )
-        } finally {
-            fake.stop()
+                    fake.asked.toList() shouldContainExactly listOf(
+                        "GET /stores?name=bank&page_size=100&continuation_token=",
+                        "GET /stores?name=bank&page_size=100&continuation_token=next",
+                        "POST /stores/s1/check",
+                    )
+                } finally {
+                    fake.stop()
+                }
+            }
         }
-    }
+        test("a store that is not there is no store") {
+            holds {
+                val fake = FakeStores(mapOf("" to """{"stores":[]}"""))
+                try {
+                    val missing = Fga(fake.url, "key", "bank").storeId.shouldBeLeft()
 
-    @Test
-    fun `a store that is not there is no store`() {
-        val fake = FakeStores(mapOf("" to """{"stores":[]}"""))
-        try {
-            val missing = shouldThrow<FgaUnavailable> { Fga(fake.url, "key", "bank").storeId }
-
-            missing.message shouldContain "no store named bank"
-        } finally {
-            fake.stop()
+                    missing.message shouldContain "no store named bank"
+                } finally {
+                    fake.stop()
+                }
+            }
         }
     }
 }

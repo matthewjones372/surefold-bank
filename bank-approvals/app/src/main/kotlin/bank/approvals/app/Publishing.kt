@@ -10,14 +10,20 @@ import bank.approvals.protocol.toContract
 import bank.events.v1.ApprovalEvent
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import dev.surefold.Promise
 import dev.surefold.Schedule
+import dev.surefold.Shared
 import dev.surefold.actor.Journal
 import dev.surefold.actor.OffsetStore
 import dev.surefold.actor.PersistenceId
 import dev.surefold.actor.SlicedFeed
 import dev.surefold.actor.projection.Projection
 import dev.surefold.actor.projection.runProjecting
+import dev.surefold.cache.Cache
 import dev.surefold.counter
+import dev.surefold.fail.Either
+import dev.surefold.fail.fold
+import dev.surefold.fail.onLeft
 import dev.surefold.increment
 import dev.surefold.kafka.Kafka
 import dev.surefold.kafka.Producer
@@ -26,6 +32,7 @@ import dev.surefold.kafka.producer
 import dev.surefold.logWarn
 import dev.surefold.stream.mapAsync
 import dev.surefold.stream.restartOnDefect
+import dev.surefold.surefoldFuture
 import org.apache.kafka.clients.admin.Admin
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.producer.ProducerConfig
@@ -78,10 +85,15 @@ class ApprovalEvents(private val producer: Producer<String, ByteArray>, private 
      * Completes once the brokers have it for good (acks=all). [carried] goes as headers: the trace the event was
      * written in, so whoever handles it continues that trace (bank spec 0024).
      */
-    fun publish(event: ApprovalEvent, carried: Map<String, String> = emptyMap()): CompletableFuture<Unit> =
+    fun publish(event: ApprovalEvent, carried: Map<String, String> = emptyMap()): Promise<Throwable, Unit> {
+        val done = Promise<Throwable, Unit>("approvals.publish")
         producer.send(
             ProducerRecord(ApprovalTopic.NAME, event.requestId, framed(contentId, event)).carrying(carried),
-        ).thenApply { }
+        ).whenComplete { _, error ->
+            if (error == null) done.succeed(Unit) else done.fail(error)
+        }
+        return done
+    }
 
     override fun close() = producer.close()
 
@@ -154,11 +166,11 @@ class Apicurio(private val url: String, private val group: String = "default") {
 
 /** The topic, made with [ApprovalTopic.PARTITIONS] partitions if it is not there yet. */
 fun createTopic(settings: KafkaSettings) = Admin.create(settings.client).use { admin ->
-    try {
+    Either.catchOrThrow<ExecutionException, Unit> {
         admin.createTopics(
             listOf(NewTopic(ApprovalTopic.NAME, ApprovalTopic.PARTITIONS, settings.replication)),
         ).all().get()
-    } catch (failed: ExecutionException) {
+    }.onLeft { failed ->
         if (failed.cause !is TopicExistsException) throw failed
     }
 }
@@ -184,13 +196,28 @@ fun approvalEvents(settings: KafkaSettings): ApprovalEvents {
  * from the journal for a request whose `Requested` was published before this publisher started.
  */
 class RequestHeads(private val journal: Journal, private val remembered: Int = 10_000) {
-    private val known = object : LinkedHashMap<String, RequestHead>(256, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, RequestHead>) = size > remembered
+    private val planted = Shared(emptyMap<String, RequestHead>(), "approvals.request.heads")
+    private val known = Cache<String, Nothing, RequestHead>(
+        ttl = { Duration.INFINITE },
+        capacity = remembered,
+        onEvict = { id, _ -> planted.update { held -> held - id } },
+        lookup = { id -> planted.peek()[id]?.let { Either.Right(it) } ?: Either.Right(requested(RequestId(id))) },
+    )
+
+    fun of(id: RequestId, event: RequestEvent): RequestHead {
+        if (event is RequestEvent.Requested) {
+            val head = event.head()
+            plant(id.value, head)
+            return head
+        }
+        return known.get(id.value).fold({ error("a request head's lookup does not fail") }, { it })
     }
 
-    fun of(id: RequestId, event: RequestEvent): RequestHead = synchronized(known) {
-        if (event is RequestEvent.Requested) known[id.value] = event.head()
-        known.getOrPut(id.value) { requested(id) }
+    private fun plant(id: String, head: RequestHead) {
+        planted.update { held ->
+            val next = held + (id to head)
+            if (next.size <= remembered) next else next - next.keys.first()
+        }
     }
 
     private fun requested(id: RequestId): RequestHead {
@@ -198,6 +225,14 @@ class RequestHeads(private val journal: Journal, private val remembered: Int = 1
             ?.let { stored -> RequestEvents.decode(stored.bytes).event }
         check(first is RequestEvent.Requested) { "request ${id.value} does not begin with its Requested" }
         return first.head()
+    }
+}
+
+/** The stream's `mapAsync` asks for a completion stage; the publisher answers a promise. */
+private fun Promise<Throwable, Unit>.asStage(): CompletableFuture<Unit> = surefoldFuture {
+    when (val ended = await()) {
+        is Either.Right -> Unit
+        is Either.Left -> throw ended.value
     }
 }
 
@@ -226,7 +261,7 @@ fun publishedRequests(
         events.publish(
             event.toContract(heads.of(id, event), followed.sequence),
             tracedOnly(followed.metadata),
-        ).thenApply {
+        ).asStage().thenApply {
             counter("approvals.published").increment()
             followed
         }
@@ -250,8 +285,12 @@ class KafkaOwners(private val events: ApprovalEvents) : Owners {
         val requested = history.firstOrNull() as? RequestEvent.Requested ?: return
         val at = history.indexOfLast { it is RequestEvent.ApprovalGiven || it is RequestEvent.AutoApproved }
         if (at < 0) return
-        events.publish(history[at].toContract(requested.head(), at + 1L)).whenComplete { _, failed ->
-            if (failed != null) logWarn("request ${id.value}: asking its owner again failed: ${failed.message}")
+        val sent = events.publish(history[at].toContract(requested.head(), at + 1L))
+        surefoldFuture {
+            when (val ended = sent.await()) {
+                is Either.Left -> logWarn("request ${id.value}: asking its owner again failed: ${ended.value.message}")
+                is Either.Right -> Unit
+            }
         }
     }
 }
