@@ -100,7 +100,7 @@ class FgaAudit(
 
     private val String.id get() = substringAfter(':')
 
-    private fun <A> answered(work: Fail<FgaUnavailable>.() -> A): A? = attempt(work).fold(
+    private fun <A> answered(work: context(Fail<FgaUnavailable>) () -> A): A? = attempt { work() }.fold(
         { unanswered ->
             logWarn("bank-access did not answer an auditor's question: ${unanswered.message}")
             null
