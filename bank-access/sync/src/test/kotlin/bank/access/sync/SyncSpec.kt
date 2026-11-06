@@ -94,7 +94,7 @@ class StubPocketId : AutoCloseable {
 }
 
 /** Bank spec 0022's `access-sync`: every relationship derived from something already recorded, and rebuilt from it. */
-object SyncSpec : Suite() {
+object SyncSpec : Suite(isolated = true) {
     init {
         test(
             "an opened account's owner sees it, an approved grant lets Bob see it until it expires, and a group " +

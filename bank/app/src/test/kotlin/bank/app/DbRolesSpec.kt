@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /** Bank spec 0021's `db-roles`: the database is the second fence, below the rules. */
-object DbRolesSpec : Suite() {
+object DbRolesSpec : Suite(isolated = true) {
     init {
         test("as bank_reader with bank caller set to Ada, select star from statement_line returns only her rows") {
             holds {

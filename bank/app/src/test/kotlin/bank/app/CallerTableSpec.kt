@@ -24,7 +24,7 @@ import java.util.UUID
  * Bank spec 0021's specification of who may do what: every endpoint, as every kind of caller, and the status each must
  * answer. Someone else's account is missing, not forbidden; an ops view refused is forbidden, since it names nothing.
  */
-object CallerTableSpec : Suite() {
+object CallerTableSpec : Suite(isolated = true) {
 
     /** Who calls: the token they send, or none. */
     private enum class Who(val token: () -> String?) {

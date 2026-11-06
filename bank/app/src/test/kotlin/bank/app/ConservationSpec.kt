@@ -15,7 +15,7 @@ import kotlin.random.Random
  * Spec 0001: money moved between accounts on three nodes is never created, lost or moved twice, with the journal
  * split across two databases (spec 0004), so a transfer's two accounts are often in different ones.
  */
-object ConservationSpec : Suite() {
+object ConservationSpec : Suite(isolated = true) {
     init {
         test(
             "thousands of transfers across three nodes and two journal databases leave every penny where the " +

@@ -82,7 +82,7 @@ private class StubCheck(
 }
 
 /** Bank spec 0018: every transfer screened before its source is debited. */
-object ScreeningSpec : Suite() {
+object ScreeningSpec : Suite(isolated = true) {
     init {
         test("two hundred transfers screened at once each get the check's answer, not the policy's") {
             holds {

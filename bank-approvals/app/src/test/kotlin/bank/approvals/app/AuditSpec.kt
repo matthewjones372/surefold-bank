@@ -42,7 +42,7 @@ import java.time.ZoneOffset
 import java.util.UUID
 
 /** bank spec 0019's approvals-audit: who and from where, the content hash on acting, the chains and their digests. */
-object AuditSpec : Suite() {
+object AuditSpec : Suite(isolated = true) {
     init {
         test("one stored event's bytes edited, verify names that event, and only an approver or auditor may ask") {
             holds {

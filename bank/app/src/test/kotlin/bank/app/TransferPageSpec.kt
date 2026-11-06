@@ -12,7 +12,7 @@ import io.kotest.matchers.shouldBe
 private val patiently = LocatorAssertions.ContainsTextOptions().setTimeout(15_000.0)
 
 /** Bank spec 0006: a transfer followed until it settles, and a payroll. */
-object TransferPageSpec : Suite() {
+object TransferPageSpec : Suite(isolated = true) {
     init {
         test("a transfer still pending when the page is answered is followed until it completes") {
             holds {

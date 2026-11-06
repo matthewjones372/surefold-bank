@@ -23,7 +23,7 @@ import java.io.PrintStream
 import java.util.UUID
 
 /** bank spec 0023's `log-json`: every line Approvals writes is one JSON object, with the estate's field names. */
-object LogJsonSpec : Suite() {
+object LogJsonSpec : Suite(isolated = true) {
     init {
         test(
             "every line a node writes, migrating, starting and answering, is one JSON object with the shared fields",

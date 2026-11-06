@@ -23,7 +23,7 @@ import kotlin.time.Duration.Companion.seconds
 private val patiently = LocatorAssertions.ContainsTextOptions().setTimeout(15_000.0)
 
 /** Bank spec 0021's `act-as`: support sees what a customer sees, only while a grant lives, and moves nothing. */
-object ActAsSpec : Suite() {
+object ActAsSpec : Suite(isolated = true) {
     init {
         test(
             "support acts as Ada with a grant, sees her statement and the banner, is refused a withdrawal, and " +

@@ -14,7 +14,7 @@ import java.net.http.HttpResponse
 import java.util.UUID
 
 /** Bank spec 0024's `trace-views`: a request's latency carries its trace as an exemplar, for a panel to open it. */
-object ExemplarsSpec : Suite() {
+object ExemplarsSpec : Suite(isolated = true) {
     init {
         test(
             "a request in a sampled trace leaves its trace id on the latency histogram, and one in an unsampled " +

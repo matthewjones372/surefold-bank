@@ -30,7 +30,7 @@ import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.seconds
 
 /** bank spec 0019's approvals-saga, against Postgres and real tokens. */
-object SagaSpec : Suite() {
+object SagaSpec : Suite(isolated = true) {
     init {
         test(
             "a request approved on one node after its entity moved from another ends applied once, with its " +

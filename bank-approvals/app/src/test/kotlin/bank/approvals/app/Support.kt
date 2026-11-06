@@ -50,6 +50,8 @@ object TestPostgres {
             withUsername("postgres")
             withPassword("postgres")
             withEnv("POSTGRES_HOST_AUTH_METHOD", "trust")
+            // Every node's pools, across the clusters a test JVM runs at once, share this one server.
+            withCommand("postgres", "-c", "max_connections=1000")
             start()
         }
     }

@@ -84,7 +84,7 @@ object TestKafka {
 }
 
 /** Bank spec 0015: every event published, as a contract Apicurio holds. */
-object PublishingSpec : Suite() {
+object PublishingSpec : Suite(isolated = true) {
     init {
         test("a transfer's events arrive on both topics, and Apicurio's own deserializer reads them") {
             holds {

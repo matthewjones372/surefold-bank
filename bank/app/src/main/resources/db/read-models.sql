@@ -144,12 +144,16 @@ do $$
 declare
     reader text;
 begin
+    -- Roles are cluster-wide. Two databases migrating at once both see a role missing and both create it; the
+    -- second hits pg_authid's unique index (unique_violation), which duplicate_object does not cover. The lock makes
+    -- the check and the create one at a time, and the handler covers a race that still gets through.
+    perform pg_advisory_xact_lock(714203, 1);
     foreach reader in array array['bank_reader', 'auditor_ro'] loop
         if not exists (select 1 from pg_roles where rolname = reader) then
             begin
                 execute format('create role %I nologin', reader);
             exception
-                when duplicate_object then null;
+                when duplicate_object or unique_violation then null;
                 when insufficient_privilege then
                     raise warning '% is missing, and % may not make it: the operator makes it', reader, current_user;
             end;
