@@ -63,14 +63,17 @@ import dev.surefold.stream.Actors as StreamActors
 
 /**
  * Liquibase's lines into the log, as JSON like every other (bank spec 0023): its own through java.util.logging,
- * bridged to SLF4J, and what it would print to stdout ("Running Changeset", the summary) through that log instead. Its
- * scope is kept per thread and handed to the threads started after, so this runs as this file's modules are defined,
- * before any node is built.
+ * bridged to SLF4J, and what it would print to stdout ("Running Changeset", the summary) through that log instead. The
+ * UI service is a process setting, read by every thread: a scope entered on the thread that first loaded this file
+ * would not reach the thread a later test migrates on. This runs as this file's modules are defined, before any node
+ * is built.
  */
 @Suppress("unused")
 private val liquibaseLogged: Unit = run {
-    Scope.enter(mapOf(Scope.Attr.ui.name to LoggerUIService()))
+    // Before Liquibase's classes read it. CONSOLE prints "Running Changeset" to stdout and ignores the scope below.
+    System.setProperty("liquibase.uiService", "LOGGER")
     System.setProperty("liquibase.command.showSummaryOutput", "LOG")
+    Scope.enter(mapOf(Scope.Attr.ui.name to LoggerUIService()))
     SLF4JBridgeHandler.removeHandlersForRootLogger()
     SLF4JBridgeHandler.install()
 }

@@ -78,7 +78,7 @@ object TraceActorsSpec : Suite(isolated = true) {
                         // only the last ones made: the request's own spans can reach Tempo after the accounts' do.
                         val expected = listOf(
                             "PUT /transfers/{transferId}",
-                            "transfer debitsource",
+                            "transfer debit",
                             "account debit",
                             "account credit",
                         )

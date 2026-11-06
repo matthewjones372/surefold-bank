@@ -80,7 +80,7 @@ not through a collector: one less pod, and the services already batch.
 - [x] **`trace-actors`** — on Surefold 0122. Done when: on a three-node cluster, one transfer's trace holds spans from the
       node that took it, the shard's node and both accounts' nodes.
       Done: `TraceActorsSpec` sends six transfers on three nodes, each under its own sampled `traceparent`; every
-      trace holds `PUT /transfers/{transferId}`, `transfer debitsource`, `account debit` and `account credit`, and
+      trace holds `PUT /transfers/{transferId}`, `transfer debit`, `account debit` and `account credit`, and
       the traces between them hold spans from more than one node. The bank adds a span per account command and per leg
       sent; Surefold carries them. Building it found a gap in Surefold: an account answers its leg by reply, and a reply
       answered across nodes lost the trace, fixed there.

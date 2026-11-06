@@ -10,6 +10,7 @@ import dev.surefold.clock
 import dev.surefold.fail.Either
 import dev.surefold.fail.onLeft
 import dev.surefold.junit.Suite
+import dev.surefold.junit.alone
 import dev.surefold.junit.holds
 import io.github.matthewjones372.pelican.In2
 import io.github.matthewjones372.pelican.In3
@@ -116,6 +117,7 @@ object GrantsSpec : Suite(isolated = true) {
     init {
         test(
             "support sees the account a grant names while it lives, nothing else, and nothing a second after it ends",
+            alone,
         ) {
             holds {
                 val fixture = Fixture()
@@ -168,7 +170,7 @@ object GrantsSpec : Suite(isolated = true) {
                 }
             }
         }
-        test("a grant to act as a customer, approved, lets that person act as them until it ends") {
+        test("a grant to act as a customer, approved, lets that person act as them until it ends", alone) {
             holds {
                 val fixture = Fixture()
                 with(fixture) {
@@ -200,6 +202,7 @@ object GrantsSpec : Suite(isolated = true) {
         test(
             "a grant asked for someone else, for too long, or by someone outside support is never given, and " +
                 "Approvals hears why",
+            alone,
         ) {
             holds {
                 val fixture = Fixture()
