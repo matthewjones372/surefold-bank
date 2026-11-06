@@ -35,7 +35,7 @@ object TestTempo {
 }
 
 /** Bank spec 0024's `trace-export`: a request's spans reach Tempo, continuing the caller's trace, as sampled. */
-object TraceExportSpec : Suite(isolated = true) {
+object TraceExportSpec : Suite(isolated = true, concurrent = false) {
     init {
         test(
             "a request inside a sampled trace is in Tempo, its transfer a span of it, and one in an unsampled " +

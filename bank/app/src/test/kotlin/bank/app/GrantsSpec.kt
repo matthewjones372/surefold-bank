@@ -113,7 +113,7 @@ object ApprovalEvents {
 }
 
 /** Bank spec 0021's `staff`: support sees one account, and only while a grant approved in Approvals lives. */
-object GrantsSpec : Suite(isolated = true) {
+object GrantsSpec : Suite(isolated = true, concurrent = false) {
     init {
         test(
             "support sees the account a grant names while it lives, nothing else, and nothing a second after it ends",

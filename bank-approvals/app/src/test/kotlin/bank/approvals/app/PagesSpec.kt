@@ -47,7 +47,7 @@ fun Browser.signedIn(base: String, subject: String, groups: String, then: String
 }
 
 /** bank spec 0019's approvals-pages: a request asked, talked over, approved by two and applied, through the pages. */
-object PagesSpec : Suite(isolated = true) {
+object PagesSpec : Suite(isolated = true, concurrent = false) {
     init {
         test(
             "the requester and two approvers sign in, talk it over, both approve, and the page shows the diff, " +

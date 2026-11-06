@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 
 /** bank spec 0026's debug switch: Approvals' level, from the file its ConfigMap is mounted as. */
-object LevelFileSpec : Suite(isolated = true) {
+object LevelFileSpec : Suite(isolated = true, concurrent = false) {
     init {
         test("DEBUG in the file turns its own lines to DEBUG, and INFO turns them back", alone) {
             holds {

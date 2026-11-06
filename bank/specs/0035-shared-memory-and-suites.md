@@ -40,8 +40,8 @@ token and a token with no expiry are not kept. The ops page reads a `Shared` map
 
 Every spec is a `Suite`. A test that used to construct its own fixture still does, once per test. Suites run several
 at a time (`surefold.junit.suites.limit`), and the tests inside a suite run together. A suite that starts a node, a
-database or the process logger is `isolated`, so it has the JVM to itself: those share one Postgres, stdout and the
-logger. A check is recorded with
+database or the process logger is `isolated` and not `concurrent`: it has the JVM to itself, and its tests run one
+at a time. Those share one Postgres, stdout, the logger and Pelican's schema map. A check is recorded with
 `holds`, so a spec that asserts nothing fails. A wait polls with `eventually` until what it is waiting for is true.
 A pause that has to elapse on the wall clock while the suite's clock is fixed waits there; a pause on the suite's
 own clock is `clock.sleep`.

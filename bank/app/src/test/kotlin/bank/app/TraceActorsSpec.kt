@@ -29,7 +29,7 @@ private class Held(val spans: List<Pair<String, String>>) {
 }
 
 /** Bank spec 0024's `trace-actors`: a transfer's trace follows it to the accounts' nodes. */
-object TraceActorsSpec : Suite(isolated = true) {
+object TraceActorsSpec : Suite(isolated = true, concurrent = false) {
     init {
         test("a transfer's trace holds its debit and credit, made on the nodes the accounts live on") {
             holds {

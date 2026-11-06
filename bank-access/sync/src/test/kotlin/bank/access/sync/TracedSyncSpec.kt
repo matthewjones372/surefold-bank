@@ -41,7 +41,7 @@ private class Kept : SpanExporter {
 }
 
 /** Surefold-bank spec 0024's `trace-events`: an account opened inside a trace has its owner written in that trace. */
-object TracedSyncSpec : Suite(isolated = true) {
+object TracedSyncSpec : Suite(isolated = true, concurrent = false) {
     init {
         test("an account published inside a trace has its owner written to OpenFGA in a span of that trace") {
             holds {

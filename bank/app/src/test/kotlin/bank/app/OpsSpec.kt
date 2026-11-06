@@ -27,7 +27,7 @@ import java.util.stream.Stream
 import kotlin.time.Duration.Companion.milliseconds
 
 /** Bank spec 0007: every node's snapshot over one stream, from whichever node serves it. */
-object OpsSpec : Suite(isolated = true) {
+object OpsSpec : Suite(isolated = true, concurrent = false) {
     private val json = ObjectMapper()
 
     /** The snapshots [base] streams, parsed, until [enough] says stop or [seconds] pass. */
