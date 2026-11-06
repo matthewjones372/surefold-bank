@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.seconds
 private val patiently = LocatorAssertions.ContainsTextOptions().setTimeout(15_000.0)
 
 /** Bank spec 0021's `access-log`: every look by staff recorded and published, and the customer told who has looked. */
-object AccessLogSpec : Suite(isolated = true) {
+object AccessLogSpec : Suite(isolated = true, concurrent = false) {
     init {
         test("Ada's page lists Bob's look, and the topic carries it with the grant's approval id") {
             holds {

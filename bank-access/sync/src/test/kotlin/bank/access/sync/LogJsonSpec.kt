@@ -14,7 +14,7 @@ import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 
 /** bank spec 0023's `log-json`: access-sync's lines are JSON objects, with the estate's field names. */
-object LogJsonSpec : Suite(isolated = true) {
+object LogJsonSpec : Suite(isolated = true, concurrent = false) {
     init {
         test("a line, its MDC and its exception are one JSON object with the shared fields", alone) {
             holds {

@@ -58,7 +58,7 @@ object TestAccess {
 }
 
 /** Bank spec 0022's `access-shadow`: bank-access asked every question the bank's own rules answer, and compared. */
-object ShadowSpec : Suite(isolated = true) {
+object ShadowSpec : Suite(isolated = true, concurrent = false) {
     init {
         test(
             "the bank answers as before, bank-access agrees with it, and a deliberately wrong relationship is counted",

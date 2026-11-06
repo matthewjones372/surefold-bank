@@ -94,7 +94,9 @@ that copies logs to network storage, keeps the lines but still leaves nothing to
       JSON with `ts`, `level`, `service` and `msg`, and the transfer's lines carry its `transfer_id` and a `trace_id`.
       Done: `LogJsonSpec` in each service. The bank's starts a node, serves Ada and refuses Eve, and parses every line,
       Liquibase's included: its "Running Changeset" and update summary went to stdout as plain text, and now go
-      through the log, its own lines bridged from java.util.logging. A transfer writes no line of its own, so the test
+      through the log, its own lines bridged from java.util.logging. Liquibase builds a console UI on each thread.
+      The app enters the logger UI when it loads, and a test enters it again on the thread that starts the node.
+      A transfer writes no line of its own, so the test
       checks that a line inside a span's annotations carries `trace_id` and `transfer_id` as fields; a transfer's
       lines across actors are spec 0024's `trace-actors`. The logstash encoder is 8.1, not 9, which is on Jackson 3.
 - ~~**`log-correlation`**~~ — moved to spec 0024, which carries the trace across services, actors and Kafka.

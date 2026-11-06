@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 
 /** Bank spec 0026's `logging-configmaps`: the bank's level, from the file its ConfigMap is mounted as. */
-object LevelFileSpec : Suite(isolated = true) {
+object LevelFileSpec : Suite(isolated = true, concurrent = false) {
     init {
         test("DEBUG in the file turns the bank's lines to DEBUG, and INFO turns them back", alone) {
             holds {

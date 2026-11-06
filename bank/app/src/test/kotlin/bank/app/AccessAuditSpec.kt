@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /** Bank spec 0022's `access-audit`: who can see an account, what a person can see, and why, on the access page. */
-object AccessAuditSpec : Suite(isolated = true) {
+object AccessAuditSpec : Suite(isolated = true, concurrent = false) {
     init {
         test("an auditor sees Bob's grant on the account, with the approval it came from, and not after it expires") {
             holds {

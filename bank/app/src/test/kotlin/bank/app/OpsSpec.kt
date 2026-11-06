@@ -9,6 +9,7 @@ import dev.surefold.app.use
 import dev.surefold.assert.shouldBeRight
 import dev.surefold.clock
 import dev.surefold.junit.Suite
+import dev.surefold.junit.alone
 import dev.surefold.junit.holds
 import io.kotest.assertions.withClue
 import io.kotest.matchers.doubles.shouldBeGreaterThan
@@ -26,7 +27,7 @@ import java.util.stream.Stream
 import kotlin.time.Duration.Companion.milliseconds
 
 /** Bank spec 0007: every node's snapshot over one stream, from whichever node serves it. */
-object OpsSpec : Suite(isolated = true) {
+object OpsSpec : Suite(isolated = true, concurrent = false) {
     private val json = ObjectMapper()
 
     /** The snapshots [base] streams, parsed, until [enough] says stop or [seconds] pass. */
@@ -49,7 +50,7 @@ object OpsSpec : Suite(isolated = true) {
     private fun JsonNode.node(name: String): JsonNode? = get("nodes").firstOrNull { it["node"].asText() == name }
 
     init {
-        test("one node's stream carries every node's snapshot, and a stopped node's snapshot stops") {
+        test("one node's stream carries every node's snapshot, and a stopped node's snapshot stops", alone) {
             holds {
                 val cluster = TestCluster(3)
                 cluster.node(0).use { one: TestNode ->
@@ -100,7 +101,7 @@ object OpsSpec : Suite(isolated = true) {
             }
         }
 
-        test("the ops page shows three nodes and the ledger balanced, and greys a node that stops") {
+        test("the ops page shows three nodes and the ledger balanced, and greys a node that stops", alone) {
             holds {
                 val cluster = TestCluster(3)
                 cluster.node(0).use { one: TestNode ->
@@ -138,7 +139,7 @@ object OpsSpec : Suite(isolated = true) {
             }
         }
 
-        test("the books are gauges an alert can watch, and a balanced ledger reads a gap of 0") {
+        test("the books are gauges an alert can watch, and a balanced ledger reads a gap of 0", alone) {
             holds {
                 TestCluster(1).running { (node) ->
                     node.bank.open(AccountId("gauge-1"), "Ada", gbp(1_000), "open:gauge-1").shouldBeRight()

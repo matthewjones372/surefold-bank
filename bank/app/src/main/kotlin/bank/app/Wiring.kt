@@ -114,15 +114,15 @@ import io.micrometer.core.instrument.Metrics as MicrometerRegistries
 
 /**
  * Liquibase's lines into the log, as JSON like every other (bank spec 0023): its own through java.util.logging, bridged
- * to SLF4J, and what it would print to stdout ("Running Changeset") through that log instead. Its scope is kept per
- * thread and handed to the threads started after, so this runs as this file's
- * modules are defined, before any node is built.
+ * to SLF4J, and what it would print to stdout ("Running Changeset") through that log instead. Liquibase keeps a
+ * console UI on each thread, so this enters the logger UI on the thread that loads the app. A test thread enters it
+ * again before it starts a node. This runs as this file's modules are defined, before any node is built.
  */
 @Suppress("unused")
 private val liquibaseLogged: Unit = run {
-    Scope.enter(mapOf(Scope.Attr.ui.name to LoggerUIService()))
-    // The update summary has a switch of its own.
+    // The update summary has a switch of its own. The UI does not: it is the scope of the thread that migrates.
     System.setProperty("liquibase.command.showSummaryOutput", "LOG")
+    Scope.enter(mapOf(Scope.Attr.ui.name to LoggerUIService()))
     SLF4JBridgeHandler.removeHandlersForRootLogger()
     SLF4JBridgeHandler.install()
 }

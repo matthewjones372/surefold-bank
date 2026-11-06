@@ -14,6 +14,8 @@ import dev.surefold.fail.onLeft
 import io.github.matthewjones372.pelican.jetty.PelicanServer
 import io.github.matthewjones372.pelican.test.ApiClient
 import io.github.matthewjones372.pelican.test.signedInAs
+import liquibase.Scope
+import liquibase.ui.LoggerUIService
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.io.IOException
@@ -24,6 +26,18 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+
+private val liquibaseOnThisThread = ThreadLocal.withInitial { false }
+
+/**
+ * Liquibase prints "Running Changeset" through the UI on the thread that migrates. The logger UI entered when the
+ * app class loaded stays on that thread, so a test enters it on its own before a node starts (bank spec 0023).
+ */
+internal fun liquibaseThroughTheLogger() {
+    if (liquibaseOnThisThread.get()) return
+    liquibaseOnThisThread.set(true)
+    Scope.enter(mapOf(Scope.Attr.ui.name to LoggerUIService()))
+}
 
 /** One Postgres for the test JVM, in a container started on first use, and an empty database in it per cluster. */
 object TestPostgres {
@@ -129,20 +143,23 @@ class TestCluster(
     private val web = ports.drop(size)
     private val seeds = remoting.joinToString(", ") { "\"127.0.0.1:$it\"" }
 
-    fun node(index: Int, extra: String = ""): Module = (
-        bankModule +
-            single {
-                    server: PelicanServer,
-                    bank: Bank,
-                    reads: JdbcReadModels,
-                    cluster: Cluster,
-                    persistence: Persistence,
-                    grants: JdbcGrants,
-                ->
-                TestNode(server, bank, reads, cluster, persistence, grants)
-            }
-        ).overridingConfig(
-        """
+    fun node(index: Int, extra: String = ""): Module {
+        // This thread's Liquibase UI, not the one entered when the app class was loaded (bank spec 0023).
+        liquibaseThroughTheLogger()
+        return (
+            bankModule +
+                single {
+                        server: PelicanServer,
+                        bank: Bank,
+                        reads: JdbcReadModels,
+                        cluster: Cluster,
+                        persistence: Persistence,
+                        grants: JdbcGrants,
+                    ->
+                    TestNode(server, bank, reads, cluster, persistence, grants)
+                }
+            ).overridingConfig(
+            """
             bank.port = ${web[index]}
             bank.identity.issuer = "${TestIdentity.issuer.url}"
             bank.identity.callbackUrl = "http://127.0.0.1:${web[index]}/callback"
@@ -164,8 +181,9 @@ class TestCluster(
             bank.database.poolSize = 16
             bank.journal.databases = "$others"
             $extra
-        """.trimIndent(),
-    )
+            """.trimIndent(),
+        )
+    }
 
     /** Every node started, one after another so each joins the one before, and all given back after [block]. */
     fun <A> running(block: (List<TestNode>) -> A): A = start(0, emptyList(), block)

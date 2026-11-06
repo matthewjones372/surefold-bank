@@ -19,6 +19,8 @@ import io.github.matthewjones372.pelican.test.ResponseSpec
 import io.github.matthewjones372.pelican.test.Transport
 import io.github.matthewjones372.pelican.test.apiClient
 import io.github.matthewjones372.pelican.test.signedInAs
+import liquibase.Scope
+import liquibase.ui.LoggerUIService
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -40,6 +42,18 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+
+private val liquibaseOnThisThread = ThreadLocal.withInitial { false }
+
+/**
+ * Liquibase prints "Running Changeset" through the UI on the thread that migrates. The logger UI entered when the
+ * app class loaded stays on that thread, so a test enters it on its own before a node starts (bank spec 0023).
+ */
+internal fun liquibaseThroughTheLogger() {
+    if (liquibaseOnThisThread.get()) return
+    liquibaseOnThisThread.set(true)
+    Scope.enter(mapOf(Scope.Attr.ui.name to LoggerUIService()))
+}
 
 /** One Postgres for the test JVM, and an empty database in it per cluster, as surefold-bank's tests have. */
 object TestPostgres {
@@ -216,19 +230,21 @@ class TestCluster(
     private val web = List(size) { freePort() }
     private val seeds = remoting.joinToString(", ") { "\"127.0.0.1:$it\"" }
 
-    fun node(index: Int): Module = (
-        approvalsModule(if (onKafka) kafkaOwners else single<Owners> { owners }) +
-            single { server: PelicanServer, entities: Entities, cluster: Cluster, audit: JournalAudit ->
-                TestNode(
-                    server,
-                    entities,
-                    cluster,
-                    audit,
-                )
-            }
-        )
-        .overridingConfig(
-            """
+    fun node(index: Int): Module {
+        liquibaseThroughTheLogger()
+        return (
+            approvalsModule(if (onKafka) kafkaOwners else single<Owners> { owners }) +
+                single { server: PelicanServer, entities: Entities, cluster: Cluster, audit: JournalAudit ->
+                    TestNode(
+                        server,
+                        entities,
+                        cluster,
+                        audit,
+                    )
+                }
+            )
+            .overridingConfig(
+                """
             approvals.port = ${web[index]}
             approvals.cluster.node.name = "a$index"
             approvals.cluster.node.port = ${remoting[index]}
@@ -250,8 +266,9 @@ class TestCluster(
             approvals.kafka.registry = "${TestKafka.registry}"
             approvals.kafka.every = 100ms
             $extra
-            """.trimIndent(),
-        )
+                """.trimIndent(),
+            )
+    }
 }
 
 /** A node on a thread of its own until [stop], so a test can take it away mid-run. */

@@ -25,7 +25,7 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
 /** bank spec 0019's approvals-published: every request's events on `bank.approval-events`, as a consumer reads them. */
-object PublishedSpec : Suite(isolated = true) {
+object PublishedSpec : Suite(isolated = true, concurrent = false) {
     init {
         test(
             "a consumer reads a request's events in order, each with its kind and subject, as Apicurio's " +
