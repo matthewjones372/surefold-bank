@@ -12,7 +12,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 /** Bank spec 0006: the pages are served beside the API, and every endpoint still answers as itself. */
-object PagesSpec : Suite() {
+object PagesSpec : Suite(isolated = true) {
     init {
         test("the pages are served beside the API, and an endpoint still answers as itself") {
             holds {

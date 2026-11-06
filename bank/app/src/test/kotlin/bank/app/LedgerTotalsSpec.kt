@@ -12,7 +12,7 @@ import javax.sql.DataSource
  * Bank spec 0032: the ledger's totals keep a row per currency and share, so the partitions' batches never wait on one
  * another's row, and the ledger is the rows' sum.
  */
-object LedgerTotalsSpec : Suite() {
+object LedgerTotalsSpec : Suite(isolated = true) {
     init {
         test("two shares' batches each add to a row of their own, and the ledger is their sum") {
             holds {

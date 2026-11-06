@@ -15,7 +15,7 @@ import javax.sql.DataSource
  * Spec 0014: read models written by partitions at once. Two writers can hold the same account's events, as after a
  * range of slices moves between journal databases; the statement line's key decides which of them counts each one.
  */
-object ReadModelsSpec : Suite() {
+object ReadModelsSpec : Suite(isolated = true) {
     init {
         test("the same batch written by eight writers at once is counted once, and every balance is where it ends") {
             holds {

@@ -20,7 +20,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 
 /** Bank spec 0027 over HTTP: an account opened with a daily limit, refused past it, with what is left today. */
-object DailyLimitApiSpec : Suite() {
+object DailyLimitApiSpec : Suite(isolated = true) {
     init {
         test("withdrawals and transfers past an account's daily limit are refused, saying the limit and what is left") {
             holds {

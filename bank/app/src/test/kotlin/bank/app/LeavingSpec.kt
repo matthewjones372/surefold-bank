@@ -16,7 +16,7 @@ import kotlin.random.Random
  * Spec 0001: a node leaving while transfers run through the others. Its shards move, its entities recover from the
  * journal on their new owners, and a saga caught mid-way is finished by the sweeper — so the books still balance.
  */
-object LeavingSpec : Suite() {
+object LeavingSpec : Suite(isolated = true) {
     init {
         test("a node leaving mid-run loses no money and doubles none") {
             holds {

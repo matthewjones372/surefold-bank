@@ -15,7 +15,7 @@ import io.kotest.matchers.shouldBe
  * Spec 0002: a saga whose node died after it was requested is in the journal and nowhere else. Nobody asks about it,
  * so only the sweeper can wake it — and once woken it reads its next step off its state and finishes.
  */
-object SweeperSpec : Suite() {
+object SweeperSpec : Suite(isolated = true) {
     init {
         test("a stranded transfer is found and finished without anyone asking about it") {
             holds {

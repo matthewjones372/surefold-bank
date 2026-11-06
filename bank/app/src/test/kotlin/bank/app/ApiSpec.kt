@@ -31,7 +31,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 
 /** The bank through its HTTP contract, on one node: every call names an endpoint, and every refusal is a declared one.
  */
-object ApiSpec : Suite() {
+object ApiSpec : Suite(isolated = true) {
     init {
         test("an account is opened, paid into, refused, and paid out of over HTTP") {
             holds {

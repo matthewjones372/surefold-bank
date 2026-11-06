@@ -16,7 +16,7 @@ import java.util.UUID
 
 /** Bank spec 0024's `trace-events`: an event is published in the trace it was written in, for a consumer to continue.
  */
-object TraceEventsSpec : Suite() {
+object TraceEventsSpec : Suite(isolated = true) {
     init {
         test("an account opened inside a trace is published with it, and its log annotations are not") {
             holds {

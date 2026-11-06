@@ -42,7 +42,7 @@ private class Collector : AutoCloseable {
 }
 
 /** bank spec 0024's `trace-calls`, Approvals' half: a request continues its caller's trace, and is exported. */
-object TraceSpec : Suite() {
+object TraceSpec : Suite(isolated = true) {
     init {
         test("a request in a sampled trace is exported in it, and one in an unsampled trace is not") {
             holds {

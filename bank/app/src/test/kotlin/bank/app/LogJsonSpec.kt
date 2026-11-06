@@ -25,7 +25,7 @@ import java.net.http.HttpResponse
 import java.util.UUID
 
 /** Bank spec 0023's `log-json`: every line the bank writes is one JSON object, with the estate's field names. */
-object LogJsonSpec : Suite() {
+object LogJsonSpec : Suite(isolated = true) {
     init {
         test(
             "every line a node writes, starting, serving and refusing, is one JSON object with the shared fields",

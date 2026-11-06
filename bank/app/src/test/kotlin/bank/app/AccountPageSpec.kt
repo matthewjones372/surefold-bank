@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger
 private val patiently = LocatorAssertions.ContainsTextOptions().setTimeout(15_000.0)
 
 /** Bank spec 0006: an account's page, and a retry that moves money once. */
-object AccountPageSpec : Suite() {
+object AccountPageSpec : Suite(isolated = true) {
     init {
         test("an account opened on the page, withdrawn from with a lost answer, moves the money once") {
             holds {

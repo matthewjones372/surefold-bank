@@ -22,7 +22,7 @@ import javax.sql.DataSource
  * its offset's durable commit after it flushes it too. The setting is the transaction's alone: a pooled connection
  * goes back as durable as it came, for whatever borrows it next, a journal append included.
  */
-object DerivedWritesSpec : Suite() {
+object DerivedWritesSpec : Suite(isolated = true) {
     init {
         test("an account batch commits without waiting for the disk, and the connection goes back durable") {
             holds {

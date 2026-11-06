@@ -17,7 +17,7 @@ import javax.sql.DataSource
  * Bank spec 0032: the access log is written by one writer per node, in batches, so a staff page's many looks share a
  * few inserts and commits, and every look is still recorded.
  */
-object AccessLogBatchesSpec : Suite() {
+object AccessLogBatchesSpec : Suite(isolated = true) {
     init {
         test("a staff page's 1,000 looks make at most 20 inserts, and every one is recorded") {
             holds {
